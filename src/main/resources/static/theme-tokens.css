@@ -1,0 +1,109 @@
+/* CityFix shared day/night theme tokens.
+   Generated from the Material 3 palette already used across the app.
+   Values are space-separated RGB triplets so they work both with
+   Tailwind's "rgb(var(--x) / <alpha-value>)" pattern and with plain
+   CSS via rgb(var(--x)). Add this file to any page's <head> and pair
+   it with /theme.js + a `.theme-toggle` button. */
+
+:root{
+    color-scheme: light;
+    --primary-fixed: 221 225 255;
+    --primary-fixed-dim: 184 196 255;
+    --on-primary-fixed: 0 20 83;
+    --on-primary-fixed-variant: 23 59 171;
+    --secondary-fixed: 111 251 190;
+    --secondary-fixed-dim: 78 222 163;
+    --on-secondary-fixed: 0 33 19;
+    --on-secondary-fixed-variant: 0 82 54;
+    --tertiary-fixed: 255 219 206;
+    --tertiary-fixed-dim: 255 181 154;
+    --on-tertiary-fixed: 56 13 0;
+    --on-tertiary-fixed-variant: 128 42 0;
+    --primary: 0 40 142;
+    --on-primary: 255 255 255;
+    --primary-container: 30 64 175;
+    --on-primary-container: 168 184 255;
+    --inverse-primary: 184 196 255;
+    --secondary: 0 108 73;
+    --on-secondary: 255 255 255;
+    --secondary-container: 108 248 187;
+    --on-secondary-container: 0 113 77;
+    --tertiary: 97 30 0;
+    --on-tertiary: 255 255 255;
+    --tertiary-container: 135 45 0;
+    --on-tertiary-container: 255 165 131;
+    --error: 186 26 26;
+    --on-error: 255 255 255;
+    --error-container: 255 218 214;
+    --on-error-container: 147 0 10;
+    --surface: 247 249 251;
+    --on-surface: 25 28 30;
+    --surface-variant: 224 227 229;
+    --on-surface-variant: 68 70 83;
+    --outline: 117 118 132;
+    --outline-variant: 196 197 213;
+    --surface-dim: 216 218 220;
+    --surface-bright: 247 249 251;
+    --surface-container-lowest: 255 255 255;
+    --surface-container-low: 242 244 246;
+    --surface-container: 236 238 240;
+    --surface-container-high: 230 232 234;
+    --surface-container-highest: 224 227 229;
+    --inverse-surface: 45 49 51;
+    --inverse-on-surface: 239 241 243;
+    --background: 247 249 251;
+    --on-background: 25 28 30;
+    --surface-tint: 55 85 195;
+}
+
+[data-theme="dark"]{
+    color-scheme: dark;
+    --primary: 173 198 255;
+    --on-primary: 0 25 74;
+    --primary-container: 40 69 119;
+    --on-primary-container: 221 225 255;
+    --inverse-primary: 55 85 195;
+    --secondary: 82 220 156;
+    --on-secondary: 0 57 31;
+    --secondary-container: 0 82 47;
+    --on-secondary-container: 108 248 187;
+    --tertiary: 255 181 156;
+    --on-tertiary: 60 15 0;
+    --tertiary-container: 135 45 0;
+    --on-tertiary-container: 255 219 205;
+    --error: 255 180 171;
+    --on-error: 105 0 5;
+    --error-container: 147 0 10;
+    --on-error-container: 255 218 214;
+    --surface: 17 19 24;
+    --on-surface: 226 226 230;
+    --surface-variant: 68 70 79;
+    --on-surface-variant: 196 197 213;
+    --outline: 142 144 153;
+    --outline-variant: 68 70 79;
+    --surface-dim: 17 19 24;
+    --surface-bright: 55 57 62;
+    --surface-container-lowest: 12 14 19;
+    --surface-container-low: 25 28 30;
+    --surface-container: 29 32 36;
+    --surface-container-high: 40 42 47;
+    --surface-container-highest: 51 53 58;
+    --inverse-surface: 226 226 230;
+    --inverse-on-surface: 47 48 51;
+    --background: 17 19 24;
+    --on-background: 226 226 230;
+    --surface-tint: 173 198 255;
+}
+
+html {
+    transition: background-color .2s ease;
+}
+body {
+    transition: background-color .2s ease, color .2s ease;
+}
+
+/* Sun/moon icon swap inside any .theme-toggle button */
+.theme-toggle .theme-icon-sun { display: none; }
+.theme-toggle .theme-icon-moon { display: inline-block; }
+[data-theme="dark"] .theme-toggle .theme-icon-sun { display: inline-block; }
+[data-theme="dark"] .theme-toggle .theme-icon-moon { display: none; }

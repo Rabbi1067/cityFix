@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>CityFix - Citizen Dashboard</title>
+  <style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script id="tailwind-config">tailwind.config={theme:{extend:{"colors":{"tertiary-fixed-dim":"rgb(var(--tertiary-fixed-dim) / <alpha-value>)","on-secondary-fixed-variant":"rgb(var(--on-secondary-fixed-variant) / <alpha-value>)","on-tertiary":"rgb(var(--on-tertiary) / <alpha-value>)","on-tertiary-fixed":"rgb(var(--on-tertiary-fixed) / <alpha-value>)","on-primary-fixed-variant":"rgb(var(--on-primary-fixed-variant) / <alpha-value>)","on-primary":"rgb(var(--on-primary) / <alpha-value>)","primary-container":"rgb(var(--primary-container) / <alpha-value>)","tertiary":"rgb(var(--tertiary) / <alpha-value>)","error":"rgb(var(--error) / <alpha-value>)","secondary":"rgb(var(--secondary) / <alpha-value>)","on-error":"rgb(var(--on-error) / <alpha-value>)","surface-container-highest":"rgb(var(--surface-container-highest) / <alpha-value>)","on-surface":"rgb(var(--on-surface) / <alpha-value>)","secondary-fixed":"rgb(var(--secondary-fixed) / <alpha-value>)","error-container":"rgb(var(--error-container) / <alpha-value>)","surface-container-low":"rgb(var(--surface-container-low) / <alpha-value>)","on-tertiary-container":"rgb(var(--on-tertiary-container) / <alpha-value>)","surface":"rgb(var(--surface) / <alpha-value>)","inverse-primary":"rgb(var(--inverse-primary) / <alpha-value>)","surface-container-high":"rgb(var(--surface-container-high) / <alpha-value>)","on-secondary-container":"rgb(var(--on-secondary-container) / <alpha-value>)","outline":"rgb(var(--outline) / <alpha-value>)","secondary-container":"rgb(var(--secondary-container) / <alpha-value>)","on-secondary-fixed":"rgb(var(--on-secondary-fixed) / <alpha-value>)","surface-bright":"rgb(var(--surface-bright) / <alpha-value>)","outline-variant":"rgb(var(--outline-variant) / <alpha-value>)","primary-fixed-dim":"rgb(var(--primary-fixed-dim) / <alpha-value>)","on-primary-container":"rgb(var(--on-primary-container) / <alpha-value>)","primary":"rgb(var(--primary) / <alpha-value>)","on-surface-variant":"rgb(var(--on-surface-variant) / <alpha-value>)","surface-tint":"rgb(var(--surface-tint) / <alpha-value>)","on-primary-fixed":"rgb(var(--on-primary-fixed) / <alpha-value>)","surface-container":"rgb(var(--surface-container) / <alpha-value>)","primary-fixed":"rgb(var(--primary-fixed) / <alpha-value>)","tertiary-container":"rgb(var(--tertiary-container) / <alpha-value>)","on-error-container":"rgb(var(--on-error-container) / <alpha-value>)","inverse-surface":"rgb(var(--inverse-surface) / <alpha-value>)","on-tertiary-fixed-variant":"rgb(var(--on-tertiary-fixed-variant) / <alpha-value>)","on-secondary":"rgb(var(--on-secondary) / <alpha-value>)","inverse-on-surface":"rgb(var(--inverse-on-surface) / <alpha-value>)","secondary-fixed-dim":"rgb(var(--secondary-fixed-dim) / <alpha-value>)","surface-container-lowest":"rgb(var(--surface-container-lowest) / <alpha-value>)","tertiary-fixed":"rgb(var(--tertiary-fixed) / <alpha-value>)","on-background":"rgb(var(--on-background) / <alpha-value>)","background":"rgb(var(--background) / <alpha-value>)","surface-variant":"rgb(var(--surface-variant) / <alpha-value>)","surface-dim":"rgb(var(--surface-dim) / <alpha-value>)"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"margin-desktop":"32px","margin-mobile":"16px","base":"4px","sidebar-width":"280px","gutter":"24px","container-max":"1440px"},"fontFamily":{"display-lg":["Inter"],"label-sm":["Inter"],"title-md":["Inter"],"label-md":["Inter"],"headline-lg":["Inter"],"body-lg":["Inter"],"headline-lg-mobile":["Inter"],"body-md":["Inter"]},"fontSize":{"display-lg":["48px",{"lineHeight":"1.2","letterSpacing":"-0.02em","fontWeight":"700"}],"label-sm":["12px",{"lineHeight":"1","letterSpacing":"0.05em","fontWeight":"600"}],"title-md":["20px",{"lineHeight":"1.4","fontWeight":"600"}],"label-md":["14px",{"lineHeight":"1.2","letterSpacing":"0.01em","fontWeight":"500"}],"headline-lg":["32px",{"lineHeight":"1.25","letterSpacing":"-0.01em","fontWeight":"600"}],"body-lg":["18px",{"lineHeight":"1.6","fontWeight":"400"}],"headline-lg-mobile":["24px",{"lineHeight":"1.3","fontWeight":"600"}],"body-md":["16px",{"lineHeight":"1.5","fontWeight":"400"}]}}}}</script>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet">
+  <script th:src="@{/theme.js}"></script>
+  <link rel="stylesheet" th:href="@{/theme-tokens.css}">
+  <style>
+    /* Citizen settings switch state: keeps the existing Admin Dashboard switch appearance. */
+    .cf-switch input:checked + span { background: rgb(var(--primary)); }
+    .cf-switch input:checked + span::after { transform: translateX(20px); }
+    .cf-switch span::after {
+      content: "";
+      position: absolute;
+      left: 3px;
+      top: 3px;
+      width: 18px;
+      height: 18px;
+      border-radius: 9999px;
+      background: rgb(var(--surface-container-lowest));
+      box-shadow: 0 1px 3px rgb(0 0 0 / 0.22);
+      transition: transform 0.2s ease;
+    }
+    /* Responsive dashboard polish */
+    html { background: rgb(var(--surface)); }
+    body { min-width: 0; overflow-x: hidden; }
+    .cf-page-shell { min-width: 0; }
+    .cf-activity-title,
+    .cf-activity-description { overflow-wrap: anywhere; word-break: break-word; }
+    .cf-activity-title { line-height: 1.35; }
+    .cf-hotspot-legend-item { min-width: 0; }
+
+    /* A centered, lightweight 3D loader shown for a short, predictable hand-off. */
+    .cf-loader {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 18px;
+      padding: 24px;
+      background: rgb(var(--surface) / 0.94);
+      backdrop-filter: blur(16px);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity .35s ease, visibility .35s ease;
+    }
+    .cf-loader.is-visible { opacity: 1; visibility: visible; pointer-events: auto; }
+    .cf-loader.is-hidden { opacity: 0; visibility: hidden; }
+    .cf-loader-orbit { position: relative; width: 92px; height: 92px; display: grid; place-items: center; perspective: 420px; }
+    .cf-loader-orbit::before,
+    .cf-loader-orbit::after {
+      content: "";
+      position: absolute;
+      inset: 5px;
+      border: 1px solid rgb(var(--primary) / .22);
+      border-radius: 50%;
+      transform: rotateX(68deg) rotateZ(18deg);
+      animation: cf-orbit 2.4s linear infinite;
+    }
+    .cf-loader-orbit::after { inset: 13px; border-color: rgb(var(--secondary) / .36); transform: rotateY(68deg) rotateZ(-18deg); animation-direction: reverse; animation-duration: 1.8s; }
+    .cf-loader-cube { width: 36px; height: 36px; position: relative; transform-style: preserve-3d; animation: cf-cube 2.2s ease-in-out infinite; }
+    .cf-loader-cube span { position: absolute; inset: 0; border: 1px solid rgb(var(--primary) / .55); background: linear-gradient(135deg, rgb(var(--primary) / .78), rgb(var(--secondary) / .68)); box-shadow: 0 0 24px rgb(var(--primary) / .28); }
+    .cf-loader-cube span:nth-child(1) { transform: translateZ(18px); }
+    .cf-loader-cube span:nth-child(2) { transform: rotateY(180deg) translateZ(18px); }
+    .cf-loader-cube span:nth-child(3) { transform: rotateY(90deg) translateZ(18px); }
+    .cf-loader-cube span:nth-child(4) { transform: rotateY(-90deg) translateZ(18px); }
+    .cf-loader-cube span:nth-child(5) { transform: rotateX(90deg) translateZ(18px); }
+    .cf-loader-cube span:nth-child(6) { transform: rotateX(-90deg) translateZ(18px); }
+    .cf-loader-copy { text-align: center; }
+    .cf-loader-copy strong { display: block; color: rgb(var(--on-surface)); font-size: 15px; letter-spacing: .01em; }
+    .cf-loader-copy span { display: block; margin-top: 5px; color: rgb(var(--on-surface-variant)); font-size: 12px; }
+    .cf-loader-dots { display: inline-flex; gap: 5px; margin-left: 4px; vertical-align: middle; }
+    .cf-loader-dots i { width: 4px; height: 4px; border-radius: 50%; background: rgb(var(--primary)); animation: cf-dot 1.1s ease-in-out infinite; }
+    .cf-loader-dots i:nth-child(2) { animation-delay: .14s; }
+    .cf-loader-dots i:nth-child(3) { animation-delay: .28s; }
+    @keyframes cf-cube { 0%, 100% { transform: rotateX(-18deg) rotateY(0deg) translateY(0); } 50% { transform: rotateX(28deg) rotateY(180deg) translateY(-5px); } }
+    @keyframes cf-orbit { to { transform: rotateX(68deg) rotateZ(378deg); } }
+    @keyframes cf-dot { 0%, 60%, 100% { opacity: .3; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-3px); } }
+
+    .cf-mobile-menu-btn { display: none; }
+    .cf-mobile-nav-backdrop { display: none; }
+    .cf-activity-row { min-width: 0; }
+    .cf-activity-row > div:last-child { min-width: 0; }
+    @media (max-width: 1023px) {
+      /* Tablet and phone: the existing sidebar stays off-canvas until opened. */
+      .cf-sidebar { width: 280px !important; transform: translateX(-100%); transition: transform .25s ease, box-shadow .25s ease; }
+      .cf-sidebar.cf-sidebar-open { transform: translateX(0); box-shadow: 20px 0 48px rgb(0 0 0 / .18); }
+      .cf-sidebar .cf-brand-copy,
+      .cf-sidebar nav a .cf-nav-label,
+      .cf-sidebar .cf-logout-label { display: inline; }
+      .cf-sidebar nav a { justify-content: flex-start; padding-left: 16px; padding-right: 16px; }
+      .cf-sidebar nav a .material-symbols-outlined,
+      .cf-sidebar > div:last-child a .material-symbols-outlined { margin-right: 12px; }
+      .cf-page-shell { padding-left: 0 !important; }
+      .cf-topbar { left: 0 !important; padding-left: 24px !important; padding-right: 24px !important; }
+      .cf-mobile-menu-btn { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border: 0; border-radius: 999px; color: rgb(var(--on-surface-variant)); background: rgb(var(--surface-container-high)); }
+      .cf-mobile-nav-backdrop.is-visible { display: block; position: fixed; inset: 0; z-index: 45; background: rgb(0 0 0 / .34); backdrop-filter: blur(2px); }
+    }
+    @media (max-width: 639px) {
+      .cf-topbar { padding-left: 16px !important; padding-right: 16px !important; }
+      .cf-topbar-actions { gap: 12px !important; }
+      .cf-topbar-actions > a { gap: 8px !important; padding-left: 12px !important; }
+      .cf-section-pad { padding-left: 16px !important; padding-right: 16px !important; }
+      .cf-settings-pad { padding-left: 16px !important; padding-right: 16px !important; }
+      .cf-hero-heading { white-space: normal !important; font-size: clamp(28px, 9vw, 42px) !important; }
+      .cf-action-bar { width: 100%; flex-wrap: wrap; border-radius: 22px !important; }
+      .cf-action-bar a { flex: 1 1 100%; justify-content: center; }
+      .cf-card-padding { padding: 20px !important; }
+      .cf-activity-list { gap: 24px; }
+      .cf-activity-row { padding-left: 40px; }
+      .cf-activity-title { font-size: 17px; }
+      .cf-hotspot-panel { border-radius: 24px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .cf-loader-cube, .cf-loader-orbit::before, .cf-loader-orbit::after, .cf-loader-dots i { animation: none; }
+      .cf-loader { transition: none; }
+    }
+    /* Header control alignment: actions stay grouped on the right like the reference layout. */
+    .cf-topbar { justify-content: space-between !important; }
+    .cf-topbar-actions { margin-left: auto; display: flex; align-items: center; justify-content: flex-end; gap: 24px; min-width: max-content; }
+    .cf-topbar-actions > * { flex-shrink: 0; }
+    .cf-topbar-actions > a { white-space: nowrap; }
+    @media (max-width: 639px) {
+      .cf-topbar-actions { gap: 12px !important; }
+      .cf-topbar-actions > a { gap: 8px !important; padding-left: 12px !important; }
+    }
+  </style>
+</head>
+<body class="bg-surface font-body-md text-on-surface">
+
+<div id="cityfix-loader" class="cf-loader" role="status" aria-live="polite" aria-label="Loading dashboard">
+  <div class="cf-loader-orbit" aria-hidden="true">
+    <div class="cf-loader-cube">
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+  </div>
+  <div class="cf-loader-copy">
+    <strong>Preparing your dashboard</strong>
+    <span>Syncing your reports <span class="cf-loader-dots" aria-hidden="true"><i></i><i></i><i></i></span></span>
+  </div>
+</div>
+<div id="mobile-nav-backdrop" class="cf-mobile-nav-backdrop" aria-hidden="true"></div>
+<script>
+  (() => {
+    const loader = document.getElementById('cityfix-loader');
+    if (!loader) return;
+    let pageReady = false;
+    let loaderShown = false;
+    const delay = window.setTimeout(() => {
+      if (!pageReady) {
+        loaderShown = true;
+        loader.classList.add('is-visible');
+      }
+    }, 2300);
+    const finishLoading = () => {
+      pageReady = true;
+      window.clearTimeout(delay);
+      if (loaderShown) {
+        window.setTimeout(() => {
+          loader.classList.remove('is-visible');
+          loader.classList.add('is-hidden');
+        }, 420);
+      }
+    };
+    if (document.readyState === 'complete') finishLoading();
+    else window.addEventListener('load', finishLoading, { once: true });
+  })();
+</script>
+
+<aside class="cf-sidebar fixed left-0 top-0 h-full w-sidebar-width bg-surface-container-lowest border-r border-outline-variant z-50 flex flex-col">
+  <div class="p-6 flex items-center gap-3 border-b border-outline-variant">
+    <img alt="CityFix Logo" class="h-8 w-auto" th:src="@{/screen.png}">
+    <span class="cf-brand-copy font-title-md text-title-md text-primary">CityFix</span>
+  </div>
+  <nav class="flex-1 py-6 px-4 space-y-2">
+    <a th:href="@{/citizen/dashboard}"
+       th:classappend="${activePage == 'citizen-dashboard'} ? 'bg-secondary-container text-on-secondary-container' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'"
+       class="flex items-center px-4 py-3 rounded-xl transition-all">
+      <span class="material-symbols-outlined mr-3">dashboard</span>
+      <span class="cf-nav-label font-label-md text-label-md">Dashboard</span>
+    </a>
+    <a th:href="@{/citizen/my-complaints}"
+       th:classappend="${activePage == 'my-complaints'} ? 'bg-secondary-container text-on-secondary-container' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'"
+       class="flex items-center px-4 py-3 rounded-xl transition-all">
+      <span class="material-symbols-outlined mr-3">list_alt</span>
+      <span class="cf-nav-label font-label-md text-label-md">My Complaints</span>
+    </a>
+    <a th:href="@{/citizen/create-complaint}"
+       th:classappend="${activePage == 'create-complaint'} ? 'bg-secondary-container text-on-secondary-container' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'"
+       class="flex items-center px-4 py-3 rounded-xl transition-all">
+      <span class="material-symbols-outlined mr-3">add_circle</span>
+      <span class="cf-nav-label font-label-md text-label-md">Create Complaint</span>
+    </a>
+    <a th:href="@{/citizen/profile}"
+       th:classappend="${activePage == 'profile'} ? 'bg-secondary-container text-on-secondary-container' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'"
+       class="flex items-center px-4 py-3 rounded-xl transition-all">
+      <span class="material-symbols-outlined mr-3">person</span>
+      <span class="cf-nav-label font-label-md text-label-md">Profile</span>
+    </a>
+  </nav>
+  <div class="p-4 mt-auto border-t border-outline-variant">
+    <a th:href="@{/logout}" class="flex items-center px-4 py-3 rounded-xl text-error hover:bg-error-container transition-all">
+      <span class="material-symbols-outlined mr-3">logout</span>
+      <span class="cf-logout-label font-label-md text-label-md">Logout</span>
+    </a>
+  </div>
+</aside>
+
+<div class="cf-page-shell pl-sidebar-width">
+  <!-- Search bar removed. Header now just shows the logged-in citizen's name + avatar (kept in sync with the
+       localStorage-based avatar preview from the Profile page, same as my-complaints.html / profile.html) -->
+  <header class="cf-topbar fixed top-0 left-sidebar-width right-0 h-16 bg-surface/80 backdrop-blur-xl border-b border-outline-variant z-40 flex items-center justify-between px-margin-desktop">
+    <button id="mobile-nav-toggle" type="button" class="cf-mobile-menu-btn" aria-label="Open navigation" aria-expanded="false"><span class="material-symbols-outlined">menu</span></button>
+    <div class="cf-topbar-actions flex items-center gap-6">
+
+      <div th:replace="~{fragments/themeToggle :: toggle}"></div>
+
+      <div class="relative">
+    <span id="notif-bell" class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-on-surface transition-colors">
+        notifications
+    </span>
+        <span id="notif-badge"
+              class="hidden absolute -top-1 -right-1 bg-error text-on-error text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+    </span>
+
+        <div id="notif-dropdown" class="hidden absolute right-0 mt-2 w-80 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-lg z-50">
+          <div class="p-3 border-b border-outline-variant flex justify-between items-center">
+            <span class="font-label-md text-label-md">Resolved Complaints</span>
+            <button id="mark-all-read" class="text-label-sm text-primary hover:underline" type="button">Mark all read</button>
+          </div>
+
+          <div id="notif-empty" class="hidden p-4 text-label-sm text-on-surface-variant">
+            No new resolutions right now.
+          </div>
+
+          <div id="notification-list"></div>
+        </div>
+      </div>
+      <a th:href="@{/citizen/profile}" class="flex items-center gap-3 border-l border-outline-variant pl-6 cursor-pointer hover:opacity-80 transition-opacity">
+        <span class="hidden md:block text-right">
+          <p class="text-label-md font-bold text-on-surface" id="header-name" th:text="${citizen?.name ?: 'Citizen'}">Citizen</p>
+          <p class="text-label-sm text-on-surface-variant">Citizen User</p>
+        </span>
+        <img alt="Profile" class="w-9 h-9 rounded-full object-cover border border-outline-variant shadow-sm" id="header-avatar"
+             th:src="@{${citizen?.profileImagePath ?: '/profile1.jpg'}}">
+      </a>
+    </div>
+  </header>
+
+  <main class="pt-16 min-h-screen bg-surface">
+    <div class="flex flex-col w-full">
+
+      <!-- Header Summary Section -->
+      <section class="cf-section-pad px-margin-desktop py-8">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+          <div class="max-w-2xl">
+            <p class="font-label-md text-label-md text-primary mb-2 uppercase tracking-widest">Citizen Overview</p>
+            <!-- Fixed: this heading no longer carries the "text-display-lg" class, so the counter-animation
+                 script (which targets that class) can no longer overwrite the name with NaN. -->
+            <h1 class="cf-hero-heading font-display-lg font-bold text-on-surface whitespace-nowrap" style="font-size: clamp(20px, 4vw, 48px); line-height: 1.2;">
+              Welcome back, <span id="welcome-name" th:text="${citizen?.name ?: 'Citizen'}">Citizen</span>
+            </h1>
+            <p class="font-body-lg text-body-lg text-on-surface-variant mt-4">
+              Thank you for helping improve
+              <span class="text-secondary font-bold" id="welcome-city"
+                    th:text="${citizen?.address?.city ?: 'your city'}">your city</span>.
+              Here is the current status of your reports.
+            </p>
+          </div>
+          <div class="cf-action-bar flex items-center gap-4 bg-surface-container-low p-2 rounded-full shadow-sm">
+            <a th:href="@{/citizen/create-complaint}" class="flex items-center px-6 py-3 rounded-full bg-primary text-on-primary font-label-md hover:shadow-xl transition-all hover:-translate-y-1">
+              <span class="material-symbols-outlined mr-2">add_circle</span>
+              Create New Report
+            </a>
+            <a id="openSettingsNav" href="#citizen-settings" class="flex items-center px-6 py-3 rounded-full bg-surface-container-highest text-on-surface-variant font-label-md hover:bg-outline-variant transition-colors">
+              <span class="material-symbols-outlined mr-2">settings</span>
+              Settings
+            </a>
+          </div>
+        </div>
+
+        <!-- Metric Grid: trimmed down to the 4 most relevant stats (Total, Pending, Working, Resolved) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter">
+          <div class="bg-surface-container-lowest p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+            <div class="flex justify-between items-start mb-4">
+              <span class="p-2 rounded-lg bg-surface-container text-on-surface-variant">
+                <span class="material-symbols-outlined">analytics</span>
+              </span>
+            </div>
+            <p class="text-display-lg font-display-lg text-on-surface" id="stat-total" th:text="0">0</p>
+            <p class="text-label-sm font-label-sm text-on-surface-variant uppercase mt-1">Total Filed</p>
+          </div>
+          <div class="bg-surface-container-lowest p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+            <div class="flex justify-between items-start mb-4">
+              <span class="p-2 rounded-lg bg-tertiary-fixed text-tertiary">
+                <span class="material-symbols-outlined">hourglass_empty</span>
+              </span>
+            </div>
+            <p class="text-display-lg font-display-lg text-tertiary" id="stat-pending" th:text="0">0</p>
+            <p class="text-label-sm font-label-sm text-tertiary uppercase mt-1">Pending</p>
+          </div>
+          <div class="bg-surface-container-lowest p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+            <div class="flex justify-between items-start mb-4">
+              <span class="p-2 rounded-lg bg-secondary-container text-on-secondary-container">
+                <span class="material-symbols-outlined">engineering</span>
+              </span>
+            </div>
+            <p class="text-display-lg font-display-lg text-on-secondary-container" id="stat-working" th:text="0">0</p>
+            <p class="text-label-sm font-label-sm text-on-secondary-container uppercase mt-1">Working</p>
+          </div>
+          <div class="bg-surface-container-lowest p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow border-b-4 border-secondary">
+            <div class="flex justify-between items-start mb-4">
+              <span class="p-2 rounded-lg bg-secondary/10 text-secondary">
+                <span class="material-symbols-outlined">check_circle</span>
+              </span>
+            </div>
+            <p class="text-display-lg font-display-lg text-secondary" id="stat-resolved" th:text="0">0</p>
+            <p class="text-label-sm font-label-sm text-secondary uppercase mt-1">Resolved</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Main Content Area -->
+      <section class="cf-section-pad px-margin-desktop grid grid-cols-1 lg:grid-cols-12 gap-gutter pb-16">
+        <!-- Left: Trend & Activity (both rendered dynamically via JS below, from real backend data) -->
+        <div class="lg:col-span-8 flex flex-col gap-gutter">
+          <div class="bg-surface-container-lowest rounded-3xl p-8 shadow-sm">
+            <div class="flex justify-between items-center mb-8">
+              <div>
+                <div class="flex items-center gap-3">
+                  <h3 class="font-headline-lg text-headline-lg text-on-surface">Activity Trend</h3>
+                  <span class="px-2.5 py-1 rounded-full bg-primary/10 text-primary text-label-sm font-bold">6 months</span>
+                </div>
+                <p class="text-label-md font-label-md text-on-surface-variant mt-1">Your complaint activity over time</p>
+              </div>
+              <div class="flex items-center gap-5 text-right">
+                <div>
+                  <p id="trend-total" class="text-title-md font-bold text-on-surface">0</p>
+                  <p class="text-label-sm text-on-surface-variant uppercase">Total</p>
+                </div>
+                <div>
+                  <p id="trend-average" class="text-title-md font-bold text-primary">0</p>
+                  <p class="text-label-sm text-on-surface-variant uppercase">Monthly avg.</p>
+                </div>
+              </div>
+            </div>
+            <div id="trend-chart" class="w-full h-80 relative overflow-hidden rounded-2xl bg-gradient-to-b from-primary/5 to-transparent border border-outline-variant/40">
+              <!-- SVG chart injected by JavaScript -->
+            </div>
+            <div id="trend-tooltip" class="pointer-events-none fixed hidden z-[100] rounded-xl bg-on-surface px-3 py-2 text-label-sm text-surface shadow-xl"></div>
+            <div id="trend-labels" class="flex justify-between mt-4 px-2 text-label-sm text-on-surface-variant uppercase tracking-widest"></div>
+          </div>
+
+          <div class="bg-surface-container-lowest rounded-3xl p-8 shadow-sm cf-card-padding">
+            <h3 class="font-headline-lg text-headline-lg text-on-surface mb-8">Recent Activity</h3>
+            <div class="cf-activity-list space-y-8 relative" id="recent-activity-list">
+              <!-- Timeline items injected by JS from real recentActivities -->
+            </div>
+            <a th:href="@{/citizen/my-complaints}" class="block text-center w-full mt-10 py-4 font-label-md text-primary bg-primary/5 rounded-xl hover:bg-primary/10 transition-colors">View All History</a>
+          </div>
+        </div>
+
+        <!-- Right Sidebar: Quick Actions & Status -->
+        <div class="lg:col-span-4 flex flex-col gap-gutter">
+          <div class="bg-primary text-on-primary rounded-3xl p-8 shadow-xl relative overflow-hidden group">
+            <div class="absolute -right-8 -bottom-8 w-48 h-48 bg-on-primary/10 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-700"></div>
+            <h3 class="font-headline-lg text-headline-lg relative z-10">Report an Issue</h3>
+            <p class="text-body-md text-on-primary/80 mt-2 relative z-10">Spotted something that needs attention? Let us know immediately.</p>
+            <div class="mt-8 space-y-3 relative z-10">
+              <a th:href="@{/citizen/create-complaint}" class="w-full flex items-center justify-between p-4 bg-on-primary text-primary rounded-2xl font-label-md hover:bg-surface-bright transition-colors group/btn">
+                <span class="flex items-center"><span class="material-symbols-outlined mr-3">note_add</span>Quick Report</span>
+                <span class="material-symbols-outlined group-hover/btn:translate-x-1 transition-transform">arrow_forward</span>
+              </a>
+              <a th:href="@{/citizen/create-complaint}" class="w-full flex items-center justify-between p-4 bg-primary-container text-on-primary rounded-2xl font-label-md border border-on-primary/20 hover:bg-primary-container/80 transition-colors group/btn">
+                <span class="flex items-center"><span class="material-symbols-outlined mr-3">photo_camera</span>Upload Evidence</span>
+                <span class="material-symbols-outlined group-hover/btn:translate-x-1 transition-transform">arrow_forward</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- Hotspot Map: rendered dynamically via JS from the citizen's real category
+               distribution (we don't store lat/lng, so this shows which issue categories
+               are most active for this citizen instead of literal geo-coordinates). -->
+          <div class="cf-hotspot-panel bg-surface-container-lowest rounded-3xl overflow-hidden shadow-sm">
+            <div class="w-full h-48 relative" id="hotspot-map"></div>
+            <div class="p-6">
+              <h4 class="font-title-md text-title-md text-on-surface">Category Hotspots</h4>
+              <p class="text-body-md text-on-surface-variant mt-1">Live breakdown from your database-backed complaints.</p>
+            </div>
+            <div id="hotspot-legend" class="px-6 pb-6 space-y-3" aria-live="polite"></div>
+          </div>
+
+          <div class="bg-secondary-container text-on-secondary-container rounded-3xl p-8 relative">
+            <div class="flex justify-between items-start mb-6">
+              <span class="material-symbols-outlined text-4xl">volunteer_activism</span>
+              <span class="bg-on-secondary-container text-secondary-container text-[10px] px-2 py-1 rounded font-bold uppercase">Community</span>
+            </div>
+            <p class="font-headline-lg text-headline-lg-mobile leading-tight">Join the Weekend Cleanup Drive</p>
+            <p class="text-body-md mt-4 opacity-90">Help us clean the Central Park area this Saturday. Earn 50 Civic Points!</p>
+            <a href="https://www.facebook.com/share/g/19KJXetVzb/" target="_blank" rel="noopener noreferrer"
+               class="mt-8 inline-block px-6 py-2 border-2 border-on-secondary-container rounded-full font-label-md hover:bg-on-secondary-container hover:text-secondary-container transition-all text-center">
+              Register Now
+            </a>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <section id="settingsView" class="cf-settings-pad hidden pt-16 min-h-screen bg-surface">
+    <div class="w-full max-w-7xl mx-auto p-margin-desktop cf-view-enter">
+      <div class="flex flex-col xl:flex-row xl:items-end justify-between gap-6 mb-8">
+        <div>
+          <div class="flex items-center gap-2 text-primary text-label-sm uppercase tracking-widest font-bold mb-3"><span class="material-symbols-outlined text-[18px]">settings</span>Account control center</div>
+          <h1 class="font-headline-lg text-headline-lg md:text-display-lg text-on-surface">Settings</h1>
+          <p class="font-body-md text-body-md text-on-surface-variant mt-2 max-w-2xl">Manage your account, notifications, appearance, and privacy preferences without leaving your dashboard.</p>
+        </div>
+        <button id="backToDashboardBtn" type="button" class="inline-flex items-center justify-center gap-2 rounded-full bg-surface-container-highest px-5 py-3 text-label-md font-bold text-on-surface-variant hover:bg-outline-variant transition-colors"><span class="material-symbols-outlined text-[20px]">arrow_back</span>Back to dashboard</button>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div class="rounded-2xl border border-outline-variant bg-surface-container-lowest p-5 shadow-sm"><div class="flex items-center justify-between"><span class="text-label-sm uppercase tracking-wide text-on-surface-variant font-bold">Profile</span><span class="material-symbols-outlined text-secondary">person</span></div><p class="mt-3 text-label-md font-bold text-on-surface">Active</p><p class="mt-1 text-label-sm text-on-surface-variant">Citizen account</p></div>
+        <div class="rounded-2xl border border-outline-variant bg-surface-container-lowest p-5 shadow-sm"><div class="flex items-center justify-between"><span class="text-label-sm uppercase tracking-wide text-on-surface-variant font-bold">Alerts</span><span class="material-symbols-outlined text-primary">notifications</span></div><p id="citizenAlertsStatus" class="mt-3 text-label-md font-bold text-on-surface">Enabled</p><p class="mt-1 text-label-sm text-on-surface-variant">Resolution updates</p></div>
+        <div class="rounded-2xl border border-outline-variant bg-surface-container-lowest p-5 shadow-sm"><div class="flex items-center justify-between"><span class="text-label-sm uppercase tracking-wide text-on-surface-variant font-bold">Theme</span><span class="material-symbols-outlined text-tertiary">palette</span></div><p id="citizenThemeStatus" class="mt-3 text-label-md font-bold text-on-surface">Light</p><p class="mt-1 text-label-sm text-on-surface-variant">Workspace appearance</p></div>
+        <div class="rounded-2xl border border-outline-variant bg-surface-container-lowest p-5 shadow-sm"><div class="flex items-center justify-between"><span class="text-label-sm uppercase tracking-wide text-on-surface-variant font-bold">Privacy</span><span class="material-symbols-outlined text-secondary">shield</span></div><p class="mt-3 text-label-md font-bold text-on-surface">Protected</p><p class="mt-1 text-label-sm text-on-surface-variant">Browser preferences</p></div>
+      </div>
+      <div class="rounded-2xl border border-outline-variant bg-surface-container-lowest p-5 shadow-sm mb-8">
+        <div class="flex items-center justify-between gap-4">
+          <div class="flex items-center gap-4">
+            <span id="citizenDeviceIcon" class="material-symbols-outlined rounded-xl bg-primary/10 p-3 text-primary">devices</span>
+            <div><p class="text-label-sm uppercase tracking-wide text-on-surface-variant font-bold">Active device</p><p id="citizenDeviceName" class="mt-1 text-label-md font-bold text-on-surface">Current browser</p><p id="citizenDeviceMeta" class="mt-1 text-label-sm text-on-surface-variant">Active now · This device</p></div>
+          </div>
+          <span class="rounded-full bg-secondary-container px-3 py-1 text-label-sm font-bold text-on-secondary-container">Current</span>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter pb-16">
+        <div class="lg:col-span-4 bg-surface-container-lowest rounded-3xl p-3 shadow-sm h-fit">
+          <p class="px-4 pt-3 pb-2 text-label-sm uppercase tracking-widest text-on-surface-variant font-bold">Preferences</p>
+          <button type="button" data-settings-tab="account" aria-selected="true" class="w-full flex items-center gap-3 rounded-2xl px-4 py-4 text-left text-label-md font-bold text-on-surface"><span class="material-symbols-outlined">manage_accounts</span>Account</button>
+          <button type="button" data-settings-tab="notifications" aria-selected="false" class="w-full flex items-center gap-3 rounded-2xl px-4 py-4 text-left text-label-md font-bold text-on-surface-variant hover:bg-surface-container-high"><span class="material-symbols-outlined">notifications</span>Notifications</button>
+          <button type="button" data-settings-tab="appearance" aria-selected="false" class="w-full flex items-center gap-3 rounded-2xl px-4 py-4 text-left text-label-md font-bold text-on-surface-variant hover:bg-surface-container-high"><span class="material-symbols-outlined">brightness_6</span>Appearance</button>
+          <button type="button" data-settings-tab="privacy" aria-selected="false" class="w-full flex items-center gap-3 rounded-2xl px-4 py-4 text-left text-label-md font-bold text-on-surface-variant hover:bg-surface-container-high"><span class="material-symbols-outlined">lock</span>Privacy</button>
+        </div>
+        <div class="lg:col-span-8 bg-surface-container-lowest rounded-3xl p-8 shadow-sm">
+          <div data-settings-panel="account"><h2 class="font-headline-lg text-headline-lg text-on-surface">Account preferences</h2><p class="text-body-md text-on-surface-variant mt-2 mb-8">Control how your CityFix account behaves.</p><div class="space-y-4"><div class="flex items-center justify-between gap-4 rounded-2xl bg-surface-container-low p-5"><div><p class="text-label-md font-bold text-on-surface">Remember my preferences</p><p class="text-label-sm text-on-surface-variant mt-1">Keep your settings on this device.</p></div><label class="cf-switch relative inline-block w-11 h-6 shrink-0"><input id="rememberPreferences" type="checkbox" class="sr-only" checked><span class="absolute inset-0 rounded-full bg-outline-variant transition-colors"></span></label></div><div class="flex items-center justify-between gap-4 rounded-2xl bg-surface-container-low p-5"><div><p class="text-label-md font-bold text-on-surface">Reduced motion</p><p class="text-label-sm text-on-surface-variant mt-1">Use fewer animations across the dashboard.</p></div><label class="cf-switch relative inline-block w-11 h-6 shrink-0"><input id="citizenReduceMotion" type="checkbox" class="sr-only"><span class="absolute inset-0 rounded-full bg-outline-variant transition-colors"></span></label></div></div></div>
+          <div data-settings-panel="notifications" class="hidden"><h2 class="font-headline-lg text-headline-lg text-on-surface">Notifications</h2><p class="text-body-md text-on-surface-variant mt-2 mb-8">Choose which updates you want to receive.</p><div class="space-y-4"><div class="flex items-center justify-between gap-4 rounded-2xl bg-surface-container-low p-5"><div><p class="text-label-md font-bold text-on-surface">Complaint resolution updates</p><p class="text-label-sm text-on-surface-variant mt-1">Show resolved complaint alerts in the notification bell.</p></div><label class="cf-switch relative inline-block w-11 h-6 shrink-0"><input id="citizenNotifyResolution" type="checkbox" class="sr-only" checked><span class="absolute inset-0 rounded-full bg-outline-variant transition-colors"></span></label></div><div class="flex items-center justify-between gap-4 rounded-2xl bg-surface-container-low p-5"><div><p class="text-label-md font-bold text-on-surface">Community updates</p><p class="text-label-sm text-on-surface-variant mt-1">Receive civic activity announcements.</p></div><label class="cf-switch relative inline-block w-11 h-6 shrink-0"><input id="citizenNotifyCommunity" type="checkbox" class="sr-only" checked><span class="absolute inset-0 rounded-full bg-outline-variant transition-colors"></span></label></div></div></div>
+          <div data-settings-panel="appearance" class="hidden"><h2 class="font-headline-lg text-headline-lg text-on-surface">Appearance</h2><p class="text-body-md text-on-surface-variant mt-2 mb-8">Personalize the dashboard display.</p><label class="text-label-md font-bold text-on-surface">Theme<select id="citizenSettingsTheme" class="block mt-3 w-full rounded-xl bg-surface-container px-4 py-3 text-label-md text-on-surface border-none outline-none"><option value="light">Light</option><option value="dark">Dark</option><option value="system">System default</option></select></label></div>
+          <div data-settings-panel="privacy" class="hidden"><h2 class="font-headline-lg text-headline-lg text-on-surface">Privacy and data</h2><p class="text-body-md text-on-surface-variant mt-2 mb-8">Review browser-only preferences.</p><div class="rounded-2xl bg-surface-container-low p-5"><p class="text-label-md font-bold text-on-surface">Local notification history</p><p class="text-label-sm text-on-surface-variant mt-1">Read/unread state is stored only in this browser.</p><button id="clearCitizenNotificationState" type="button" class="mt-4 rounded-full bg-surface-container-highest px-5 py-2 text-label-md font-bold text-on-surface-variant hover:bg-outline-variant">Clear local history</button></div></div>
+          <div class="mt-10 flex flex-wrap gap-3 border-t border-outline-variant pt-6"><button id="saveCitizenSettingsBtn" type="button" class="rounded-full bg-primary px-6 py-3 text-label-md font-bold text-on-primary hover:shadow-lg">Save settings</button><button id="restoreCitizenSettingsBtn" type="button" class="rounded-full bg-surface-container-highest px-6 py-3 text-label-md font-bold text-on-surface-variant hover:bg-outline-variant">Restore defaults</button><a th:href="@{/citizen/profile}" class="rounded-full bg-surface-container-highest px-6 py-3 text-label-md font-bold text-on-surface-variant hover:bg-outline-variant">Edit profile</a></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div id="complaint-data" class="hidden">
+  <div th:each="c : ${complaints}"
+       class="complaint-data-item"
+       th:attr="data-id=${c.id},
+                data-title=${c.title},
+                data-category=${c.category},
+                data-location=${c.location},
+                data-status=${c.status != null ? c.status.name() : 'PENDING'},
+                data-created-at=${c.createdAt},
+                data-resolved-at=${c.resolution != null && c.resolution.resolvedAt != null ? c.resolution.resolvedAt : ''}">
+  </div>
+</div>
+
+<script th:inline="javascript">
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const complaints = Array.from(document.querySelectorAll('.complaint-data-item')).map(item => ({
+      id: item.dataset.id || '',
+      title: item.dataset.title || '',
+      category: item.dataset.category || 'General',
+      location: item.dataset.location || 'Unknown location',
+      status: item.dataset.status || 'PENDING',
+      createdAt: item.dataset.createdAt || null,
+      resolvedAt: item.dataset.resolvedAt || null
+    }));
+    const countByStatus = status => complaints.filter(c => c.status === status).length;
+    const escapeHtml = value => String(value).replace(/[&<>"']/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character]));
+
+    document.getElementById('stat-total').textContent = complaints.length;
+    document.getElementById('stat-pending').textContent = countByStatus('PENDING');
+    document.getElementById('stat-working').textContent = countByStatus('IN_PROGRESS');
+    document.getElementById('stat-resolved').textContent = countByStatus('RESOLVED');
+
+    const formatRelativeTime = value => {
+      if (!value) return '';
+      const minutes = Math.max(0, Math.floor((Date.now() - new Date(value).getTime()) / 60000));
+      if (minutes < 1) return 'Just now';
+      if (minutes < 60) return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
+      const hours = Math.floor(minutes / 60);
+      if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+      const days = Math.floor(hours / 24);
+      if (days < 7) return `${days} day${days === 1 ? '' : 's'} ago`;
+      const weeks = Math.floor(days / 7);
+      if (weeks < 5) return `${weeks} week${weeks === 1 ? '' : 's'} ago`;
+      const months = Math.floor(days / 30);
+      if (months < 12) return `${months} month${months === 1 ? '' : 's'} ago`;
+      const years = Math.floor(days / 365);
+      return `${years} year${years === 1 ? '' : 's'} ago`;
+    };
+
+    const monthKey = date => {
+      const d = new Date(date);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    };
+
+    const monthLabel = key => {
+      const [year, month] = key.split('-').map(Number);
+      return new Date(year, month - 1, 1).toLocaleString('en', { month: 'short' });
+    };
+
+    const months = [];
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+    }
+    const trendValues = months.map(month =>
+            complaints.filter(c => c.createdAt && monthKey(c.createdAt) === month).length
+    );
+
+    const chartEl = document.getElementById('trend-chart');
+    const labelsEl = document.getElementById('trend-labels');
+    const tooltipEl = document.getElementById('trend-tooltip');
+    const totalTrend = trendValues.reduce((sum, value) => sum + value, 0);
+    document.getElementById('trend-total').textContent = totalTrend;
+    document.getElementById('trend-average').textContent = (totalTrend / months.length).toFixed(1);
+
+    if (!complaints.length) {
+      chartEl.innerHTML = '<div class="h-full flex items-center justify-center"><p class="text-body-md text-on-surface-variant">No activity yet.</p></div>';
+    } else {
+      const width = 760;
+      const height = 280;
+      const padX = 42;
+      const padY = 28;
+      const graphWidth = width - padX * 2;
+      const graphHeight = height - padY * 2;
+      const maxValue = Math.max(...trendValues, 1);
+      const stepX = graphWidth / Math.max(months.length - 1, 1);
+      const points = trendValues.map((value, index) => ({
+        x: padX + index * stepX,
+        y: height - padY - (value / maxValue) * graphHeight,
+        value
+      }));
+      const linePath = points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ');
+      const areaPath = `${linePath} L ${points[points.length - 1].x} ${height - padY} L ${points[0].x} ${height - padY} Z`;
+      const gridLines = [0, 0.25, 0.5, 0.75, 1].map(ratio => {
+        const y = height - padY - ratio * graphHeight;
+        const label = Math.round(maxValue * ratio);
+        return `<line x1="${padX}" y1="${y}" x2="${width - padX}" y2="${y}" stroke="currentColor" stroke-opacity=".12" stroke-dasharray="4 6"/><text x="8" y="${y + 4}" fill="currentColor" opacity=".55" font-size="11">${label}</text>`;
+      }).join('');
+      const dots = points.map((point, index) => `<circle class="trend-point" data-index="${index}" cx="${point.x}" cy="${point.y}" r="${index === points.length - 1 ? 6 : 4}" fill="currentColor" stroke="var(--surface-container-lowest)" stroke-width="3"/>`).join('');
+      const hoverZones = points.map((point, index) => `<rect class="trend-hover-zone" data-index="${index}" x="${Math.max(0, point.x - stepX / 2)}" y="0" width="${stepX}" height="${height}" fill="transparent"/>`).join('');
+
+      chartEl.innerHTML = `<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" class="w-full h-full text-primary overflow-visible" role="img" aria-label="Complaint activity trend"><defs><linearGradient id="trend-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="currentColor" stop-opacity=".24"/><stop offset="100%" stop-color="currentColor" stop-opacity="0"/></linearGradient></defs><g>${gridLines}</g><path d="${areaPath}" fill="url(#trend-fill)"/><path d="${linePath}" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><g>${dots}</g><g>${hoverZones}</g></svg>`;
+
+      labelsEl.innerHTML = months.map((month, index) => `<span class="${index === months.length - 1 ? 'text-primary font-bold' : ''}">${monthLabel(month)}</span>`).join('');
+      chartEl.querySelectorAll('.trend-hover-zone').forEach(zone => {
+        zone.addEventListener('mouseenter', event => {
+          const index = Number(event.currentTarget.dataset.index);
+          const value = trendValues[index];
+          tooltipEl.textContent = `${monthLabel(months[index])}: ${value} complaint${value === 1 ? '' : 's'}`;
+          tooltipEl.classList.remove('hidden');
+          tooltipEl.style.left = `${event.clientX + 12}px`;
+          tooltipEl.style.top = `${event.clientY - 42}px`;
+          chartEl.querySelectorAll('.trend-point').forEach(point => point.setAttribute('opacity', point.dataset.index === String(index) ? '1' : '.45'));
+        });
+        zone.addEventListener('mousemove', event => {
+          tooltipEl.style.left = `${event.clientX + 12}px`;
+          tooltipEl.style.top = `${event.clientY - 42}px`;
+        });
+        zone.addEventListener('mouseleave', () => {
+          tooltipEl.classList.add('hidden');
+          chartEl.querySelectorAll('.trend-point').forEach(point => point.setAttribute('opacity', '1'));
+        });
+      });
+    }
+
+    const categoryCounts = complaints.reduce((map, complaint) => {
+      const category = String(complaint.category || 'General').trim() || 'General';
+      map[category] = (map[category] || 0) + 1;
+      return map;
+    }, {});
+    const categoryEntries = Object.entries(categoryCounts).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+    const categoryLabels = categoryEntries.map(([category]) => category);
+    const categoryValues = categoryEntries.map(([, count]) => count);
+
+    const activityListEl = document.getElementById('recent-activity-list');
+    activityListEl.innerHTML = '';
+    const MAX_RECENT_ACTIVITIES = 5;
+    const recent = [...complaints].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)).slice(0, MAX_RECENT_ACTIVITIES);
+    if (!recent.length) {
+      activityListEl.innerHTML = '<p class="text-body-md text-on-surface-variant text-center py-8">No recent activity yet.</p>';
+    } else {
+      const line = document.createElement('div');
+      line.className = 'absolute left-4 top-2 bottom-2 w-0.5 bg-outline-variant';
+      activityListEl.appendChild(line);
+      recent.forEach(complaint => {
+        const row = document.createElement('div');
+        row.className = 'cf-activity-row relative pl-12';
+        const color = complaint.status === 'RESOLVED' ? 'bg-secondary' : complaint.status === 'IN_PROGRESS' ? 'bg-primary' : 'bg-outline';
+        row.innerHTML = `<div class="absolute left-2 top-1 w-4 h-4 rounded-full ${color} ring-4 ring-surface-container-lowest"></div><div class="flex min-w-0 flex-col md:flex-row md:items-center justify-between gap-2"><div class="min-w-0"><p class="cf-activity-title font-title-md text-title-md text-on-surface"></p><p class="cf-activity-description text-body-md text-on-surface-variant"></p></div><span class="shrink-0 text-label-sm text-on-surface-variant whitespace-nowrap"></span></div>`;
+        row.querySelector('.font-title-md').textContent = complaint.title || 'Untitled Report';
+        row.querySelector('.text-body-md').textContent = `${complaint.category || 'General'} • ${complaint.location || 'Unknown location'}`;
+        row.querySelector('.text-label-sm').textContent = formatRelativeTime(complaint.createdAt);
+        activityListEl.appendChild(row);
+      });
+    }
+
+    const generatedNotificationList = document.getElementById('notification-list');
+    const resolved = complaints.filter(c => c.status === 'RESOLVED' && c.resolvedAt)
+            .sort((a, b) => new Date(b.resolvedAt) - new Date(a.resolvedAt)).slice(0, 10);
+    generatedNotificationList.innerHTML = resolved.map(c => `<div class="notif-item flex items-center justify-between p-3 border-b border-outline-variant hover:bg-surface-container-high" data-id="${c.id}"><a href="/citizen/my-complaints" class="flex-1"><p class="text-label-md font-bold">${c.title || 'Untitled Report'}</p><p class="text-label-sm text-on-surface-variant">${c.category || 'General'} • Resolved ${formatRelativeTime(c.resolvedAt)}</p></a><button class="mark-read-btn material-symbols-outlined text-outline text-[18px] hover:text-error" type="button" title="Mark as read">close</button></div>`).join('');
+
+    const mapEl = document.getElementById('hotspot-map');
+    const hotspotLegendEl = document.getElementById('hotspot-legend');
+    if (!categoryLabels.length) {
+      mapEl.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-surface-container/30"><p class="text-body-md text-on-surface-variant">No category data yet.</p></div>';
+      if (hotspotLegendEl) hotspotLegendEl.innerHTML = '<p class="text-label-sm text-on-surface-variant">Categories will appear here after your first report.</p>';
+    } else {
+      const maxCategoryVal = Math.max(...categoryValues, 1);
+      const hashToRange = (str, min, max) => {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) hash = (hash * 31 + str.charCodeAt(i)) | 0;
+        return min + ((Math.abs(hash) % 1000) / 1000) * (max - min);
+      };
+      let svg = '<svg viewBox="0 0 100 100" preserveAspectRatio="none" class="w-full h-full"><rect width="100" height="100" fill="#eceef0"></rect>';
+      for (let i = 10; i < 100; i += 10) {
+        svg += `<line x1="${i}" y1="0" x2="${i}" y2="100" stroke="#c4c5d5" stroke-width="0.3"/><line x1="0" y1="${i}" x2="100" y2="${i}" stroke="#c4c5d5" stroke-width="0.3"/>`;
+      }
+      categoryLabels.forEach((label, i) => {
+        const value = categoryValues[i];
+        const safeLabel = escapeHtml(label);
+        const ratio = value / maxCategoryVal;
+        const x = hashToRange(`${label}-x`, 15, 85);
+        const y = hashToRange(`${label}-y`, 15, 85);
+        const size = 8 + ratio * 16;
+        const intensity = 0.3 + ratio * 0.6;
+        svg += `<circle cx="${x}" cy="${y}" r="${size}" fill="#00288e" opacity="${intensity * 0.15}"><title>${safeLabel}: ${value}</title></circle><circle cx="${x}" cy="${y}" r="${size / 4}" fill="#00288e" opacity="${intensity}"><title>${safeLabel}: ${value}</title></circle>`;
+      });
+      mapEl.innerHTML = `${svg}</svg>`;
+      if (hotspotLegendEl) {
+        const totalCategories = categoryValues.reduce((sum, value) => sum + value, 0);
+        hotspotLegendEl.innerHTML = categoryEntries.map(([label, value], index) => {
+          const percentage = Math.round((value / totalCategories) * 100);
+          const color = index % 2 === 0 ? 'bg-primary' : 'bg-secondary';
+          const safeLabel = escapeHtml(label);
+          return `<div class="cf-hotspot-legend-item flex items-center gap-3"><span class="h-2.5 w-2.5 shrink-0 rounded-full ${color}"></span><div class="min-w-0 flex-1"><div class="flex items-center justify-between gap-3"><span class="truncate text-label-sm font-bold text-on-surface" title="${safeLabel}">${safeLabel}</span><span class="shrink-0 text-label-sm text-on-surface-variant">${value} · ${percentage}%</span></div><div class="mt-1 h-1.5 overflow-hidden rounded-full bg-surface-container"><span class="block h-full rounded-full ${color}" style="width:${percentage}%"></span></div></div></div>`;
+        }).join('');
+      }
+    }
+
+    const statIds = ['stat-total', 'stat-pending', 'stat-working', 'stat-resolved'];
+    statIds.forEach(id => {
+      const counter = document.getElementById(id);
+      const target = Number(counter.textContent) || 0;
+      let count = 0;
+      const step = () => {
+        count = Math.min(count + Math.max(target / 30, 1), target);
+        counter.textContent = Math.ceil(count);
+        if (count < target) requestAnimationFrame(step);
+      };
+      if (target) step();
+    });
+
+    (function () {
+      const email = /*[[${citizen?.email ?: ''}]]*/ '';
+      const nameKey = 'cityfix-profile-name-' + email;
+      const avatarKey = 'cityfix-avatar-' + email;
+      const applyProfile = () => {
+        const name = localStorage.getItem(nameKey);
+        const avatar = localStorage.getItem(avatarKey);
+        if (name) document.querySelectorAll('#header-name, #welcome-name').forEach(el => el.textContent = name);
+        if (avatar) document.querySelectorAll('#header-avatar').forEach(el => el.src = avatar);
+      };
+      applyProfile();
+      window.addEventListener('storage', event => { if (event.key === nameKey || event.key === avatarKey) applyProfile(); });
+      window.addEventListener('cityfix-profile-updated', applyProfile);
+    })();
+
+    document.querySelectorAll('.shadow-sm').forEach(card => {
+      card.addEventListener('mouseenter', () => { card.style.transform = 'translateY(-4px)'; card.style.transition = 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'; });
+      card.addEventListener('mouseleave', () => { card.style.transform = 'translateY(0px)'; });
+    });
+
+    // Notification system: bind after JavaScript creates the notification items.
+    const bell = document.getElementById('notif-bell');
+    const dropdown = document.getElementById('notif-dropdown');
+    const badge = document.getElementById('notif-badge');
+    const emptyMsg = document.getElementById('notif-empty');
+    const notificationList = document.getElementById('notification-list');
+    const markAllBtn = document.getElementById('mark-all-read');
+    const notificationStorageKey = 'cityfix_citizen_read_notifications_' + /*[[${citizen?.email ?: ''}]]*/ '';
+
+    const getReadIds = () => {
+      try {
+        return JSON.parse(localStorage.getItem(notificationStorageKey) || '[]');
+      } catch (error) {
+        return [];
+      }
+    };
+
+    const saveReadIds = ids => localStorage.setItem(notificationStorageKey, JSON.stringify(ids));
+
+    const notificationSettingsKey = 'cityfix-citizen-settings';
+    const notificationsEnabled = () => {
+      try { return JSON.parse(localStorage.getItem(notificationSettingsKey) || '{}').citizenNotifyResolution !== false; }
+      catch (_) { return true; }
+    };
+    const refreshNotifications = () => {
+      const readIds = getReadIds();
+      const enabled = notificationsEnabled();
+      const items = notificationList.querySelectorAll('.notif-item');
+      let unreadCount = 0;
+      items.forEach(item => {
+        const isRead = readIds.includes(item.dataset.id);
+        item.classList.toggle('hidden', !enabled || isRead);
+        if (enabled && !isRead) unreadCount++;
+      });
+      badge.textContent = unreadCount;
+      badge.classList.toggle('hidden', unreadCount === 0);
+      emptyMsg.textContent = enabled ? 'No new resolutions right now.' : 'Notifications are turned off in Settings.';
+      emptyMsg.classList.toggle('hidden', unreadCount !== 0);
+    };
+
+    bell.addEventListener('click', event => {
+      event.stopPropagation();
+      dropdown.classList.toggle('hidden');
+      refreshNotifications();
+    });
+
+    document.addEventListener('click', event => {
+      if (!dropdown.contains(event.target) && !bell.contains(event.target)) {
+        dropdown.classList.add('hidden');
+      }
+    });
+
+    // Delegation is important because notification items are inserted dynamically.
+    notificationList.addEventListener('click', event => {
+      const button = event.target.closest('.mark-read-btn');
+      if (!button) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const item = button.closest('.notif-item');
+      const id = item.dataset.id;
+      const readIds = getReadIds();
+      if (!readIds.includes(id)) readIds.push(id);
+      saveReadIds(readIds);
+      refreshNotifications();
+    });
+
+    markAllBtn.addEventListener('click', event => {
+      event.preventDefault();
+      saveReadIds(Array.from(notificationList.querySelectorAll('.notif-item')).map(item => item.dataset.id));
+      refreshNotifications();
+    });
+
+    refreshNotifications();
+  });
+</script>
+
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const dashboard = document.querySelector('main');
+    const settings = document.getElementById('settingsView');
+    const nav = document.getElementById('openSettingsNav');
+    const back = document.getElementById('backToDashboardBtn');
+    const key = 'cityfix-citizen-settings';
+    const themeKey = 'cityfix-theme';
+    const controls = ['rememberPreferences', 'citizenReduceMotion', 'citizenNotifyResolution', 'citizenNotifyCommunity'];
+    const getSaved = () => { try { return JSON.parse(localStorage.getItem(key) || '{}'); } catch (_) { return {}; } };
+    const notifyStatus = () => { const el = document.getElementById('citizenAlertsStatus'); if (el) el.textContent = document.getElementById('citizenNotifyResolution').checked ? 'Enabled' : 'Off'; };
+    const themeStatus = () => { const value = document.getElementById('citizenSettingsTheme')?.value || 'light'; const el = document.getElementById('citizenThemeStatus'); if (el) el.textContent = value === 'system' ? 'System' : value.charAt(0).toUpperCase() + value.slice(1); };
+    const showToast = message => { document.querySelector('.citizen-settings-toast')?.remove(); const el = document.createElement('div'); el.className = 'citizen-settings-toast fixed bottom-6 left-1/2 z-[90] -translate-x-1/2 rounded-full bg-on-surface px-5 py-3 text-label-md font-bold text-surface-container-lowest shadow-2xl'; el.textContent = message; document.body.appendChild(el); setTimeout(() => el.remove(), 2800); };
+    const open = event => { event?.preventDefault(); dashboard.classList.add('hidden'); settings.classList.remove('hidden'); window.scrollTo({top: 0, behavior: 'smooth'}); };
+    const close = event => { event?.preventDefault(); settings.classList.add('hidden'); dashboard.classList.remove('hidden'); window.scrollTo({top: 0, behavior: 'smooth'}); };
+    nav?.addEventListener('click', open); back?.addEventListener('click', close);
+    document.querySelectorAll('[data-settings-tab]').forEach(tab => tab.addEventListener('click', () => { const selected = tab.dataset.settingsTab; document.querySelectorAll('[data-settings-tab]').forEach(item => item.setAttribute('aria-selected', String(item === tab))); document.querySelectorAll('[data-settings-panel]').forEach(panel => panel.classList.toggle('hidden', panel.dataset.settingsPanel !== selected)); }));
+    const apply = values => { controls.forEach(id => { if (typeof values[id] === 'boolean') document.getElementById(id).checked = values[id]; }); const theme = localStorage.getItem(themeKey) || 'light'; document.getElementById('citizenSettingsTheme').value = theme; notifyStatus(); themeStatus(); };
+    document.getElementById('citizenSettingsTheme')?.addEventListener('change', event => { document.documentElement.setAttribute('data-theme', event.target.value); localStorage.setItem(themeKey, event.target.value); themeStatus(); });
+    document.getElementById('citizenNotifyResolution')?.addEventListener('change', event => { const values = getSaved(); values.citizenNotifyResolution = event.target.checked; localStorage.setItem(key, JSON.stringify(values)); notifyStatus(); window.dispatchEvent(new Event('cityfix:notification-settings-changed')); });
+    document.getElementById('saveCitizenSettingsBtn')?.addEventListener('click', () => { const values = {}; controls.forEach(id => values[id] = document.getElementById(id).checked); localStorage.setItem(key, JSON.stringify(values)); window.dispatchEvent(new Event('cityfix:notification-settings-changed')); const theme = document.getElementById('citizenSettingsTheme').value; document.documentElement.setAttribute('data-theme', theme); localStorage.setItem(themeKey, theme); notifyStatus(); themeStatus(); showToast('Settings saved successfully'); });
+    document.getElementById('restoreCitizenSettingsBtn')?.addEventListener('click', () => { const defaults = {rememberPreferences: true, citizenReduceMotion: false, citizenNotifyResolution: true, citizenNotifyCommunity: true}; apply(defaults); localStorage.setItem(key, JSON.stringify(defaults)); window.dispatchEvent(new Event('cityfix:notification-settings-changed')); document.getElementById('citizenSettingsTheme').value = 'light'; document.documentElement.setAttribute('data-theme', 'light'); localStorage.setItem(themeKey, 'light'); themeStatus(); showToast('Default preferences restored'); });
+    document.getElementById('clearCitizenNotificationState')?.addEventListener('click', () => { const notificationKey = 'cityfix_citizen_read_notifications_' + /*[[${citizen?.email ?: ''}]]*/ ''; localStorage.removeItem(notificationKey); showToast('Local notification history cleared'); });
+
+    // Mobile navigation: keep the desktop sidebar intact while making the same routes reachable on phones.
+    const mobileNavToggle = document.getElementById('mobile-nav-toggle');
+    const mobileSidebar = document.querySelector('.cf-sidebar');
+    const mobileBackdrop = document.getElementById('mobile-nav-backdrop');
+    const closeMobileNav = () => {
+      mobileSidebar?.classList.remove('cf-sidebar-open');
+      mobileBackdrop?.classList.remove('is-visible');
+      mobileBackdrop?.setAttribute('aria-hidden', 'true');
+      mobileNavToggle?.setAttribute('aria-expanded', 'false');
+      if (mobileNavToggle) mobileNavToggle.querySelector('.material-symbols-outlined').textContent = 'menu';
+    };
+    const toggleMobileNav = () => {
+      const open = !mobileSidebar?.classList.contains('cf-sidebar-open');
+      mobileSidebar?.classList.toggle('cf-sidebar-open', open);
+      mobileBackdrop?.classList.toggle('is-visible', open);
+      mobileBackdrop?.setAttribute('aria-hidden', String(!open));
+      mobileNavToggle?.setAttribute('aria-expanded', String(open));
+      if (mobileNavToggle) mobileNavToggle.querySelector('.material-symbols-outlined').textContent = open ? 'close' : 'menu';
+    };
+    mobileNavToggle?.addEventListener('click', toggleMobileNav);
+    mobileBackdrop?.addEventListener('click', closeMobileNav);
+    mobileSidebar?.querySelectorAll('a').forEach(link => link.addEventListener('click', closeMobileNav));
+
+    const ua = navigator.userAgent;
+    const browser = ua.includes('Edg/') ? 'Edge' : ua.includes('OPR/') || ua.includes('Opera') ? 'Opera' : ua.includes('Chrome/') && !ua.includes('Chromium') ? 'Chrome' : ua.includes('Firefox/') ? 'Firefox' : ua.includes('Safari/') && !ua.includes('Chrome') ? 'Safari' : 'Unknown browser';
+    const os = ua.includes('Windows') ? 'Windows' : ua.includes('Mac OS X') && !ua.includes('iPhone') && !ua.includes('iPad') ? 'macOS' : ua.includes('Android') ? 'Android' : ua.includes('iPhone') || ua.includes('iPad') ? 'iOS' : ua.includes('Linux') ? 'Linux' : 'Unknown OS';
+    const deviceIcon = os === 'Windows' ? 'desktop_windows' : os === 'Android' || os === 'iOS' ? 'phone_iphone' : 'laptop_mac';
+    document.getElementById('citizenDeviceName').textContent = `${browser} on ${os}`;
+    document.getElementById('citizenDeviceMeta').textContent = 'Active now · This device';
+    document.getElementById('citizenDeviceIcon').textContent = deviceIcon;
+    apply(getSaved());
+    if (window.location.hash === '#citizen-settings') open();
+  });
+</script>
+
+</body>
+</html>

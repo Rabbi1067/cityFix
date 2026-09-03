@@ -1,0 +1,585 @@
+
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>CityFix - Report a New Issue</title>
+    <style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style>
+    <style>
+        /* Multi-device responsive polish */
+        html { background: rgb(var(--surface)); }
+        html, body { width:100%; min-width:0; min-height:100%; height:auto !important; overflow-x:hidden; overflow-y:auto !important; }
+        body { overscroll-behavior:auto; }
+        main { min-height:calc(100vh - 4rem); height:auto !important; overflow:visible !important; }
+        .cf-page-shell { min-width: 0; }
+        .cf-form-card, .cf-guide-card, .cf-form-header, .cf-form-actions { min-width: 0; }
+        .cf-form-card input, .cf-form-card select, .cf-form-card textarea { max-width: 100%; }
+
+        /* Professional 3D loader: only appears when navigation takes longer than 2.3 seconds. */
+        .cf-loader {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 18px;
+            padding: 24px;
+            background: rgb(var(--surface) / .94);
+            backdrop-filter: blur(16px);
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity .35s ease, visibility .35s ease;
+        }
+        .cf-loader.is-visible { opacity: 1; visibility: visible; pointer-events: auto; }
+        .cf-loader.is-hidden { opacity: 0; visibility: hidden; }
+        .cf-loader-orbit { position: relative; width: 96px; height: 96px; display: grid; place-items: center; perspective: 440px; }
+        .cf-loader-orbit::before,
+        .cf-loader-orbit::after {
+            content: "";
+            position: absolute;
+            inset: 5px;
+            border: 1px solid rgb(var(--primary) / .24);
+            border-radius: 50%;
+            transform: rotateX(68deg) rotateZ(18deg);
+            animation: cf-orbit 2.4s linear infinite;
+        }
+        .cf-loader-orbit::after { inset: 14px; border-color: rgb(var(--secondary) / .4); transform: rotateY(68deg) rotateZ(-18deg); animation-direction: reverse; animation-duration: 1.8s; }
+        .cf-loader-cube { width: 38px; height: 38px; position: relative; transform-style: preserve-3d; animation: cf-cube 2.2s ease-in-out infinite; }
+        .cf-loader-cube span { position: absolute; inset: 0; border: 1px solid rgb(var(--primary) / .58); background: linear-gradient(135deg, rgb(var(--primary) / .82), rgb(var(--secondary) / .72)); box-shadow: 0 0 26px rgb(var(--primary) / .3); }
+        .cf-loader-cube span:nth-child(1) { transform: translateZ(19px); }
+        .cf-loader-cube span:nth-child(2) { transform: rotateY(180deg) translateZ(19px); }
+        .cf-loader-cube span:nth-child(3) { transform: rotateY(90deg) translateZ(19px); }
+        .cf-loader-cube span:nth-child(4) { transform: rotateY(-90deg) translateZ(19px); }
+        .cf-loader-cube span:nth-child(5) { transform: rotateX(90deg) translateZ(19px); }
+        .cf-loader-cube span:nth-child(6) { transform: rotateX(-90deg) translateZ(19px); }
+        .cf-loader-copy { text-align: center; }
+        .cf-loader-copy strong { display: block; color: rgb(var(--on-surface)); font-size: 15px; letter-spacing: .01em; }
+        .cf-loader-copy span { display: block; margin-top: 5px; color: rgb(var(--on-surface-variant)); font-size: 12px; }
+        .cf-loader-dots { display: inline-flex; gap: 5px; margin-left: 4px; vertical-align: middle; }
+        .cf-loader-dots i { width: 4px; height: 4px; border-radius: 50%; background: rgb(var(--primary)); animation: cf-dot 1.1s ease-in-out infinite; }
+        .cf-loader-dots i:nth-child(2) { animation-delay: .14s; }
+        .cf-loader-dots i:nth-child(3) { animation-delay: .28s; }
+        @keyframes cf-cube { 0%, 100% { transform: rotateX(-18deg) rotateY(0deg) translateY(0); } 50% { transform: rotateX(28deg) rotateY(180deg) translateY(-5px); } }
+        @keyframes cf-orbit { to { transform: rotateX(68deg) rotateZ(378deg); } }
+        @keyframes cf-dot { 0%, 60%, 100% { opacity: .3; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-3px); } }
+
+        .cf-mobile-menu-btn, .cf-mobile-nav-backdrop { display: none; }
+        @media (max-width: 1023px) {
+            /* Tablet and phone: keep the original sidebar off-canvas, like the dashboard demo. */
+            .cf-sidebar { width: 280px !important; transform: translateX(-100%); transition: transform .25s ease, box-shadow .25s ease; }
+            .cf-sidebar.cf-sidebar-open { transform: translateX(0); box-shadow: 20px 0 48px rgb(0 0 0 / .18); }
+            .cf-sidebar .cf-brand-copy, .cf-sidebar nav a .cf-nav-label, .cf-sidebar .cf-logout-label { display: inline; }
+            .cf-sidebar nav a { justify-content: flex-start; padding-left: 16px; padding-right: 16px; }
+            .cf-sidebar nav a .material-symbols-outlined, .cf-sidebar > div:last-child a .material-symbols-outlined { margin-right: 12px; }
+            .cf-page-shell { padding-left: 0 !important; }
+            .cf-topbar { left: 0 !important; padding-left: 24px !important; padding-right: 24px !important; }
+            .cf-mobile-menu-btn { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border: 0; border-radius: 999px; color: rgb(var(--on-surface-variant)); background: rgb(var(--surface-container-high)); }
+            .cf-mobile-nav-backdrop.is-visible { display: block; position: fixed; inset: 0; z-index: 45; background: rgb(0 0 0 / .34); backdrop-filter: blur(2px); }
+            .cf-section-pad { padding-left: 24px !important; padding-right: 24px !important; }
+        }
+        @media (max-width: 639px) {
+            .cf-topbar { padding-left: 16px !important; padding-right: 16px !important; }
+            .cf-topbar-actions { gap: 12px !important; }
+            .cf-topbar-actions > a { gap: 8px !important; padding-left: 12px !important; }
+            .cf-section-pad { padding-left: 16px !important; padding-right: 16px !important; }
+            .cf-grid { gap: 20px !important; }
+            .cf-card-padding, .cf-form-header, .cf-form-card form { padding: 20px !important; }
+            .cf-form-actions { flex-wrap: wrap; }
+            .cf-form-actions > * { flex: 1 1 100%; justify-content: center; text-align: center; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .cf-loader-cube, .cf-loader-orbit::before, .cf-loader-orbit::after, .cf-loader-dots i { animation: none; }
+            .cf-loader { transition: none; }
+        }
+    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="tailwind-config">tailwind.config={theme:{extend:{"colors":{"tertiary-fixed-dim":"rgb(var(--tertiary-fixed-dim) / <alpha-value>)","on-secondary-fixed-variant":"rgb(var(--on-secondary-fixed-variant) / <alpha-value>)","on-tertiary":"rgb(var(--on-tertiary) / <alpha-value>)","on-tertiary-fixed":"rgb(var(--on-tertiary-fixed) / <alpha-value>)","on-primary-fixed-variant":"rgb(var(--on-primary-fixed-variant) / <alpha-value>)","on-primary":"rgb(var(--on-primary) / <alpha-value>)","primary-container":"rgb(var(--primary-container) / <alpha-value>)","tertiary":"rgb(var(--tertiary) / <alpha-value>)","error":"rgb(var(--error) / <alpha-value>)","secondary":"rgb(var(--secondary) / <alpha-value>)","on-error":"rgb(var(--on-error) / <alpha-value>)","surface-container-highest":"rgb(var(--surface-container-highest) / <alpha-value>)","on-surface":"rgb(var(--on-surface) / <alpha-value>)","secondary-fixed":"rgb(var(--secondary-fixed) / <alpha-value>)","error-container":"rgb(var(--error-container) / <alpha-value>)","surface-container-low":"rgb(var(--surface-container-low) / <alpha-value>)","on-tertiary-container":"rgb(var(--on-tertiary-container) / <alpha-value>)","surface":"rgb(var(--surface) / <alpha-value>)","inverse-primary":"rgb(var(--inverse-primary) / <alpha-value>)","surface-container-high":"rgb(var(--surface-container-high) / <alpha-value>)","on-secondary-container":"rgb(var(--on-secondary-container) / <alpha-value>)","outline":"rgb(var(--outline) / <alpha-value>)","secondary-container":"rgb(var(--secondary-container) / <alpha-value>)","on-secondary-fixed":"rgb(var(--on-secondary-fixed) / <alpha-value>)","surface-bright":"rgb(var(--surface-bright) / <alpha-value>)","outline-variant":"rgb(var(--outline-variant) / <alpha-value>)","primary-fixed-dim":"rgb(var(--primary-fixed-dim) / <alpha-value>)","on-primary-container":"rgb(var(--on-primary-container) / <alpha-value>)","primary":"rgb(var(--primary) / <alpha-value>)","on-surface-variant":"rgb(var(--on-surface-variant) / <alpha-value>)","surface-tint":"rgb(var(--surface-tint) / <alpha-value>)","on-primary-fixed":"rgb(var(--on-primary-fixed) / <alpha-value>)","surface-container":"rgb(var(--surface-container) / <alpha-value>)","primary-fixed":"rgb(var(--primary-fixed) / <alpha-value>)","tertiary-container":"rgb(var(--tertiary-container) / <alpha-value>)","on-error-container":"rgb(var(--on-error-container) / <alpha-value>)","inverse-surface":"rgb(var(--inverse-surface) / <alpha-value>)","on-tertiary-fixed-variant":"rgb(var(--on-tertiary-fixed-variant) / <alpha-value>)","on-secondary":"rgb(var(--on-secondary) / <alpha-value>)","inverse-on-surface":"rgb(var(--inverse-on-surface) / <alpha-value>)","secondary-fixed-dim":"rgb(var(--secondary-fixed-dim) / <alpha-value>)","surface-container-lowest":"rgb(var(--surface-container-lowest) / <alpha-value>)","tertiary-fixed":"rgb(var(--tertiary-fixed) / <alpha-value>)","on-background":"rgb(var(--on-background) / <alpha-value>)","background":"rgb(var(--background) / <alpha-value>)","surface-variant":"rgb(var(--surface-variant) / <alpha-value>)","surface-dim":"rgb(var(--surface-dim) / <alpha-value>)"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"margin-desktop":"32px","margin-mobile":"16px","base":"4px","sidebar-width":"280px","gutter":"24px","container-max":"1440px"},"fontFamily":{"display-lg":["Inter"],"label-sm":["Inter"],"title-md":["Inter"],"label-md":["Inter"],"headline-lg":["Inter"],"body-lg":["Inter"],"headline-lg-mobile":["Inter"],"body-md":["Inter"]},"fontSize":{"display-lg":["48px",{"lineHeight":"1.2","letterSpacing":"-0.02em","fontWeight":"700"}],"label-sm":["12px",{"lineHeight":"1","letterSpacing":"0.05em","fontWeight":"600"}],"title-md":["20px",{"lineHeight":"1.4","fontWeight":"600"}],"label-md":["14px",{"lineHeight":"1.2","letterSpacing":"0.01em","fontWeight":"500"}],"headline-lg":["32px",{"lineHeight":"1.25","letterSpacing":"-0.01em","fontWeight":"600"}],"body-lg":["18px",{"lineHeight":"1.6","fontWeight":"400"}],"headline-lg-mobile":["24px",{"lineHeight":"1.3","fontWeight":"600"}],"body-md":["16px",{"lineHeight":"1.5","fontWeight":"400"}]}}}}</script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet">
+    <script th:src="@{/theme.js}"></script>
+    <link rel="stylesheet" th:href="@{/theme-tokens.css}">
+</head>
+<body class="bg-surface font-body-md text-on-surface">
+
+<div id="cityfix-loader" class="cf-loader" role="status" aria-live="polite" aria-label="Loading complaint form">
+    <div class="cf-loader-orbit" aria-hidden="true">
+        <div class="cf-loader-cube"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+    </div>
+    <div class="cf-loader-copy">
+        <strong>Preparing your report</strong>
+        <span>Loading CityFix form <span class="cf-loader-dots" aria-hidden="true"><i></i><i></i><i></i></span></span>
+    </div>
+</div>
+<div id="mobile-nav-backdrop" class="cf-mobile-nav-backdrop" aria-hidden="true"></div>
+<script>
+    (() => {
+        const loader = document.getElementById('cityfix-loader');
+        if (!loader) return;
+        let pageReady = false;
+        let loaderShown = false;
+        const delay = window.setTimeout(() => {
+            if (!pageReady) {
+                loaderShown = true;
+                loader.classList.add('is-visible');
+            }
+        }, 2300);
+        const finishLoading = () => {
+            pageReady = true;
+            window.clearTimeout(delay);
+            if (loaderShown) {
+                window.setTimeout(() => {
+                    loader.classList.remove('is-visible');
+                    loader.classList.add('is-hidden');
+                }, 420);
+            }
+        };
+        if (document.readyState === 'complete') finishLoading();
+        else window.addEventListener('load', finishLoading, { once: true });
+    })();
+</script>
+
+<aside class="cf-sidebar fixed left-0 top-0 h-full w-sidebar-width bg-surface-container-lowest border-r border-outline-variant z-50 flex flex-col">
+    <div class="p-6 flex items-center gap-3 border-b border-outline-variant">
+        <img alt="CityFix Logo" class="h-8 w-auto" th:src="@{/screen.png}">
+        <span class="cf-brand-copy font-title-md text-title-md text-primary">CityFix</span>
+    </div>
+    <nav class="flex-1 py-6 px-4 space-y-2">
+        <a th:href="@{/citizen/dashboard}"
+           th:classappend="${activePage == 'citizen-dashboard'} ? 'bg-secondary-container text-on-secondary-container' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'"
+           class="flex items-center px-4 py-3 rounded-xl transition-all">
+            <span class="material-symbols-outlined mr-3">dashboard</span>
+            <span class="cf-nav-label font-label-md text-label-md">Dashboard</span>
+        </a>
+        <a th:href="@{/citizen/my-complaints}"
+           th:classappend="${activePage == 'my-complaints'} ? 'bg-secondary-container text-on-secondary-container' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'"
+           class="flex items-center px-4 py-3 rounded-xl transition-all">
+            <span class="material-symbols-outlined mr-3">list_alt</span>
+            <span class="cf-nav-label font-label-md text-label-md">My Complaints</span>
+        </a>
+        <a th:href="@{/citizen/create-complaint}"
+           th:classappend="${activePage == 'create-complaint'} ? 'bg-secondary-container text-on-secondary-container' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'"
+           class="flex items-center px-4 py-3 rounded-xl transition-all">
+            <span class="material-symbols-outlined mr-3">add_circle</span>
+            <span class="cf-nav-label font-label-md text-label-md">Create Complaint</span>
+        </a>
+        <a th:href="@{/citizen/profile}"
+           th:classappend="${activePage == 'profile'} ? 'bg-secondary-container text-on-secondary-container' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'"
+           class="flex items-center px-4 py-3 rounded-xl transition-all">
+            <span class="material-symbols-outlined mr-3">person</span>
+            <span class="cf-nav-label font-label-md text-label-md">Profile</span>
+        </a>
+    </nav>
+    <div class="p-4 mt-auto border-t border-outline-variant">
+        <a th:href="@{/logout}" class="flex items-center px-4 py-3 rounded-xl text-error hover:bg-error-container transition-all">
+            <span class="material-symbols-outlined mr-3">logout</span>
+            <span class="cf-logout-label font-label-md text-label-md">Logout</span>
+        </a>
+    </div>
+</aside>
+
+<div class="cf-page-shell pl-sidebar-width">
+    <header class="cf-topbar fixed top-0 left-sidebar-width right-0 h-16 bg-surface/80 backdrop-blur-xl border-b border-outline-variant z-40 flex items-center justify-between px-margin-desktop">
+        <div class="flex items-center gap-3">
+            <button id="mobile-nav-toggle" type="button" class="cf-mobile-menu-btn" aria-label="Open navigation" aria-expanded="false"><span class="material-symbols-outlined">menu</span></button>
+            <span class="material-symbols-outlined text-primary">add_circle</span>
+            <div class="flex flex-col leading-tight">
+                <span class="font-label-md text-label-md text-on-surface">Create Complaint</span>
+                <span class="text-label-sm text-on-surface-variant">Report a new civic issue</span>
+            </div>
+        </div>
+        <div class="cf-topbar-actions flex items-center gap-6">
+            <div th:replace="~{fragments/themeToggle :: toggle}"></div>
+
+            <span class="material-symbols-outlined text-on-surface-variant cursor-pointer">notifications</span>
+            <a th:href="@{/citizen/profile}" class="flex items-center gap-3 border-l border-outline-variant pl-6 cursor-pointer hover:opacity-80 transition-opacity">
+        <span class="hidden md:block text-right">
+          <p class="text-label-md font-bold text-on-surface" th:text="${citizen.name}">Jane Citizen</p>
+          <p class="text-label-sm text-on-surface-variant">Citizen User</p>
+        </span>
+                <img alt="Profile" class="w-9 h-9 rounded-full object-cover border border-outline-variant shadow-sm" id="header-avatar"
+                     th:src="@{${citizen.profileImagePath != null ? citizen.profileImagePath : '/profile1.jpg'}}">
+            </a>
+        </div>
+    </header>
+
+    <main class="pt-16 min-h-screen bg-surface">
+        <div class="flex flex-col w-full">
+            <div class="cf-grid grid grid-cols-12 gap-gutter px-margin-desktop py-10 items-start cf-section-pad">
+
+                <!-- Left Column: Guidance -->
+                <div class="col-span-12 lg:col-span-4 flex flex-col gap-8">
+                    <div class="cf-guide-card relative p-8 rounded-xl bg-primary text-on-primary overflow-hidden shadow-xl">
+                        <div class="relative z-10">
+                            <span class="font-label-sm uppercase tracking-widest opacity-80 mb-4 block">Process Guide</span>
+                            <h2 class="font-headline-lg text-headline-lg mb-6 leading-tight">Civic Improvement Starts With You.</h2>
+                            <p class="font-body-md text-body-md opacity-90 mb-8">Your report will be routed directly to the municipal department responsible for resolution.</p>
+                            <div class="space-y-6" id="processSteps">
+                                <div class="flex items-center gap-4 transition-opacity" data-step="1">
+                                    <div class="step-circle w-8 h-8 rounded-full border-2 border-on-primary text-on-primary flex items-center justify-center font-bold text-label-md transition-all">1</div>
+                                    <div class="flex flex-col">
+                                        <span class="font-label-md text-label-md">Identification</span>
+                                        <span class="text-label-sm opacity-70">Category &amp; Subject</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-4 opacity-50 transition-opacity" data-step="2">
+                                    <div class="step-circle w-8 h-8 rounded-full border-2 border-on-primary text-on-primary flex items-center justify-center font-bold text-label-md transition-all">2</div>
+                                    <div class="flex flex-col">
+                                        <span class="font-label-md text-label-md">Context</span>
+                                        <span class="text-label-sm">Location &amp; Details</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-4 opacity-50 transition-opacity" data-step="3">
+                                    <div class="step-circle w-8 h-8 rounded-full border-2 border-on-primary text-on-primary flex items-center justify-center font-bold text-label-md transition-all">3</div>
+                                    <div class="flex flex-col">
+                                        <span class="font-label-md text-label-md">Evidence</span>
+                                        <span class="text-label-sm">Photo Upload</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-6 rounded-xl bg-surface-container shadow-sm border border-outline-variant/30">
+                        <h3 class="font-title-md text-title-md text-on-surface mb-4 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary">lightbulb</span>
+                            Effective Reporting
+                        </h3>
+                        <ul class="space-y-4 font-body-md text-on-surface-variant">
+                            <li class="flex gap-3">
+                                <span class="material-symbols-outlined text-secondary text-[18px]">check_circle</span>
+                                <span>Include specific landmarks for location accuracy.</span>
+                            </li>
+                            <li class="flex gap-3">
+                                <span class="material-symbols-outlined text-secondary text-[18px]">check_circle</span>
+                                <span>Clear, daytime photos help technicians assess severity.</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Right Column: The Form -->
+                <div class="col-span-12 lg:col-span-8">
+                    <div class="cf-form-card bg-surface-container-lowest rounded-xl shadow-xl overflow-hidden border border-outline-variant/20">
+                        <div class="cf-form-header p-8 border-b border-outline-variant/30 bg-surface-container-low/50">
+                            <h1 class="font-headline-lg text-headline-lg text-on-surface">Report a New Issue</h1>
+                            <p class="font-body-md text-on-surface-variant">Fill out the details below to notify city services.</p>
+                        </div>
+                        <form id="complaint-form" class="p-8 space-y-8" enctype="multipart/form-data" method="post" th:action="@{/citizen/complaints/save}" th:object="${complaint}" novalidate>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="flex flex-col gap-2">
+                                    <label class="font-label-md text-on-surface-variant px-1" for="category">Issue Category</label>
+                                    <div class="relative">
+                                        <select class="w-full h-12 pl-4 pr-10 bg-surface border border-outline-variant rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-on-surface font-body-md"
+                                                th:classappend="${#fields.hasErrors('category')} ? 'border-error' : ''"
+                                                id="category" th:field="*{category}" required>
+                                            <option disabled selected value="">Select category...</option>
+                                            <option value="Roads">Roads &amp; Pavements</option>
+                                            <option value="Sanitation">Sanitation &amp; Waste</option>
+                                            <option value="Lighting">Public Lighting</option>
+                                            <option value="Parks">Parks &amp; Recreation</option>
+                                            <option value="Water">Water &amp; Sewage</option>
+                                            <option value="Other">Other Issues</option>
+                                        </select>
+                                        <span class="material-symbols-outlined absolute right-3 top-3 pointer-events-none text-on-surface-variant">expand_more</span>
+                                    </div>
+                                    <span th:if="${#fields.hasErrors('category')}" th:errors="*{category}" class="text-error text-label-sm px-1"></span>
+                                </div>
+                                <div class="flex flex-col gap-2">
+                                    <label class="font-label-md text-on-surface-variant px-1" for="priority">Urgency Level</label>
+                                    <div class="relative">
+                                        <select class="w-full h-12 pl-4 pr-10 bg-surface border border-outline-variant rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-on-surface font-body-md"
+                                                th:classappend="${#fields.hasErrors('priority')} ? 'border-error' : ''"
+                                                id="priority" th:field="*{priority}" required>
+                                            <option disabled selected value="">Select urgency...</option>
+                                            <option value="LOW">Low - Routine maintenance</option>
+                                            <option value="MEDIUM">Medium - Performance issue</option>
+                                            <option value="HIGH">High - Immediate attention</option>
+                                            <option value="CRITICAL">Critical - Public safety hazard</option>
+                                        </select>
+                                        <span class="material-symbols-outlined absolute right-3 top-3 pointer-events-none text-on-surface-variant">priority_high</span>
+                                    </div>
+                                    <span th:if="${#fields.hasErrors('priority')}" th:errors="*{priority}" class="text-error text-label-sm px-1"></span>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col gap-2">
+                                <label class="font-label-md text-on-surface-variant px-1" for="title">Issue Title</label>
+                                <input class="w-full h-12 px-4 bg-surface border border-outline-variant rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-on-surface font-body-md"
+                                       th:classappend="${#fields.hasErrors('title')} ? 'border-error' : ''"
+                                       id="title" placeholder="e.g., Deep pothole near Main St. intersection" th:field="*{title}" type="text" required minlength="5" maxlength="150">
+                                <span th:if="${#fields.hasErrors('title')}" th:errors="*{title}" class="text-error text-label-sm px-1"></span>
+                            </div>
+
+                            <div class="flex flex-col gap-2">
+                                <label class="font-label-md text-on-surface-variant px-1" for="description">Detailed Description</label>
+                                <textarea class="w-full p-4 bg-surface border border-outline-variant rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-on-surface font-body-md resize-none"
+                                          th:classappend="${#fields.hasErrors('description')} ? 'border-error' : ''"
+                                          id="description" placeholder="Provide as much detail as possible..." rows="4" th:field="*{description}" required minlength="10" maxlength="1000"></textarea>
+                                <span th:if="${#fields.hasErrors('description')}" th:errors="*{description}" class="text-error text-label-sm px-1"></span>
+                            </div>
+
+                            <div class="flex flex-col gap-2">
+                                <label class="font-label-md text-on-surface-variant px-1" for="location">Exact Location</label>
+                                <div class="flex flex-col sm:flex-row gap-3">
+                                    <div class="relative flex-1">
+                                        <span class="material-symbols-outlined absolute left-4 top-3 text-primary">location_on</span>
+                                        <input class="w-full h-12 pl-12 pr-4 bg-surface border border-outline-variant rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-on-surface font-body-md"
+                                               th:classappend="${#fields.hasErrors('location')} ? 'border-error' : ''"
+                                               id="location" placeholder="Street address or GPS coordinates" th:field="*{location}" type="text" required>
+                                    </div>
+                                    <button type="button" onclick="detectLocation()"
+                                            class="h-12 px-5 rounded-lg border border-primary text-primary hover:bg-primary hover:text-on-primary transition-all flex items-center justify-center gap-2 font-label-md whitespace-nowrap">
+                                        <span class="material-symbols-outlined text-[20px]" id="locationIcon">my_location</span>
+                                        <span>Use My Location</span>
+                                    </button>
+                                </div>
+                                <span id="locationStatus" class="text-label-sm text-on-surface-variant px-1"></span>
+                                <span th:if="${#fields.hasErrors('location')}" th:errors="*{location}" class="text-error text-label-sm px-1"></span>
+                            </div>
+
+                            <div class="flex flex-col gap-2">
+                                <label class="font-label-md text-on-surface-variant px-1">Visual Evidence (Photo)</label>
+                                <div class="group relative flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-outline-variant rounded-xl bg-surface-container-low hover:bg-surface-container transition-colors cursor-pointer">
+                                    <input class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" id="image" name="image" type="file" accept="image/jpeg,image/png,image/webp">
+                                    <div class="flex flex-col items-center pointer-events-none">
+                                        <span class="material-symbols-outlined text-primary text-[48px] mb-2">add_a_photo</span>
+                                        <span class="font-label-md text-on-surface">Click to upload or drag image</span>
+                                        <span class="text-label-sm text-on-surface-variant mt-1">JPG, PNG up to 10MB</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="cf-form-actions flex items-center justify-end gap-4 pt-6 border-t border-outline-variant/30">
+                                <a th:href="@{/citizen/dashboard}" class="px-6 py-3 rounded-lg font-label-md text-on-surface-variant hover:bg-surface-container transition-all">Cancel</a>
+                                <button id="submit-complaint-btn" class="px-8 py-3 rounded-lg bg-primary text-on-primary font-label-md shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2" type="submit">
+                                    <span>Submit Complaint</span>
+                                    <span class="material-symbols-outlined text-[18px]">send</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div id="complaint-toast" class="hidden fixed top-20 right-4 sm:right-8 z-[9999] flex items-center gap-3 rounded-2xl bg-secondary-container px-5 py-4 text-on-secondary-container shadow-2xl" style="transform: translateY(16px); opacity: 0; transition: transform 300ms ease, opacity 300ms ease;" role="status" aria-live="polite">
+                <span class="material-symbols-outlined">check_circle</span>
+                <span class="font-label-md text-label-md">Complaint submitted successfully!</span>
+            </div>
+
+            <script th:inline="javascript">
+                // Keeps the header avatar in sync with the photo picked on the Profile
+                // page (that upload is only saved to this browser's localStorage,
+                // not to the server), so it doesn't fall back to the default image here.
+                (function () {
+                    const email = /*[[${citizen.email}]]*/ '';
+                    const nameKey = 'cityfix-profile-name-' + email;
+                    const avatarKey = 'cityfix-avatar-' + email;
+                    const applyProfile = () => {
+                        const name = localStorage.getItem(nameKey);
+                        const avatar = localStorage.getItem(avatarKey);
+                        if (name) document.querySelectorAll('#header-name').forEach(el => el.textContent = name);
+                        if (avatar) document.querySelectorAll('#header-avatar').forEach(el => el.src = avatar);
+                    };
+                    applyProfile();
+                    window.addEventListener('storage', event => { if (event.key === nameKey || event.key === avatarKey) applyProfile(); });
+                    window.addEventListener('cityfix-profile-updated', applyProfile);
+                })();
+            </script>
+
+            <script>
+                const complaintForm = document.getElementById('complaint-form');
+                const submitComplaintBtn = document.getElementById('submit-complaint-btn');
+
+                function showComplaintToast(message) {
+                    const toast = document.getElementById('complaint-toast');
+                    const messageEl = toast.querySelector('span:last-child');
+                    if (messageEl) messageEl.textContent = message;
+                    toast.classList.remove('hidden');
+                    toast.style.transform = 'translateY(16px)';
+                    toast.style.opacity = '0';
+                    requestAnimationFrame(() => {
+                        toast.style.transform = 'translateY(0)';
+                        toast.style.opacity = '1';
+                    });
+                    setTimeout(() => {
+                        toast.style.transform = 'translateY(-16px)';
+                        toast.style.opacity = '0';
+                        setTimeout(() => toast.classList.add('hidden'), 300);
+                    }, 3000);
+                }
+
+                if (new URLSearchParams(window.location.search).get('success') === 'true') {
+                    showComplaintToast('Complaint submitted successfully!');
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+
+                complaintForm.addEventListener('submit', function () {
+                    submitComplaintBtn.disabled = true;
+                    submitComplaintBtn.classList.add('opacity-70', 'cursor-wait');
+                    submitComplaintBtn.querySelector('span').textContent = 'Submitting...';
+                    const loader = document.getElementById('cityfix-loader');
+                    if (loader) {
+                        loader.querySelector('.cf-loader-copy strong').textContent = 'Submitting your report';
+                        loader.querySelector('.cf-loader-copy > span').childNodes[0].textContent = 'Securely sending your details ';
+                        loader.classList.add('is-visible');
+                    }
+                });
+
+                document.getElementById('image').addEventListener('change', function (e) {
+                    const fileName = e.target.files[0] ? e.target.files[0].name : null;
+                    if (fileName) {
+                        const container = this.parentElement.querySelector('div');
+                        container.innerHTML =
+                            '<span class="material-symbols-outlined text-secondary text-[48px] mb-2">check_circle</span>' +
+                            '<span class="font-label-md text-on-surface">' + fileName + '</span>' +
+                            '<span class="text-label-sm text-secondary mt-1">File ready for upload</span>';
+                        this.parentElement.classList.remove('border-dashed');
+                        this.parentElement.classList.add('border-solid', 'border-secondary/50', 'bg-secondary-container/10');
+                    }
+                    updateProgress();
+                });
+
+                async function detectLocation() {
+                    const status = document.getElementById('locationStatus');
+                    const input = document.getElementById('location');
+                    const icon = document.getElementById('locationIcon');
+
+                    if (!navigator.geolocation) {
+                        status.textContent = "Geolocation not supported by this browser.";
+                        status.classList.add('text-error');
+                        return;
+                    }
+
+                    icon.textContent = "progress_activity";
+                    icon.classList.add('animate-spin');
+                    status.textContent = "Detecting your location...";
+                    status.classList.remove('text-error', 'text-secondary');
+
+                    navigator.geolocation.getCurrentPosition(
+                        async (pos) => {
+                            const lat = pos.coords.latitude;
+                            const lng = pos.coords.longitude;
+
+                            try {
+                                const response = await fetch(
+                                    `https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=18&addressdetails=1&accept-language=en&lat=${lat}&lon=${lng}`
+                                );
+                                if (!response.ok) throw new Error('Reverse geocoding failed');
+
+                                const data = await response.json();
+                                const addr = data.address || {};
+                                const street = [addr.house_number, addr.road].filter(Boolean).join(' ');
+                                const locationParts = [
+                                    street,
+                                    addr.neighbourhood || addr.suburb || addr.quarter,
+                                    addr.city || addr.town || addr.municipality || addr.village,
+                                    addr.state,
+                                    addr.postcode
+                                ].filter(Boolean);
+
+                                if (locationParts.length) {
+                                    input.value = locationParts.join(', ');
+                                    status.textContent = "✓ Address detected";
+                                } else {
+                                    input.value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                                    status.textContent = "✓ Coordinates captured";
+                                }
+                            } catch (error) {
+                                input.value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                                status.textContent = "✓ Coordinates captured";
+                            }
+
+                            icon.textContent = "my_location";
+                            icon.classList.remove('animate-spin');
+                            status.classList.add('text-secondary');
+                            updateProgress();
+                        },
+                        () => {
+                            icon.textContent = "my_location";
+                            icon.classList.remove('animate-spin');
+                            status.textContent = "Unable to detect location. Please enter manually.";
+                            status.classList.add('text-error');
+                        }
+                    );
+                }
+                // Progress tracker logic
+                function updateProgress() {
+                    const category = document.getElementById('category').value;
+                    const title = document.getElementById('title').value.trim();
+                    const location = document.getElementById('location').value.trim();
+                    const description = document.getElementById('description').value.trim();
+                    const image = document.getElementById('image').files.length > 0;
+
+                    const stepDone = {
+                        1: category && title,
+                        2: location && description,
+                        3: image
+                    };
+
+                    [1, 2, 3].forEach((num) => {
+                        const stepEl = document.querySelector(`[data-step="${num}"]`);
+                        const circle = stepEl.querySelector('.step-circle');
+
+                        if (stepDone[num]) {
+                            stepEl.classList.remove('opacity-50');
+                            circle.classList.remove('border-2', 'border-on-primary', 'text-on-primary');
+                            circle.classList.add('bg-on-primary', 'text-primary');
+                            circle.innerHTML = '<span class="material-symbols-outlined text-[18px]">check</span>';
+                        } else {
+                            stepEl.classList.add('opacity-50');
+                            circle.classList.add('border-2', 'border-on-primary', 'text-on-primary');
+                            circle.classList.remove('bg-on-primary', 'text-primary');
+                            circle.textContent = num;
+                        }
+                    });
+                }
+
+                ['category', 'title', 'location', 'description'].forEach(id => {
+                    document.getElementById(id).addEventListener('input', updateProgress);
+                    document.getElementById(id).addEventListener('change', updateProgress);
+                });
+
+                // initial check (page load e kichu already filled thakle)
+                updateProgress();
+            </script>
+        </div>
+    </main>
+</div>
+
+<script>
+    (() => {
+        const toggle = document.getElementById('mobile-nav-toggle');
+        const sidebar = document.querySelector('.cf-sidebar');
+        const backdrop = document.getElementById('mobile-nav-backdrop');
+        if (!toggle || !sidebar || !backdrop) return;
+
+        const closeNav = () => {
+            sidebar.classList.remove('cf-sidebar-open');
+            backdrop.classList.remove('is-visible');
+            backdrop.setAttribute('aria-hidden', 'true');
+            toggle.setAttribute('aria-expanded', 'false');
+            toggle.querySelector('.material-symbols-outlined').textContent = 'menu';
+        };
+        const toggleNav = () => {
+            const isOpen = !sidebar.classList.contains('cf-sidebar-open');
+            sidebar.classList.toggle('cf-sidebar-open', isOpen);
+            backdrop.classList.toggle('is-visible', isOpen);
+            backdrop.setAttribute('aria-hidden', String(!isOpen));
+            toggle.setAttribute('aria-expanded', String(isOpen));
+            toggle.querySelector('.material-symbols-outlined').textContent = isOpen ? 'close' : 'menu';
+        };
+
+        toggle.addEventListener('click', toggleNav);
+        backdrop.addEventListener('click', closeNav);
+        sidebar.querySelectorAll('a').forEach(link => link.addEventListener('click', closeNav));
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 639) closeNav();
+        });
+    })();
+</script>
+</body>
+</html>

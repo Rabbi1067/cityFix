@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>CityFix - Cost &amp; Resolution Reports</title>
+    <!--
+        MERGED FILE: this single template covers BOTH the tabular "Complaint
+        Reports" view and the graphical "Report" (charts) view. Both read the
+        same server-side data (rows / spendByCategory / etc.) — a client-side
+        JS toggle just shows/hides #tableView vs #graphView, no second route
+        or page reload needed.
+    -->
+    <style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script id="tailwind-config">tailwind.config={theme:{extend:{"colors":{"tertiary-fixed-dim":"rgb(var(--tertiary-fixed-dim) / <alpha-value>)","on-secondary-fixed-variant":"rgb(var(--on-secondary-fixed-variant) / <alpha-value>)","on-tertiary":"rgb(var(--on-tertiary) / <alpha-value>)","on-tertiary-fixed":"rgb(var(--on-tertiary-fixed) / <alpha-value>)","on-primary-fixed-variant":"rgb(var(--on-primary-fixed-variant) / <alpha-value>)","on-primary":"rgb(var(--on-primary) / <alpha-value>)","primary-container":"rgb(var(--primary-container) / <alpha-value>)","tertiary":"rgb(var(--tertiary) / <alpha-value>)","error":"rgb(var(--error) / <alpha-value>)","secondary":"rgb(var(--secondary) / <alpha-value>)","on-error":"rgb(var(--on-error) / <alpha-value>)","surface-container-highest":"rgb(var(--surface-container-highest) / <alpha-value>)","on-surface":"rgb(var(--on-surface) / <alpha-value>)","secondary-fixed":"rgb(var(--secondary-fixed) / <alpha-value>)","error-container":"rgb(var(--error-container) / <alpha-value>)","surface-container-low":"rgb(var(--surface-container-low) / <alpha-value>)","on-tertiary-container":"rgb(var(--on-tertiary-container) / <alpha-value>)","surface":"rgb(var(--surface) / <alpha-value>)","inverse-primary":"rgb(var(--inverse-primary) / <alpha-value>)","surface-container-high":"rgb(var(--surface-container-high) / <alpha-value>)","on-secondary-container":"rgb(var(--on-secondary-container) / <alpha-value>)","outline":"rgb(var(--outline) / <alpha-value>)","secondary-container":"rgb(var(--secondary-container) / <alpha-value>)","on-secondary-fixed":"rgb(var(--on-secondary-fixed) / <alpha-value>)","surface-bright":"rgb(var(--surface-bright) / <alpha-value>)","outline-variant":"rgb(var(--outline-variant) / <alpha-value>)","primary-fixed-dim":"rgb(var(--primary-fixed-dim) / <alpha-value>)","on-primary-container":"rgb(var(--on-primary-container) / <alpha-value>)","primary":"rgb(var(--primary) / <alpha-value>)","on-surface-variant":"rgb(var(--on-surface-variant) / <alpha-value>)","surface-tint":"rgb(var(--surface-tint) / <alpha-value>)","on-primary-fixed":"rgb(var(--on-primary-fixed) / <alpha-value>)","surface-container":"rgb(var(--surface-container) / <alpha-value>)","primary-fixed":"rgb(var(--primary-fixed) / <alpha-value>)","tertiary-container":"rgb(var(--tertiary-container) / <alpha-value>)","on-error-container":"rgb(var(--on-error-container) / <alpha-value>)","inverse-surface":"rgb(var(--inverse-surface) / <alpha-value>)","on-tertiary-fixed-variant":"rgb(var(--on-tertiary-fixed-variant) / <alpha-value>)","on-secondary":"rgb(var(--on-secondary) / <alpha-value>)","inverse-on-surface":"rgb(var(--inverse-on-surface) / <alpha-value>)","secondary-fixed-dim":"rgb(var(--secondary-fixed-dim) / <alpha-value>)","surface-container-lowest":"rgb(var(--surface-container-lowest) / <alpha-value>)","tertiary-fixed":"rgb(var(--tertiary-fixed) / <alpha-value>)","on-background":"rgb(var(--on-background) / <alpha-value>)","background":"rgb(var(--background) / <alpha-value>)","surface-variant":"rgb(var(--surface-variant) / <alpha-value>)","surface-dim":"rgb(var(--surface-dim) / <alpha-value>)"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"margin-desktop":"32px","margin-mobile":"16px","base":"4px","sidebar-width":"280px","gutter":"24px","container-max":"1440px"},"fontFamily":{"display-lg":["Inter"],"label-sm":["Inter"],"title-md":["Inter"],"label-md":["Inter"],"headline-lg":["Inter"],"body-lg":["Inter"],"headline-lg-mobile":["Inter"],"body-md":["Inter"]},"fontSize":{"display-lg":["48px",{"lineHeight":"1.2","letterSpacing":"-0.02em","fontWeight":"700"}],"label-sm":["12px",{"lineHeight":"1","letterSpacing":"0.05em","fontWeight":"600"}],"title-md":["20px",{"lineHeight":"1.4","fontWeight":"600"}],"label-md":["14px",{"lineHeight":"1.2","letterSpacing":"0.01em","fontWeight":"500"}],"headline-lg":["32px",{"lineHeight":"1.25","letterSpacing":"-0.01em","fontWeight":"600"}],"body-lg":["18px",{"lineHeight":"1.6","fontWeight":"400"}],"headline-lg-mobile":["24px",{"lineHeight":"1.3","fontWeight":"600"}],"body-md":["16px",{"lineHeight":"1.5","fontWeight":"400"}]}}}}</script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet">
+    <script th:src="@{/theme.js}"></script>
+    <link rel="stylesheet" th:href="@{/theme-tokens.css}">
+
+    <style>
+        /* Responsive shell: preserves the existing visual language on every viewport. */
+        html, body { width:100%; min-width:0; min-height:100%; height:auto !important; overflow-x:hidden; overflow-y:auto !important; }
+        body { overscroll-behavior:auto; }
+        main { min-height:calc(100vh - 4rem); height:auto !important; overflow:visible !important; }
+        .cf-page-shell { min-width:0; }
+        .cf-sidebar { transition:transform .25s ease, box-shadow .25s ease; }
+        .cf-topbar { justify-content:space-between !important; }
+        .cf-topbar-actions { margin-left:auto; display:flex; align-items:center; justify-content:flex-end; gap:24px; min-width:max-content; }
+        .cf-topbar-actions > * { flex-shrink:0; }
+        .cf-mobile-menu-btn { display:none; }
+        .cf-mobile-nav-backdrop { display:none; }
+        .report-table-scroll { overflow-x:auto; overflow-y:hidden; scrollbar-width:thin; scrollbar-color:rgb(var(--primary)) rgb(var(--surface-container)); -webkit-overflow-scrolling:touch; }
+        .report-table-scroll::-webkit-scrollbar { display:block; height:8px; }
+        .report-table-scroll::-webkit-scrollbar-track { background:rgb(var(--surface-container)); border-radius:999px; }
+        .report-table-scroll::-webkit-scrollbar-thumb { background:rgb(var(--primary)); border-radius:999px; }
+        .report-table-scroll table { min-width:1100px; }
+        .cf-loader { position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:18px; padding:24px; background:rgb(var(--surface) / .94); backdrop-filter:blur(16px); opacity:0; visibility:hidden; pointer-events:none; transition:opacity .35s ease, visibility .35s ease; }
+        .cf-loader.is-visible { opacity:1; visibility:visible; pointer-events:auto; }
+        .cf-loader-orbit { position:relative; width:96px; height:96px; display:grid; place-items:center; perspective:440px; }
+        .cf-loader-orbit::before,.cf-loader-orbit::after { content:""; position:absolute; inset:5px; border:1px solid rgb(var(--primary) / .24); border-radius:50%; transform:rotateX(68deg) rotateZ(18deg); animation:cf-orbit 2.4s linear infinite; }
+        .cf-loader-orbit::after { inset:14px; border-color:rgb(var(--secondary) / .4); transform:rotateY(68deg) rotateZ(-18deg); animation-direction:reverse; animation-duration:1.8s; }
+        .cf-loader-cube { width:38px; height:38px; position:relative; transform-style:preserve-3d; animation:cf-cube 2.2s ease-in-out infinite; }
+        .cf-loader-cube span { position:absolute; inset:0; border:1px solid rgb(var(--primary) / .58); background:linear-gradient(135deg,rgb(var(--primary) / .82),rgb(var(--secondary) / .72)); box-shadow:0 0 26px rgb(var(--primary) / .3); }
+        .cf-loader-cube span:nth-child(1){transform:translateZ(19px)} .cf-loader-cube span:nth-child(2){transform:rotateY(180deg) translateZ(19px)} .cf-loader-cube span:nth-child(3){transform:rotateY(90deg) translateZ(19px)} .cf-loader-cube span:nth-child(4){transform:rotateY(-90deg) translateZ(19px)} .cf-loader-cube span:nth-child(5){transform:rotateX(90deg) translateZ(19px)} .cf-loader-cube span:nth-child(6){transform:rotateX(-90deg) translateZ(19px)}
+        .cf-loader-copy { text-align:center; } .cf-loader-copy strong { display:block; color:rgb(var(--on-surface)); font-size:15px; } .cf-loader-copy span { display:block; margin-top:5px; color:rgb(var(--on-surface-variant)); font-size:12px; }
+        @keyframes cf-cube { 0%,100%{transform:rotateX(-18deg) rotateY(0deg)} 50%{transform:rotateX(28deg) rotateY(180deg) translateY(-5px)} } @keyframes cf-orbit { to{transform:rotateX(68deg) rotateZ(378deg)} }
+        @media (max-width:1023px) {
+            .cf-sidebar { width:280px !important; transform:translateX(-100%); }
+            .cf-sidebar.cf-sidebar-open { transform:translateX(0); box-shadow:20px 0 48px rgb(0 0 0 / .18); }
+            .cf-page-shell, .cf-content-shell { padding-left:0 !important; }
+            .cf-topbar { left:0 !important; padding-left:24px !important; padding-right:24px !important; }
+            .cf-mobile-menu-btn { display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; border:0; border-radius:999px; color:rgb(var(--on-surface-variant)); background:rgb(var(--surface-container-high)); }
+            .cf-mobile-nav-backdrop.is-visible { display:block; position:fixed; inset:0; z-index:45; background:rgb(0 0 0 / .34); backdrop-filter:blur(2px); }
+            .cf-content-shell { padding-left:24px !important; padding-right:24px !important; }
+            .report-table-scroll table { min-width:1100px; }
+            .report-dashboard { margin-left:0 !important; margin-right:0 !important; }
+        }
+        @media (max-width:639px) {
+            .cf-topbar { padding-left:16px !important; padding-right:16px !important; }
+            .cf-topbar-actions { gap:12px !important; }
+            .cf-content-shell { padding-left:16px !important; padding-right:16px !important; }
+            .cf-topbar .text-label-sm { display:none; }
+            #notif-dropdown { right:-52px; width:min(20rem, calc(100vw - 2rem)); }
+            .report-table-scroll table { min-width:1100px; }
+            .report-dashboard { padding-left:16px !important; padding-right:16px !important; }
+        }
+        @media (prefers-reduced-motion: reduce) { .cf-loader-cube,.cf-loader-orbit::before,.cf-loader-orbit::after { animation:none; } .cf-loader { transition:none; } }
+    </style>
+</head>
+<body class="bg-surface font-body-md text-on-surface">
+<div id="cityfix-loader" class="cf-loader" role="status" aria-live="polite" aria-label="Loading reports"><div class="cf-loader-orbit" aria-hidden="true"><div class="cf-loader-cube"><span></span><span></span><span></span><span></span><span></span><span></span></div></div><div class="cf-loader-copy"><strong>Preparing reports</strong><span>Loading complaint analytics</span></div></div>
+<div id="mobile-nav-backdrop" class="cf-mobile-nav-backdrop" aria-hidden="true"></div>
+
+<!-- ============================================================ -->
+<!-- SHARED SIDEBAR (same as complaints.html + a new Reports link) -->
+<!-- ============================================================ -->
+<aside class="cf-sidebar fixed left-0 top-0 h-full w-sidebar-width bg-surface-container-lowest border-r border-outline-variant z-50 flex flex-col">
+    <div class="p-6 flex items-center gap-3 border-b border-outline-variant">
+        <img alt="CityFix Logo" class="h-8 w-auto" th:src="@{/screen.png}">
+        <span class="font-title-md text-title-md text-primary">CityFix</span>
+    </div>
+    <nav class="flex-1 py-6 px-4 space-y-2">
+        <a th:href="@{/admin/dashboard}" class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all">
+            <span class="material-symbols-outlined mr-3">dashboard</span>
+            <span class="font-label-md text-label-md">Dashboard</span>
+        </a>
+        <a th:href="@{/admin/complaints}" class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all">
+            <span class="material-symbols-outlined mr-3">assignment</span>
+            <span class="font-label-md text-label-md">Manage Complaints</span>
+        </a>
+        <!-- Active here: this page lives under Complaints, add the same <a> block
+             into complaints.html's sidebar (right after Manage Complaints) so it
+             shows up on both pages. -->
+        <a th:href="@{/admin/complaints/reports}" class="flex items-center px-4 py-3 rounded-xl bg-secondary-container text-on-secondary-container transition-all">
+            <span class="material-symbols-outlined mr-3">bar_chart</span>
+            <span class="font-label-md text-label-md">Reports</span>
+        </a>
+        <a th:href="@{/admin/users}" class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all">
+            <span class="material-symbols-outlined mr-3">group</span>
+            <span class="font-label-md text-label-md">Manage Users</span>
+        </a>
+        <a sec:authorize="hasRole('SUPER_ADMIN')" th:href="@{/admin/admins}" class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all">
+            <span class="material-symbols-outlined mr-3">admin_panel_settings</span>
+            <span class="font-label-md text-label-md">Manage Admins</span>
+        </a>
+        <a th:href="@{/admin/profile}" class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all">
+            <span class="material-symbols-outlined mr-3">person</span>
+            <span class="font-label-md text-label-md">Profile</span>
+        </a>
+    </nav>
+    <div class="p-4 mt-auto border-t border-outline-variant">
+        <a th:href="@{/logout}" class="flex items-center px-4 py-3 rounded-xl text-error hover:bg-error-container transition-all">
+            <span class="material-symbols-outlined mr-3">logout</span>
+            <span class="font-label-md text-label-md">Logout</span>
+        </a>
+    </div>
+</aside>
+
+<div class="cf-page-shell pl-sidebar-width">
+
+    <!-- ============================================================ -->
+    <!-- SHARED HEADER — same pattern as complaints.html: theme toggle,
+         notification bell, profile name + avatar. -->
+    <!-- ============================================================ -->
+    <header class="cf-topbar fixed top-0 left-sidebar-width right-0 h-16 bg-surface/80 backdrop-blur-xl border-b border-outline-variant z-40 flex items-center justify-between px-margin-desktop">
+        <div class="flex items-center gap-3">
+            <button id="mobile-nav-toggle" type="button" class="cf-mobile-menu-btn" aria-label="Open navigation" aria-expanded="false"><span class="material-symbols-outlined">menu</span></button>
+            <span class="material-symbols-outlined text-primary">analytics</span>
+            <div class="flex flex-col leading-tight">
+                <span class="font-label-md text-label-md text-on-surface">Cost &amp; Resolution Reports</span>
+                <span class="text-label-sm text-on-surface-variant">Spending and turnaround time across resolved complaints</span>
+            </div>
+        </div>
+        <div class="cf-topbar-actions flex items-center gap-6">
+
+            <div th:replace="~{fragments/themeToggle :: toggle}"></div>
+
+            <!-- Notification bell: identical pattern to complaints.html, backed by the
+                 same globally-supplied urgentNotifications model attribute. -->
+            <div class="relative">
+                <span id="notif-bell" class="material-symbols-outlined text-on-surface-variant cursor-pointer">
+                    notifications
+                </span>
+                <span id="notif-badge"
+                      class="hidden absolute -top-1 -right-1 bg-error text-on-error text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                </span>
+
+                <div id="notif-dropdown" class="hidden absolute right-0 mt-2 w-80 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-lg z-50">
+                    <div class="p-3 border-b border-outline-variant flex justify-between items-center">
+                        <span class="font-label-md text-label-md">High Urgency Complaints</span>
+                        <button id="mark-all-read" class="text-label-sm text-primary hover:underline" type="button">Mark all read</button>
+                    </div>
+
+                    <div id="notif-empty" class="hidden p-4 text-label-sm text-on-surface-variant">
+                        No urgent complaints right now.
+                    </div>
+
+                    <div th:each="c : ${urgentNotifications}"
+                         class="notif-item flex items-center justify-between p-3 border-b border-outline-variant hover:bg-surface-container-high"
+                         th:attr="data-id=${c.id}">
+                        <a th:href="@{'/admin/complaints/' + ${c.id} + '/view'}" class="flex-1">
+                            <p class="text-label-md font-bold" th:text="${c.title}">Title</p>
+                            <p class="text-label-sm text-on-surface-variant" th:text="${c.category + ' • ' + c.priority}">Category</p>
+                        </a>
+                        <button class="mark-read-btn material-symbols-outlined text-outline text-[18px] hover:text-error" type="button" title="Mark as read">
+                            close
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <a th:href="@{/admin/profile}" class="flex items-center gap-3 border-l border-outline-variant pl-6 cursor-pointer hover:opacity-80 transition-opacity">
+                <span class="hidden md:block text-right">
+                    <p class="text-label-md font-bold text-on-surface" id="header-name" th:text="${admin != null ? admin.name : 'Admin'}">Admin</p>
+                    <p class="text-label-sm text-on-surface-variant">Administrator</p>
+                </span>
+                <img alt="Profile" class="w-9 h-9 rounded-full object-cover border border-outline-variant shadow-sm" id="header-avatar"
+                     th:src="@{${admin != null and admin.profileImagePath != null ? admin.profileImagePath : '/profile1.jpg'}}">
+            </a>
+        </div>
+    </header>
+
+    <main class="pt-16 min-h-screen bg-surface">
+        <div class="cf-content-shell flex flex-col w-full px-margin-desktop py-8 space-y-8">
+
+            <!-- ============================================================ -->
+            <!-- SUMMARY STAT CARDS — always visible, both views              -->
+            <!-- ============================================================ -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="relative bg-surface-container-low p-5 rounded-xl flex items-center gap-4 shadow-sm overflow-hidden group hover:shadow-md transition-shadow">
+                    <div class="absolute -right-5 -top-5 w-20 h-20 bg-primary/10 rounded-full transition-transform group-hover:scale-125"></div>
+                    <div class="relative z-10 w-12 h-12 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+                        <span class="material-symbols-outlined text-primary">task_alt</span>
+                    </div>
+                    <div class="relative z-10 flex flex-col">
+                        <span class="text-label-sm text-on-surface-variant uppercase tracking-wider">Total Resolved</span>
+                        <span id="totalResolved" class="text-headline-lg font-headline-lg text-primary leading-tight">0</span>
+                    </div>
+                </div>
+
+                <div class="relative bg-surface-container-low p-5 rounded-xl flex items-center gap-4 shadow-sm overflow-hidden group hover:shadow-md transition-shadow">
+                    <div class="absolute -right-5 -top-5 w-20 h-20 bg-primary/10 rounded-full transition-transform group-hover:scale-125"></div>
+                    <div class="relative z-10 w-12 h-12 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+                        <span class="material-symbols-outlined text-primary">payments</span>
+                    </div>
+                    <div class="relative z-10 flex flex-col">
+                        <span class="text-label-sm text-on-surface-variant uppercase tracking-wider">Total Spend</span>
+                        <span id="totalSpend" class="text-headline-lg font-headline-lg text-primary leading-tight">৳0</span>
+                    </div>
+                </div>
+
+                <div class="relative bg-surface-container-low p-5 rounded-xl flex items-center gap-4 shadow-sm overflow-hidden group hover:shadow-md transition-shadow">
+                    <div class="absolute -right-5 -top-5 w-20 h-20 bg-secondary/10 rounded-full transition-transform group-hover:scale-125"></div>
+                    <div class="relative z-10 w-12 h-12 rounded-full bg-secondary/15 flex items-center justify-center shrink-0">
+                        <span class="material-symbols-outlined text-secondary">schedule</span>
+                    </div>
+                    <div class="relative z-10 flex flex-col">
+                        <span class="text-label-sm text-on-surface-variant uppercase tracking-wider">Avg. Resolution Time</span>
+                        <span id="avgResolutionDays" class="text-headline-lg font-headline-lg text-secondary leading-tight">0 days</span>
+                    </div>
+                </div>
+
+                <div class="relative bg-error-container/50 p-5 rounded-xl flex items-center gap-4 shadow-sm overflow-hidden group hover:shadow-md transition-shadow">
+                    <div class="absolute -right-5 -top-5 w-20 h-20 bg-error/10 rounded-full transition-transform group-hover:scale-125"></div>
+                    <div class="relative z-10 w-12 h-12 rounded-full bg-error/15 flex items-center justify-center shrink-0">
+                        <span class="material-symbols-outlined text-error">trending_up</span>
+                    </div>
+                    <div class="relative z-10 flex flex-col">
+                        <span class="text-label-sm text-on-error-container uppercase tracking-wider">Over Budget</span>
+                        <span id="overBudgetCount" class="text-headline-lg font-headline-lg text-error leading-tight">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- VIEW TOGGLE — right-aligned button, swaps #tableView /       -->
+            <!-- #graphView client-side, no page reload, one merged file.     -->
+            <!-- ============================================================ -->
+            <div class="flex justify-end">
+                <button id="toggleReportViewBtn" type="button"
+                        class="flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-on-primary font-label-md hover:opacity-90 active:scale-[0.98] transition-all">
+                    <span class="material-symbols-outlined text-[18px]" id="toggleReportViewIcon">bar_chart</span>
+                    <span id="toggleReportViewLabel">View Graphical Report</span>
+                </button>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- TABLE VIEW                                                    -->
+            <!-- ============================================================ -->
+            <div id="tableView" class="space-y-8">
+
+                <!-- Filters -->
+                <div class="bg-surface-container-lowest rounded-xl shadow-md p-6">
+                    <div class="flex flex-col md:flex-row gap-4 md:items-end">
+                        <div class="flex-1 flex flex-col gap-1.5">
+                            <label class="text-label-sm text-on-surface-variant ml-1" for="reportSearchInput">Search ID, Location or Category</label>
+                            <div class="relative">
+                                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-body-md">search</span>
+                                <input id="reportSearchInput" class="w-full pl-10 pr-4 py-2.5 bg-surface-container-high rounded-lg border-none focus:ring-2 focus:ring-primary/20 text-label-md outline-none transition-all" placeholder="e.g. CF-9021 or Roads" type="text">
+                            </div>
+                        </div>
+                        <div class="flex flex-col gap-1.5 w-full md:w-56">
+                            <label class="text-label-sm text-on-surface-variant ml-1" for="reportCategoryFilter">Category</label>
+                            <select id="reportCategoryFilter" class="w-full px-4 py-2.5 bg-surface-container-high rounded-lg border-none focus:ring-2 focus:ring-primary/20 text-label-md outline-none appearance-none cursor-pointer">
+                                <option value="">All Categories</option>
+                            </select>
+                        </div>
+                        <div class="flex flex-col gap-1.5 w-full md:w-56">
+                            <label class="text-label-sm text-on-surface-variant ml-1" for="reportBudgetFilter">Budget</label>
+                            <select id="reportBudgetFilter" class="w-full px-4 py-2.5 bg-surface-container-high rounded-lg border-none focus:ring-2 focus:ring-primary/20 text-label-md outline-none appearance-none cursor-pointer">
+                                <option value="">All</option>
+                                <option value="over">Over Budget</option>
+                                <option value="under">Under/On Budget</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mt-6 pt-6 border-t border-outline-variant flex justify-between items-center">
+                        <button id="clearReportFiltersBtn" type="button" class="text-label-md text-primary font-bold hover:underline">Clear all filters</button>
+                        <p class="font-label-md text-label-md text-on-surface-variant" id="reportResultsSummary">
+                            <span th:text="${rows.size()}">0</span> resolved complaints
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Table -->
+                <div class="bg-surface-container-lowest rounded-xl shadow-md overflow-hidden">
+                    <div class="report-table-scroll">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                            <tr class="bg-surface-container text-on-surface-variant border-b border-outline-variant">
+                                <th class="px-6 py-4 font-label-md text-label-sm uppercase tracking-wider">ID</th>
+                                <th class="px-6 py-4 font-label-md text-label-sm uppercase tracking-wider">Location</th>
+                                <th class="px-6 py-4 font-label-md text-label-sm uppercase tracking-wider">Category</th>
+                                <th class="px-6 py-4 font-label-md text-label-sm uppercase tracking-wider">Submitted</th>
+                                <th class="px-6 py-4 font-label-md text-label-sm uppercase tracking-wider">Resolved</th>
+                                <th class="px-6 py-4 font-label-md text-label-sm uppercase tracking-wider text-center">Resolution Time</th>
+                                <th class="px-6 py-4 font-label-md text-label-sm uppercase tracking-wider text-right">Estimated</th>
+                                <th class="px-6 py-4 font-label-md text-label-sm uppercase tracking-wider text-right">Final</th>
+                                <th class="px-6 py-4 font-label-md text-label-sm uppercase tracking-wider text-right">Variance</th>
+                            </tr>
+                            </thead>
+                            <tbody class="divide-y divide-outline-variant" id="reportsBody">
+                            <tr class="hover:bg-surface-container-low transition-colors js-report-row"
+                                th:each="row : ${rows}"
+                                th:attr="data-id=${row.id},
+                                          data-location=${#strings.toLowerCase(row.location)},
+                                          data-category=${row.category},
+                                          data-category-lower=${#strings.toLowerCase(row.category)},
+                                          data-estimated=${row.estimatedCost},
+                                          data-final=${row.finalCost},
+                                          data-resolution-days=${row.resolutionDays},
+                                          data-submitted-at=${row.submittedAt},
+                                          data-resolved-at=${row.resolvedAt}">
+                                <td class="px-6 py-4 font-label-md text-primary" th:text="'#CF-' + row.id">#CF-8942</td>
+                                <td class="px-6 py-4 text-label-md text-on-surface" th:text="${row.location}">Main St.</td>
+                                <td class="px-6 py-4">
+                                    <span class="text-label-md text-on-surface-variant px-2 py-1 bg-surface-container rounded" th:text="${row.category}">Category</span>
+                                </td>
+                                <td class="px-6 py-4 text-label-sm text-on-surface-variant" th:text="${#temporals.format(row.submittedAt, 'MMM dd, yyyy')}">Oct 24, 2023</td>
+                                <td class="px-6 py-4 text-label-sm text-on-surface-variant" th:text="${#temporals.format(row.resolvedAt, 'MMM dd, yyyy')}">Oct 28, 2023</td>
+                                <td class="px-6 py-4 text-center">
+                                    <span class="px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container text-label-sm font-bold"
+                                          th:text="${row.resolutionDays + ' ' + (row.resolutionDays == 1 ? 'day' : 'days')}">3 days</span>
+                                </td>
+                                <td class="px-6 py-4 text-right text-label-md text-on-surface"
+                                    th:text="${row.estimatedCost != null ? '৳' + #numbers.formatDecimal(row.estimatedCost, 0, 'COMMA', 0, 'POINT') : '—'}">৳7,500</td>
+                                <td class="px-6 py-4 text-right font-bold text-label-md text-on-surface"
+                                    th:text="${row.finalCost != null ? '৳' + #numbers.formatDecimal(row.finalCost, 0, 'COMMA', 0, 'POINT') : '—'}">৳7,800</td>
+                                <td class="px-6 py-4 text-right">
+                                    <span class="js-variance text-on-surface-variant font-bold text-label-sm">—</span>
+                                </td>
+                            </tr>
+                            <tr th:if="${rows.isEmpty()}">
+                                <td class="px-6 py-14 text-center" colspan="9">
+                                    <div class="flex flex-col items-center gap-2">
+                                        <span class="material-symbols-outlined text-on-surface-variant text-[32px]">inbox</span>
+                                        <p class="font-title-md text-on-surface">No resolved complaints yet</p>
+                                        <p class="font-body-md text-on-surface-variant">Once complaints are marked Resolved, they'll show up here with cost and timing data.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="hidden text-center py-10 font-body-md text-on-surface-variant" id="reportNoMatch">
+                        No rows match your search/filter.
+                    </p>
+                    <div id="reportPagination" class="flex items-center justify-between gap-4 flex-wrap px-6 py-4 border-t border-outline-variant bg-surface-container/20">
+                        <span id="reportPaginationSummary" class="text-label-sm font-label-sm text-on-surface-variant">Showing 0–0 of 0 complaints</span>
+                        <div class="flex items-center gap-2">
+                            <button id="reportPrevPage" type="button" class="inline-flex items-center justify-center rounded-lg p-2 text-on-surface-variant hover:bg-surface-container-high transition-colors disabled:opacity-40 disabled:cursor-not-allowed" aria-label="Previous page" disabled>
+                                <span class="material-symbols-outlined text-[20px]">chevron_left</span>
+                            </button>
+                            <span id="reportPageNumber" class="min-w-8 text-center text-label-sm font-bold text-on-surface">1 / 1</span>
+                            <button id="reportNextPage" type="button" class="inline-flex items-center justify-center rounded-lg p-2 text-on-surface-variant hover:bg-surface-container-high transition-colors disabled:opacity-40 disabled:cursor-not-allowed" aria-label="Next page" disabled>
+                                <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- ============================================================ -->
+            <!-- GRAPHICAL REPORT VIEW — four database-backed dashboard panels -->
+            <div id="graphView" class="hidden report-dashboard space-y-5">
+                <style>
+                    .report-dashboard { background:rgb(var(--surface-container-low) / 1); color:rgb(var(--on-surface) / 1); margin:0 -32px; padding:24px 32px 32px; border-radius:18px; }
+                    .report-dashboard .dashboard-card { background:rgb(var(--surface-container-lowest) / 1); border:1px solid rgb(var(--outline-variant) / .55); box-shadow:0 8px 20px rgb(0 0 0 / .08); }
+                    .report-dashboard .dashboard-muted { color:rgb(var(--on-surface-variant) / 1); }
+                    .report-dashboard .dashboard-filter { background:rgb(var(--surface-container-high) / 1); color:rgb(var(--on-surface) / 1); border:1px solid rgb(var(--outline-variant) / .6); outline:none; color-scheme:light; }
+                    [data-theme="dark"] .report-dashboard .dashboard-filter { color-scheme:dark; }
+                    .report-dashboard .dashboard-filter:focus { border-color:rgb(var(--primary) / 1); box-shadow:0 0 0 2px rgb(var(--primary) / .18); }
+                    .report-dashboard .dashboard-grid { display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:16px; }
+                    .report-dashboard .chart-card { min-width:0; }
+                    @media (max-width: 1024px) { .report-dashboard { margin:0 -16px; padding:20px 16px 24px; } .report-dashboard .dashboard-grid { grid-template-columns:1fr; } .report-dashboard .dashboard-grid > * { grid-column:span 1!important; } }
+                </style>
+                <div class="flex items-center justify-between gap-4">
+                    <div><p class="text-xs uppercase tracking-[.18em] dashboard-muted">CityFix analytics</p><h2 class="text-2xl font-bold mt-1">Operations overview</h2></div>
+                    <div class="flex items-center gap-2">
+                        <select id="graphCategoryFilter" class="dashboard-filter rounded-lg px-3 py-2 text-sm" aria-label="Filter by category">
+                            <option value="">All Categories</option>
+                        </select>
+                        <select id="graphBudgetFilter" class="dashboard-filter rounded-lg px-3 py-2 text-sm" aria-label="Filter by budget">
+                            <option value="">All Budgets</option>
+                            <option value="over">Over Budget</option>
+                            <option value="under">Under / On Budget</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="dashboard-grid">
+                    <section class="dashboard-card chart-card rounded-xl p-5" style="grid-column:span 5"><div class="flex items-start justify-between mb-4"><div><p class="text-xs uppercase tracking-wider dashboard-muted">Resolution rate</p><h3 class="text-lg font-semibold mt-1">Resolved vs total</h3></div><span class="material-symbols-outlined text-primary">speed</span></div><div class="relative h-64"><canvas id="resolutionRateChart"></canvas></div></section>
+                    <section class="dashboard-card chart-card rounded-xl p-5" style="grid-column:span 7"><div class="flex items-start justify-between mb-4"><div><p class="text-xs uppercase tracking-wider dashboard-muted">Cost comparison</p><h3 class="text-lg font-semibold mt-1">Estimated vs final cost by month</h3></div><span class="material-symbols-outlined text-primary">bar_chart</span></div><div class="relative h-64"><canvas id="monthlyCostChart"></canvas></div></section>
+                    <section class="dashboard-card chart-card rounded-xl p-5" style="grid-column:span 6"><div class="flex items-start justify-between mb-4"><div><p class="text-xs uppercase tracking-wider dashboard-muted">Category analysis</p><h3 class="text-lg font-semibold mt-1">Spend by category</h3></div><span class="material-symbols-outlined text-primary">category</span></div><div class="relative h-64"><canvas id="categorySpendChart"></canvas></div></section>
+                    <section class="dashboard-card chart-card rounded-xl p-5" style="grid-column:span 6"><div class="flex items-start justify-between mb-4"><div><p class="text-xs uppercase tracking-wider dashboard-muted">Operational efficiency</p><h3 class="text-lg font-semibold mt-1">Average resolution time by category</h3></div><span class="material-symbols-outlined text-primary">schedule</span></div><div class="relative h-64"><canvas id="categoryResolutionChart"></canvas></div></section>
+                </div>
+            </div>
+
+            <script th:inline="javascript">
+                window.cityFixReport = {
+                    rows: /*[[${rows}]]*/ [],
+                    dashboardRows: /*[[${dashboardRows}]]*/ []
+                };
+            </script>
+            <!-- Chart, toggle, and filter state is initialized in one script at the bottom. -->
+
+        </div>
+    </main>
+</div>
+
+<!-- Keeps header avatar in sync with the photo picked on the Admin Profile page -->
+<script th:inline="javascript">
+    (function () {
+        const avatarKey = 'cityfix-avatar-' + /*[[${admin != null ? admin.email : ''}]]*/ '';
+        const savedAvatar = localStorage.getItem(avatarKey);
+        if (savedAvatar) {
+            document.getElementById('header-avatar').src = savedAvatar;
+        }
+    })();
+</script>
+
+<!-- Notification bell: same read/unread-in-localStorage pattern as complaints.html -->
+<script>
+    (function () {
+        const bell = document.getElementById('notif-bell');
+        const dropdown = document.getElementById('notif-dropdown');
+        const badge = document.getElementById('notif-badge');
+        const emptyMsg = document.getElementById('notif-empty');
+        const markAllBtn = document.getElementById('mark-all-read');
+
+        const STORAGE_KEY = 'cityfix_read_notifications';
+
+        function getReadIds() {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            return raw ? JSON.parse(raw) : [];
+        }
+
+        function saveReadIds(ids) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(ids));
+        }
+
+        function refreshNotifications() {
+            const readIds = getReadIds();
+            const items = document.querySelectorAll('.notif-item');
+            let visibleCount = 0;
+
+            items.forEach(item => {
+                const id = item.getAttribute('data-id');
+                if (readIds.includes(id)) {
+                    item.style.display = 'none';
+                } else {
+                    item.style.display = 'flex';
+                    visibleCount++;
+                }
+            });
+
+            if (visibleCount > 0) {
+                badge.textContent = visibleCount;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+
+            emptyMsg.classList.toggle('hidden', visibleCount > 0);
+        }
+
+        bell.addEventListener('click', () => { dropdown.classList.toggle('hidden'); });
+
+        document.addEventListener('click', (e) => {
+            if (!bell.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        document.querySelectorAll('.mark-read-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const item = btn.closest('.notif-item');
+                const id = item.getAttribute('data-id');
+
+                const readIds = getReadIds();
+                if (!readIds.includes(id)) {
+                    readIds.push(id);
+                    saveReadIds(readIds);
+                }
+                refreshNotifications();
+            });
+        });
+
+        markAllBtn.addEventListener('click', () => {
+            const allIds = Array.from(document.querySelectorAll('.notif-item'))
+                .map(item => item.getAttribute('data-id'));
+            saveReadIds(allIds);
+            refreshNotifications();
+        });
+
+        refreshNotifications();
+    })();
+</script>
+
+<!-- One stateful script controls view, filters, and charts. All values come from database rows. -->
+<script>
+    (function () {
+        const state = { view: 'table', search: '', category: '', budget: '', page: 1 };
+        const pageSize = 5;
+        const tableRows = Array.from(document.querySelectorAll('#reportsBody tr.js-report-row'));
+        const rawRows = Array.isArray(window.cityFixReport?.dashboardRows) && window.cityFixReport.dashboardRows.length
+            ? window.cityFixReport.dashboardRows
+            : (Array.isArray(window.cityFixReport?.rows) ? window.cityFixReport.rows : []);
+        const reportRows = rawRows.length ? rawRows : tableRows.map(row => ({
+            id: row.dataset.id,
+            location: row.dataset.location || '',
+            category: row.dataset.category || '',
+            status: 'RESOLVED',
+            submittedAt: row.dataset.submittedAt || null,
+            resolvedAt: row.dataset.resolvedAt || null,
+            estimatedCost: row.dataset.estimated === '' ? null : Number(row.dataset.estimated),
+            finalCost: row.dataset.final === '' ? null : Number(row.dataset.final)
+        }));
+        const tableView = document.getElementById('tableView');
+        const graphView = document.getElementById('graphView');
+        const toggleBtn = document.getElementById('toggleReportViewBtn');
+        const toggleIcon = document.getElementById('toggleReportViewIcon');
+        const toggleLabel = document.getElementById('toggleReportViewLabel');
+        const searchInput = document.getElementById('reportSearchInput');
+        const categoryFilter = document.getElementById('reportCategoryFilter');
+        const budgetFilter = document.getElementById('reportBudgetFilter');
+        const graphCategoryFilter = document.getElementById('graphCategoryFilter');
+        const graphBudgetFilter = document.getElementById('graphBudgetFilter');
+        const clearBtn = document.getElementById('clearReportFiltersBtn');
+        const resultsSummary = document.getElementById('reportResultsSummary');
+        const noMatch = document.getElementById('reportNoMatch');
+        const paginationSummary = document.getElementById('reportPaginationSummary');
+        const pageNumber = document.getElementById('reportPageNumber');
+        const previousPage = document.getElementById('reportPrevPage');
+        const nextPage = document.getElementById('reportNextPage');
+        let charts = {};
+
+        const numberOrZero = value => value == null || value === '' || Number.isNaN(Number(value)) ? 0 : Number(value);
+        const money = value => '৳' + Number(value || 0).toLocaleString('en-US');
+        const compactMoney = value => {
+            const amount = Number(value || 0);
+            if (Math.abs(amount) >= 1000000) return '৳' + (amount / 1000000).toFixed(1).replace('.0', '') + 'M';
+            if (Math.abs(amount) >= 1000) return '৳' + (amount / 1000).toFixed(1).replace('.0', '') + 'K';
+            return money(amount);
+        };
+        function dateValue(value) {
+            if (!value) return null;
+            if (Array.isArray(value)) return new Date(value[0], (value[1] || 1) - 1, value[2] || 1, value[3] || 0, value[4] || 0);
+            const parsed = new Date(value);
+            return Number.isNaN(parsed.getTime()) ? null : parsed;
+        }
+        function variance(row) {
+            const estimated = row.estimatedCost == null ? null : Number(row.estimatedCost);
+            const finalCost = row.finalCost == null ? null : Number(row.finalCost);
+            return estimated != null && finalCost != null && estimated !== 0 ? ((finalCost - estimated) / estimated) * 100 : 0;
+        }
+        function monthKey(date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`; }
+        function monthLabel(key) { const [year, month] = key.split('-').map(Number); return new Date(year, month - 1, 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }); }
+        function filteredRows() {
+            return reportRows.filter(row => {
+                const categoryOk = !graphCategoryFilter.value || row.category === graphCategoryFilter.value;
+                const budgetOk = !graphBudgetFilter.value || (variance(row) > 0 ? 'over' : 'under') === graphBudgetFilter.value;
+                return categoryOk && budgetOk;
+            });
+        }
+        function calculate(rows) {
+            const months = new Set();
+            const estimatedByMonth = {}, finalByMonth = {}, complaintsByMonth = {}, resolvedByMonth = {}, pendingProcessByMonth = {};
+            const spendByCategory = {}, resolutionByCategory = {}, resolutionCountByCategory = {};
+            let resolved = 0, estimatedTotal = 0, finalTotal = 0, overBudget = 0, resolutionDaysTotal = 0, resolutionCount = 0;
+            rows.forEach(row => {
+                const created = dateValue(row.submittedAt);
+                const resolvedAt = dateValue(row.resolvedAt);
+                const status = String(row.status || '').toUpperCase();
+                const category = row.category || 'Uncategorized';
+                spendByCategory[category] = (spendByCategory[category] || 0) + numberOrZero(row.finalCost);
+                if (created) {
+                    const key = monthKey(created); months.add(key); complaintsByMonth[key] = (complaintsByMonth[key] || 0) + 1;
+                    estimatedByMonth[key] = (estimatedByMonth[key] || 0) + numberOrZero(row.estimatedCost);
+                    finalByMonth[key] = (finalByMonth[key] || 0) + numberOrZero(row.finalCost);
+                    if (status === 'PENDING' || status === 'IN_PROGRESS') pendingProcessByMonth[key] = (pendingProcessByMonth[key] || 0) + 1;
+                }
+                if (status === 'RESOLVED' || resolvedAt) {
+                    resolved++;
+                    if (created && resolvedAt) {
+                        const days = Math.max(0, (resolvedAt - created) / 86400000);
+                        resolutionDaysTotal += days; resolutionCount++;
+                        resolutionByCategory[category] = (resolutionByCategory[category] || 0) + days;
+                        resolutionCountByCategory[category] = (resolutionCountByCategory[category] || 0) + 1;
+                    }
+                    if (resolvedAt) { const key = monthKey(resolvedAt); months.add(key); resolvedByMonth[key] = (resolvedByMonth[key] || 0) + 1; }
+                }
+                estimatedTotal += numberOrZero(row.estimatedCost); finalTotal += numberOrZero(row.finalCost);
+                if (variance(row) > 0) overBudget++;
+            });
+            const keys = [...months].sort();
+            let cumulative = 0;
+            const labels = keys.map(monthLabel);
+            const resolvedSeries = keys.map(key => { cumulative += resolvedByMonth[key] || 0; return cumulative; });
+            return {
+                total: rows.length, resolved, avgResolutionDays: resolutionCount ? resolutionDaysTotal / resolutionCount : 0, pendingProcess: rows.filter(row => ['PENDING', 'IN_PROGRESS'].includes(String(row.status || '').toUpperCase())).length,
+                resolutionRate: rows.length ? (resolved * 100) / rows.length : 0, estimatedTotal, finalTotal, overBudget,
+                categoryLabels: Object.keys(spendByCategory).sort((a, b) => (spendByCategory[b] || 0) - (spendByCategory[a] || 0)),
+                categorySpend: Object.keys(spendByCategory).sort((a, b) => (spendByCategory[b] || 0) - (spendByCategory[a] || 0)).map(category => spendByCategory[category]),
+                categoryResolution: Object.keys(resolutionByCategory).map(category => resolutionByCategory[category] / resolutionCountByCategory[category]),
+                categoryResolutionLabels: Object.keys(resolutionByCategory),
+                underBudget: rows.length - overBudget, labels,
+                estimated: keys.map(key => estimatedByMonth[key] || 0), final: keys.map(key => finalByMonth[key] || 0),
+                complaints: keys.map(key => complaintsByMonth[key] || 0), resolvedSeries,
+                pendingProcessSeries: keys.map(key => pendingProcessByMonth[key] || 0)
+            };
+        }
+        let data = calculate(filteredRows());
+        function cssVar(name, fallback) { const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim(); return value ? `rgb(${value})` : fallback; }
+        function themeOptions() {
+            const strong = cssVar('--on-surface', '#222');
+            const muted = cssVar('--on-surface-variant', '#666');
+            return { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: strong, usePointStyle: true, boxWidth: 10 } } }, scales: { x: { ticks: { color: muted, maxRotation: 0, drawTicks: false }, grid: { display: false, drawTicks: false } }, y: { beginAtZero: true, ticks: { color: muted, precision: 0, stepSize: 1, drawTicks: false }, grid: { display: false, drawTicks: false } } } };
+        }
+        function updateSummary() {
+            document.getElementById('totalResolved').textContent = data.resolved.toLocaleString('en-US');
+            document.getElementById('totalSpend').textContent = compactMoney(data.finalTotal);
+            document.getElementById('avgResolutionDays').textContent = data.avgResolutionDays.toFixed(1) + ' days';
+            document.getElementById('overBudgetCount').textContent = data.overBudget;
+        }
+        function renderCharts() {
+            if (typeof Chart === 'undefined' || graphView.classList.contains('hidden')) return;
+            Object.values(charts).forEach(chart => chart.destroy()); charts = {};
+            const options = themeOptions();
+            const rate = Math.round(data.resolutionRate * 10) / 10;
+            const centerText = { id: 'resolutionRateCenterText', afterDraw(chart) { const ctx = chart.ctx; const x = (chart.chartArea.left + chart.chartArea.right) / 2; const y = (chart.chartArea.top + chart.chartArea.bottom) / 2; ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = cssVar('--on-surface', '#222'); ctx.font = '700 24px Inter, sans-serif'; ctx.fillText(rate + '%', x, y - 6); ctx.font = '500 11px Inter, sans-serif'; ctx.fillStyle = cssVar('--on-surface-variant', '#666'); ctx.fillText('resolved', x, y + 16); ctx.restore(); } };
+            charts.rate = new Chart(document.getElementById('resolutionRateChart'), { type: 'doughnut', data: { labels: ['Resolved', 'Remaining'], datasets: [{ data: [rate, Math.max(0, 100 - rate)], backgroundColor: ['#4edea3', '#e5e7eb'], borderWidth: 0 }] }, plugins: [centerText], options: { ...options, cutout: '78%', plugins: { ...options.plugins, legend: { display: false }, tooltip: { callbacks: { label: item => item.label + ': ' + item.raw + '%' } } } } });
+            charts.cost = new Chart(document.getElementById('monthlyCostChart'), { type: 'bar', data: { labels: data.labels, datasets: [{ label: 'Estimated', data: data.estimated, backgroundColor: '#9ca3af', borderRadius: 5 }, { label: 'Final', data: data.final, backgroundColor: '#e99b42', borderRadius: 5 }] }, options: { ...options, scales: { ...options.scales, y: { ...options.scales.y, ticks: { ...options.scales.y.ticks, callback: value => compactMoney(value) } } } } });
+            const avg = data.complaints.length ? data.complaints.reduce((a, b) => a + b, 0) / data.complaints.length : 0;
+            charts.categorySpend = new Chart(document.getElementById('categorySpendChart'), { type: 'bar', data: { labels: data.categoryLabels, datasets: [{ label: 'Final Cost', data: data.categorySpend, backgroundColor: '#4edea3', borderRadius: 5 }] }, options: { ...options, indexAxis: 'y', scales: { ...options.scales, x: { ...options.scales.x, beginAtZero: true, ticks: { ...options.scales.x.ticks, callback: value => compactMoney(value) } } } } });
+            charts.categoryResolution = new Chart(document.getElementById('categoryResolutionChart'), { type: 'bar', data: { labels: data.categoryResolutionLabels, datasets: [{ label: 'Average days', data: data.categoryResolution, backgroundColor: '#7b8de0', borderRadius: 5 }] }, options: { ...options, indexAxis: 'y', scales: { ...options.scales, x: { ...options.scales.x, beginAtZero: true, ticks: { ...options.scales.x.ticks, callback: value => value + 'd' } } } } });
+        }
+        function updateView() { const graph = state.view === 'graph'; tableView.classList.toggle('hidden', graph); graphView.classList.toggle('hidden', !graph); toggleIcon.textContent = graph ? 'table_rows' : 'bar_chart'; toggleLabel.textContent = graph ? 'View Table' : 'View Graphical Report'; if (graph) renderCharts(); }
+        function addCategoryOptions() { [...new Set(reportRows.map(row => row.category).filter(Boolean))].sort().forEach(name => [categoryFilter, graphCategoryFilter].forEach(select => { const option = document.createElement('option'); option.value = name; option.textContent = name; select.appendChild(option); })); }
+        function updateTableCalculations() {
+            tableRows.forEach(row => {
+                const estimated = row.dataset.estimated === '' ? null : Number(row.dataset.estimated);
+                const finalCost = row.dataset.final === '' ? null : Number(row.dataset.final);
+                const hasCosts = estimated != null && finalCost != null;
+                const percent = hasCosts && estimated !== 0 ? ((finalCost - estimated) / estimated) * 100 : 0;
+                row.dataset.budget = percent > 0 ? 'over' : 'under';
+                const cell = row.querySelector('.js-variance');
+                if (cell) {
+                    cell.textContent = hasCosts ? `${percent > 0 ? '+' : ''}${percent.toFixed(1)}%` : '—';
+                    cell.className = hasCosts && percent > 0 ? 'js-variance text-error font-bold text-label-sm' : 'js-variance text-on-surface-variant font-bold text-label-sm';
+                }
+            });
+        }
+        function updateTable(resetPage = true) {
+            if (resetPage) state.page = 1;
+            const word = state.search.toLowerCase();
+            const matchedRows = tableRows.filter(row => (!word || (row.dataset.id || '').toLowerCase().includes(word) || (row.dataset.location || '').includes(word) || (row.dataset.categoryLower || '').includes(word)) && (!state.category || row.dataset.category === state.category) && (!state.budget || row.dataset.budget === state.budget));
+            const pageCount = Math.max(1, Math.ceil(matchedRows.length / pageSize));
+            state.page = Math.min(state.page, pageCount);
+            const start = (state.page - 1) * pageSize;
+            const visibleRows = new Set(matchedRows.slice(start, start + pageSize));
+            tableRows.forEach(row => { row.style.display = visibleRows.has(row) ? '' : 'none'; });
+            const shownStart = matchedRows.length ? start + 1 : 0;
+            const shownEnd = Math.min(start + pageSize, matchedRows.length);
+            resultsSummary.textContent = matchedRows.length + ' resolved complaints';
+            paginationSummary.textContent = `Showing ${shownStart}–${shownEnd} of ${matchedRows.length} complaints`;
+            pageNumber.textContent = `${state.page} / ${pageCount}`;
+            previousPage.disabled = state.page <= 1;
+            nextPage.disabled = state.page >= pageCount;
+            noMatch.classList.toggle('hidden', matchedRows.length !== 0);
+        }
+        function refreshGraph() { data = calculate(filteredRows()); updateSummary(); renderCharts(); }
+        toggleBtn.addEventListener('click', () => { state.view = state.view === 'table' ? 'graph' : 'table'; updateView(); });
+        searchInput.addEventListener('input', event => { state.search = event.target.value.trim(); updateTable(); });
+        previousPage.addEventListener('click', () => { if (state.page > 1) { state.page--; updateTable(false); } });
+        nextPage.addEventListener('click', () => { state.page++; updateTable(false); });
+        categoryFilter.addEventListener('change', event => { state.category = event.target.value; updateTable(); });
+        budgetFilter.addEventListener('change', event => { state.budget = event.target.value; updateTable(); });
+        graphCategoryFilter.addEventListener('change', refreshGraph); graphBudgetFilter.addEventListener('change', refreshGraph);
+        clearBtn.addEventListener('click', () => { state.search = state.category = state.budget = ''; searchInput.value = categoryFilter.value = budgetFilter.value = graphCategoryFilter.value = graphBudgetFilter.value = ''; data = calculate(reportRows); updateSummary(); updateTable(); renderCharts(); });
+        addCategoryOptions(); updateSummary(); updateTableCalculations(); updateTable(); updateView();
+        new MutationObserver(() => { if (state.view === 'graph') renderCharts(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class', 'style'] });
+    })();
+</script>
+
+
+<script>
+    (function () {
+        const toggle = document.getElementById('mobile-nav-toggle');
+        const sidebar = document.querySelector('.cf-sidebar');
+        const backdrop = document.getElementById('mobile-nav-backdrop');
+        const closeNav = () => { sidebar?.classList.remove('cf-sidebar-open'); backdrop?.classList.remove('is-visible'); toggle?.setAttribute('aria-expanded','false'); if (toggle) toggle.querySelector('.material-symbols-outlined').textContent='menu'; };
+        toggle?.addEventListener('click', () => { const open = !sidebar?.classList.contains('cf-sidebar-open'); sidebar?.classList.toggle('cf-sidebar-open', open); backdrop?.classList.toggle('is-visible', open); toggle?.setAttribute('aria-expanded', String(open)); if (toggle) toggle.querySelector('.material-symbols-outlined').textContent=open?'close':'menu'; });
+        backdrop?.addEventListener('click', closeNav);
+        sidebar?.querySelectorAll('a').forEach(a => a.addEventListener('click', closeNav));
+        const loader = document.getElementById('cityfix-loader');
+        let slowTimer = setTimeout(() => loader?.classList.add('is-visible'), 2300);
+        const finish = () => { clearTimeout(slowTimer); setTimeout(() => loader?.classList.remove('is-visible'), 180); };
+        if (document.readyState === 'complete') finish(); else window.addEventListener('load', finish, {once:true});
+        document.addEventListener('click', event => { const link = event.target.closest('a[href]'); if (!link || link.target === '_blank' || link.origin !== location.origin || link.getAttribute('href').startsWith('#')) return; loader?.classList.add('is-visible'); });
+        document.addEventListener('submit', event => { if (event.target.matches('form')) loader?.classList.add('is-visible'); });
+    })();
+</script>
+</body>
+</html>

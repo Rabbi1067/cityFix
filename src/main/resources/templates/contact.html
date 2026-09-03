@@ -1,0 +1,353 @@
+<!DOCTYPE html><html lang="en" xmlns:th="http://www.thymeleaf.org"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={theme:{extend:{"colors":{"tertiary-fixed-dim":"rgb(var(--tertiary-fixed-dim) / <alpha-value>)","on-secondary-fixed-variant":"rgb(var(--on-secondary-fixed-variant) / <alpha-value>)","on-tertiary":"rgb(var(--on-tertiary) / <alpha-value>)","on-tertiary-fixed":"rgb(var(--on-tertiary-fixed) / <alpha-value>)","on-primary-fixed-variant":"rgb(var(--on-primary-fixed-variant) / <alpha-value>)","on-primary":"rgb(var(--on-primary) / <alpha-value>)","primary-container":"rgb(var(--primary-container) / <alpha-value>)","tertiary":"rgb(var(--tertiary) / <alpha-value>)","error":"rgb(var(--error) / <alpha-value>)","secondary":"rgb(var(--secondary) / <alpha-value>)","on-error":"rgb(var(--on-error) / <alpha-value>)","surface-container-highest":"rgb(var(--surface-container-highest) / <alpha-value>)","on-surface":"rgb(var(--on-surface) / <alpha-value>)","secondary-fixed":"rgb(var(--secondary-fixed) / <alpha-value>)","error-container":"rgb(var(--error-container) / <alpha-value>)","surface-container-low":"rgb(var(--surface-container-low) / <alpha-value>)","on-tertiary-container":"rgb(var(--on-tertiary-container) / <alpha-value>)","surface":"rgb(var(--surface) / <alpha-value>)","inverse-primary":"rgb(var(--inverse-primary) / <alpha-value>)","surface-container-high":"rgb(var(--surface-container-high) / <alpha-value>)","on-secondary-container":"rgb(var(--on-secondary-container) / <alpha-value>)","outline":"rgb(var(--outline) / <alpha-value>)","secondary-container":"rgb(var(--secondary-container) / <alpha-value>)","on-secondary-fixed":"rgb(var(--on-secondary-fixed) / <alpha-value>)","surface-bright":"rgb(var(--surface-bright) / <alpha-value>)","outline-variant":"rgb(var(--outline-variant) / <alpha-value>)","primary-fixed-dim":"rgb(var(--primary-fixed-dim) / <alpha-value>)","on-primary-container":"rgb(var(--on-primary-container) / <alpha-value>)","primary":"rgb(var(--primary) / <alpha-value>)","on-surface-variant":"rgb(var(--on-surface-variant) / <alpha-value>)","surface-tint":"rgb(var(--surface-tint) / <alpha-value>)","on-primary-fixed":"rgb(var(--on-primary-fixed) / <alpha-value>)","surface-container":"rgb(var(--surface-container) / <alpha-value>)","primary-fixed":"rgb(var(--primary-fixed) / <alpha-value>)","tertiary-container":"rgb(var(--tertiary-container) / <alpha-value>)","on-error-container":"rgb(var(--on-error-container) / <alpha-value>)","inverse-surface":"rgb(var(--inverse-surface) / <alpha-value>)","on-tertiary-fixed-variant":"rgb(var(--on-tertiary-fixed-variant) / <alpha-value>)","on-secondary":"rgb(var(--on-secondary) / <alpha-value>)","inverse-on-surface":"rgb(var(--inverse-on-surface) / <alpha-value>)","secondary-fixed-dim":"rgb(var(--secondary-fixed-dim) / <alpha-value>)","surface-container-lowest":"rgb(var(--surface-container-lowest) / <alpha-value>)","tertiary-fixed":"rgb(var(--tertiary-fixed) / <alpha-value>)","on-background":"rgb(var(--on-background) / <alpha-value>)","background":"rgb(var(--background) / <alpha-value>)","surface-variant":"rgb(var(--surface-variant) / <alpha-value>)","surface-dim":"rgb(var(--surface-dim) / <alpha-value>)"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"margin-desktop":"32px","margin-mobile":"16px","base":"4px","sidebar-width":"280px","gutter":"24px","container-max":"1440px"},"fontFamily":{"display-lg":["Inter"],"label-sm":["Inter"],"title-md":["Inter"],"label-md":["Inter"],"headline-lg":["Inter"],"body-lg":["Inter"],"headline-lg-mobile":["Inter"],"body-md":["Inter"]},"fontSize":{"display-lg":["48px",{"lineHeight":"1.2","letterSpacing":"-0.02em","fontWeight":"700"}],"label-sm":["12px",{"lineHeight":"1","letterSpacing":"0.05em","fontWeight":"600"}],"title-md":["20px",{"lineHeight":"1.4","fontWeight":"600"}],"label-md":["14px",{"lineHeight":"1.2","letterSpacing":"0.01em","fontWeight":"500"}],"headline-lg":["32px",{"lineHeight":"1.25","letterSpacing":"-0.01em","fontWeight":"600"}],"body-lg":["18px",{"lineHeight":"1.6","fontWeight":"400"}],"headline-lg-mobile":["24px",{"lineHeight":"1.3","fontWeight":"600"}],"body-md":["16px",{"lineHeight":"1.5","fontWeight":"400"}]}}}}</script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet">
+
+    <script th:src="@{/theme.js}"></script>
+    <link rel="stylesheet" th:href="@{/theme-tokens.css}">
+    <style>
+        .contact-loader {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: grid;
+            place-items: center;
+            padding: 24px;
+            background: rgb(15 23 42 / 35%);
+            backdrop-filter: blur(10px);
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity .25s ease, visibility .25s ease;
+        }
+        .contact-loader.is-visible {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+        .contact-loader-card {
+            width: min(360px, 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+            padding: 30px 26px;
+            text-align: center;
+            border: 1px solid rgb(255 255 255 / 25%);
+            border-radius: 22px;
+            background: rgb(255 255 255 / 94%);
+            box-shadow: 0 24px 70px rgb(0 0 0 / 22%);
+        }
+        .contact-loader-logo { width: 52px; height: 52px; object-fit: contain; border-radius: 14px; }
+        .contact-loader-spinner {
+            width: 36px; height: 36px; border-radius: 999px;
+            border: 3px solid #dbe3f5; border-top-color: #00288e; border-right-color: #006c49;
+            animation: contactLoaderSpin .8s linear infinite;
+        }
+        .contact-loader-title { margin: 0; color: #00288e; font: 700 16px/1.3 Inter, sans-serif; }
+        .contact-loader-text { margin: 0; color: #475569; font: 400 13px/1.4 Inter, sans-serif; }
+        @keyframes contactLoaderSpin { to { transform: rotate(360deg); } }
+        @media (prefers-reduced-motion: reduce) { .contact-loader-spinner { animation: none; } }
+        @media (max-width: 767px) {
+            .contact-header-nav.is-open { display: flex; }
+            .contact-header-nav a { width: 100%; padding: 12px 14px; border-radius: 10px; }
+            .contact-header-nav a:hover { background: rgb(148 163 184 / 12%); }
+        }
+    </style>
+</head><body class="bg-surface font-body-md text-body-md text-on-surface">
+<div id="contactPageLoader" class="contact-loader" role="status" aria-live="polite" aria-label="Loading CityFix">
+    <div class="contact-loader-card">
+        <img class="contact-loader-logo" th:src="@{/screen.png}" alt="CityFix">
+        <div class="contact-loader-spinner" aria-hidden="true"></div>
+        <p class="contact-loader-title">CityFix</p>
+        <p class="contact-loader-text">Please wait while we take you there...</p>
+    </div>
+</div>
+<header class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 max-w-container-max mx-auto px-margin-mobile lg:px-margin-desktop flex items-center justify-between"><div class="flex items-center gap-3"><img alt="CityFix Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDM1qIprtHsaC--pSuLEUYQ0qnbbdv-J-zjj09JJtxiRjbd-gTDFXENKML1Fup_WBnV1lpBzifb1APRRU5OWAei33kNGiPoo4rwW9rOwcCK1o3_0-QIVJYwWczyaknvOlDkDQpA5WaAeX-3taGd7RXaZ_kJK8MRx9lPO_lF99gRHrsF3hgvl6p7-Q0gmndb3YjNRf9RJ5iy-K5OsdpbtKoi_nw71OaU6c4JlL9UKEj5ImPeDa_VLXb9UQ"><span class="font-title-md text-title-md text-primary tracking-tight">CityFix</span></div>
+
+    <button id="contactMobileMenuToggle" type="button"
+            class="md:hidden inline-flex h-11 w-11 items-center justify-center rounded-xl border border-outline-variant bg-surface-container text-on-surface"
+            aria-controls="contactPrimaryNav" aria-expanded="false" aria-label="Open navigation menu">
+        <span class="material-symbols-outlined" aria-hidden="true">menu</span>
+    </button>
+
+    <nav id="contactPrimaryNav" class="contact-header-nav hidden md:flex flex-col md:flex-row items-stretch md:items-center gap-2 md:gap-8 absolute md:static top-[72px] left-4 right-4 md:top-auto md:left-auto md:right-auto rounded-2xl md:rounded-none border md:border-0 border-outline-variant bg-surface-container-lowest md:bg-transparent p-3 md:p-0 shadow-xl md:shadow-none">
+        <a class="transition-colors"
+           th:classappend="${activePage == 'home'} ? 'text-primary font-semibold' : 'text-on-surface-variant hover:text-on-surface'"
+           th:href="@{/}">Home</a>
+
+        <a class="transition-colors"
+           th:classappend="${activePage == 'about'} ? 'text-primary font-semibold' : 'text-on-surface-variant hover:text-on-surface'"
+           th:href="@{/about}">About</a>
+
+        <a class="transition-colors"
+           th:classappend="${activePage == 'contact'} ? 'text-primary font-semibold' : 'text-on-surface-variant hover:text-on-surface'"
+           th:href="@{/contact}">Contact</a>
+        <a class="transition-colors"
+           th:classappend="${activePage == 'login'} ? 'text-primary font-semibold' : 'text-on-surface-variant hover:text-on-surface'"
+           th:href="@{/login}">Login</a>
+        <a class="bg-primary text-on-primary px-4 py-2 rounded-lg hover:bg-primary-container transition-all" th:href="@{/register}">Register</a>
+        <div th:replace="~{fragments/themeToggle :: toggle}"></div>
+
+    </nav>
+</div></header><main class="w-full pt-16 bg-surface"><div class="flex flex-col w-full">
+    <!-- Hero Section: Immersive Overlap -->
+    <section class="relative w-full h-[614px] min-h-[500px] flex items-center overflow-hidden">
+        <div class="absolute inset-0 z-0">
+            <div class="w-full h-full bg-cover bg-center" data-alt="A cinematic, wide-angle shot of a modern, sustainable smart city skyline at dusk. Soft blue and amber lights illuminate architectural glass structures. In the foreground, a clean, minimal public plaza with digital kiosks. The atmosphere is professional, calm, and high-tech, using a palette of deep blues and crisp whites." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDTJLf5B5etEveb80OSstUga8nWbcaR0aWqD5ZB7FboGCcjAfeJHs_cZv-68OhnBCjc3MjHGmvD9chey_iQDMNKr8-MrPco8xoT0NbLqFmJYG7U6_RMmrojxyAIshV3JpLCNyYaF-twInuPEJnHuZgO3Be7nyKJo69ADb4GodWTW5iuSDOCr-6MJB_AueCl5fXzuonnHdjzU35qGHm0TbyHwWAspk1UfysI-zkXjWDP9vurHvLfCtBoSw')"></div>
+            <div class="absolute inset-0 bg-gradient-to-r from-primary/90 via-primary/40 to-transparent"></div>
+        </div>
+        <div class="relative z-10 max-w-container-max mx-auto px-margin-mobile lg:px-margin-desktop w-full">
+            <div class="max-w-2xl">
+                <span class="font-label-md text-label-md text-primary-fixed uppercase tracking-[0.2em] mb-4 block">Get in Touch</span>
+                <h1 class="font-display-lg text-display-lg text-on-primary mb-6 leading-tight">We're here to help build a <span class="text-secondary-fixed">better city</span> together.</h1>
+                <p class="font-body-lg text-body-lg text-primary-fixed/80 max-w-lg">
+                    Whether you're a citizen reporting an issue or a municipality looking to partner, our team is ready to assist.
+                </p>
+            </div>
+        </div>
+    </section>
+    <!-- Main Content Grid -->
+    <section class="max-w-container-max mx-auto px-margin-mobile lg:px-margin-desktop w-full -mt-24 mb-24 relative z-20">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+            <!-- Contact Form Card -->
+            <div class="lg:col-span-7 bg-surface-container-lowest shadow-xl rounded-xl p-8 lg:p-12">
+                <h2 class="font-headline-lg text-headline-lg text-on-surface mb-8">Send us a Message</h2>
+                <form class="space-y-6" id="contactForm">
+                    <!-- All submissions from this form are sent to fazlerabbicse65@gmail.com via EmailJS (no backend needed) -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="flex flex-col gap-2">
+                            <label class="font-label-md text-label-md text-on-surface-variant" for="fullName">Full Name</label>
+                            <input class="bg-surface border border-outline-variant px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="fullName" name="fullName" placeholder="John Doe" required="" type="text">
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <label class="font-label-md text-label-md text-on-surface-variant" for="email">Email Address</label>
+                            <input class="bg-surface border border-outline-variant px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="email" name="email" placeholder="john@example.com" required="" type="email">
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <label class="font-label-md text-label-md text-on-surface-variant" for="subject">Subject</label>
+                        <input class="bg-surface border border-outline-variant px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" id="subject" name="subject" placeholder="How can we help?" required="" type="text">
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <label class="font-label-md text-label-md text-on-surface-variant" for="message">Message</label>
+                        <textarea class="bg-surface border border-outline-variant px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none" id="message" name="message" placeholder="Tell us more about your inquiry..." required="" rows="5"></textarea>
+                    </div>
+                    <div id="formStatus" class="hidden rounded-lg px-4 py-3 text-label-md font-label-md"></div>
+                    <button class="w-full md:w-auto px-12 py-4 bg-primary text-on-primary font-label-md text-label-md rounded-lg hover:bg-primary-container transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2" id="submitBtn" type="submit">
+                        <span id="submitBtnText">Send Message</span>
+                        <span class="material-symbols-outlined text-sm">send</span>
+                    </button>
+                </form>
+            </div>
+            <!-- Contact Info Sidebar -->
+            <div class="lg:col-span-5 space-y-6">
+                <!-- Info Cards -->
+                <div class="bg-surface-container shadow-sm rounded-xl p-8 flex items-start gap-6">
+                    <div class="bg-primary/10 p-3 rounded-lg text-primary">
+                        <span class="material-symbols-outlined">location_on</span>
+                    </div>
+                    <div>
+                        <h3 class="font-title-md text-title-md text-on-surface mb-1">Office Address</h3>
+                        <p class="text-on-surface-variant">Tejgaon Industrial Area<br>Dhaka-1208, Bangladesh</p>
+                    </div>
+                </div>
+                <div class="bg-surface-container shadow-sm rounded-xl p-8 flex items-start gap-6">
+                    <div class="bg-secondary/10 p-3 rounded-lg text-secondary">
+                        <span class="material-symbols-outlined">call</span>
+                    </div>
+                    <div>
+                        <h3 class="font-title-md text-title-md text-on-surface mb-1">Phone &amp; Email</h3>
+                        <p class="text-on-surface-variant">+1 (555) 012-3456<br>support@cityfix.gov</p>
+                    </div>
+                </div>
+                <div class="bg-surface-container shadow-sm rounded-xl p-8 flex items-start gap-6">
+                    <div class="bg-tertiary/10 p-3 rounded-lg text-tertiary">
+                        <span class="material-symbols-outlined">schedule</span>
+                    </div>
+                    <div>
+                        <h3 class="font-title-md text-title-md text-on-surface mb-1">Working Hours</h3>
+                        <p class="text-on-surface-variant">Monday – Friday: 9:00 AM – 6:00 PM<br>Emergency Support: 24/7</p>
+                    </div>
+                </div>
+                <!-- Map Section: live embedded Google Map centered on Tejgaon, Dhaka -->
+                <div class="rounded-xl overflow-hidden shadow-sm h-64 lg:h-auto lg:grow">
+                    <iframe
+                            allowfullscreen=""
+                            class="w-full h-full min-h-[300px] border-0"
+                            loading="lazy"
+                            referrerpolicy="no-referrer-when-downgrade"
+                            src="https://www.google.com/maps?q=Tejgaon+Industrial+Area,+Dhaka-1208,+Bangladesh&output=embed">
+                    </iframe>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- FAQ Section: High Contrast Layout -->
+    <section class="bg-surface-container-high py-24">
+        <div class="max-w-container-max mx-auto px-margin-mobile lg:px-margin-desktop">
+            <div class="text-center mb-16">
+                <h2 class="font-display-lg text-display-lg text-on-surface mb-4">Frequently Asked Questions</h2>
+                <div class="h-1 w-24 bg-primary mx-auto rounded-full"></div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-surface-container-lowest p-8 rounded-xl shadow-sm border-l-4 border-primary hover:-translate-y-1 transition-transform">
+                    <h4 class="font-title-md text-title-md text-on-surface mb-3">How quickly are complaints resolved?</h4>
+                    <p class="text-on-surface-variant">Response times vary by category. Urgent safety issues are typically addressed within 24 hours, while routine maintenance may take 3-5 business days.</p>
+                </div>
+                <div class="bg-surface-container-lowest p-8 rounded-xl shadow-sm border-l-4 border-secondary hover:-translate-y-1 transition-transform">
+                    <h4 class="font-title-md text-title-md text-on-surface mb-3">Can I remain anonymous when reporting?</h4>
+                    <p class="text-on-surface-variant">Yes, you can choose to hide your identity from the public portal, though city officials may need your contact info for verification purposes.</p>
+                </div>
+                <div class="bg-surface-container-lowest p-8 rounded-xl shadow-sm border-l-4 border-tertiary hover:-translate-y-1 transition-transform">
+                    <h4 class="font-title-md text-title-md text-on-surface mb-3">Is there a mobile app available?</h4>
+                    <p class="text-on-surface-variant">Our platform is fully responsive for mobile browsers. Dedicated iOS and Android applications are currently in beta testing.</p>
+                </div>
+                <div class="bg-surface-container-lowest p-8 rounded-xl shadow-sm border-l-4 border-primary hover:-translate-y-1 transition-transform">
+                    <h4 class="font-title-md text-title-md text-on-surface mb-3">How do I track my report status?</h4>
+                    <p class="text-on-surface-variant">Once submitted, you'll receive a unique tracking ID. You can enter this on the 'Complaints' page to see real-time progress updates.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Decorative CTA Section -->
+    <section class="py-24 relative overflow-hidden">
+        <div class="absolute top-0 right-0 -mr-32 -mt-32 w-96 h-96 bg-primary/5 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-0 left-0 -ml-32 -mb-32 w-96 h-96 bg-secondary/5 rounded-full blur-3xl"></div>
+        <div class="max-w-4xl mx-auto text-center px-margin-mobile">
+            <h2 class="font-headline-lg text-headline-lg text-on-surface mb-6">Need immediate assistance?</h2>
+            <p class="font-body-lg text-body-lg text-on-surface-variant mb-10">Our 24/7 hotline is available for critical infrastructure failures or safety hazards that require instant attention.</p>
+            <a class="inline-flex items-center gap-3 px-8 py-4 bg-on-surface text-surface-container-lowest rounded-full hover:bg-on-surface-variant transition-colors shadow-lg" href="tel:311">
+                <span class="material-symbols-outlined">emergency</span>
+                <span class="font-title-md text-title-md">Call City Helpline: 311</span>
+            </a>
+        </div>
+    </section>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script>
+        // ============================================================
+        // EmailJS setup — replace the 3 values below with your own
+        // (https://www.emailjs.com — free account, no backend needed)
+        // ============================================================
+        const EMAILJS_PUBLIC_KEY = "VnYZNtH-EJq1vfqe2";
+        const EMAILJS_SERVICE_ID = "service_z6lklkj";
+        const EMAILJS_TEMPLATE_ID = "template_8hlpskp";
+        const RECIPIENT_EMAIL = "fazlerabbicse65@gmail.com";
+
+        emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+
+        // Micro-interaction for form inputs
+        const inputs = document.querySelectorAll('input, textarea');
+        inputs.forEach(input => {
+            input.addEventListener('focus', () => {
+                input.parentElement.querySelector('label')?.classList.add('text-primary');
+            });
+            input.addEventListener('blur', () => {
+                input.parentElement.querySelector('label')?.classList.remove('text-primary');
+            });
+        });
+
+        // Contact form submit -> sends email directly from the browser via EmailJS
+        const contactForm = document.getElementById('contactForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const submitBtnText = document.getElementById('submitBtnText');
+        const formStatus = document.getElementById('formStatus');
+
+        function showStatus(message, isSuccess) {
+            formStatus.textContent = message;
+            formStatus.classList.remove('hidden', 'bg-secondary-container', 'text-on-secondary-container', 'bg-error-container', 'text-on-error-container');
+            if (isSuccess) {
+                formStatus.classList.add('bg-secondary-container', 'text-on-secondary-container');
+            } else {
+                formStatus.classList.add('bg-error-container', 'text-on-error-container');
+            }
+        }
+
+        contactForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            submitBtn.disabled = true;
+            submitBtnText.textContent = 'Sending...';
+
+            const params = {
+                name: document.getElementById('fullName').value,
+                email: document.getElementById('email').value,
+                subject: document.getElementById('subject').value,
+                message: document.getElementById('message').value,
+                to_email: RECIPIENT_EMAIL
+            };
+
+            emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, params)
+                .then(() => {
+                    showStatus('Message sent successfully! We\'ll get back to you soon.', true);
+                    contactForm.reset();
+                })
+                .catch((err) => {
+                    console.error('EmailJS error:', err);
+                    showStatus('Something went wrong. Please try again or email us directly.', false);
+                })
+                .finally(() => {
+                    submitBtn.disabled = false;
+                    submitBtnText.textContent = 'Send Message';
+                });
+        });
+    </script>
+</div></main><footer class="bg-surface-container-low border-t border-outline-variant py-12 mt-12"><div class="max-w-container-max mx-auto px-margin-mobile lg:px-margin-desktop flex flex-col md:flex-row justify-between items-start gap-8"><div class="max-w-xs"><div class="flex items-center gap-2 mb-4"><img alt="CityFix Logo" class="h-6 w-auto" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDM1qIprtHsaC--pSuLEUYQ0qnbbdv-J-zjj09JJtxiRjbd-gTDFXENKML1Fup_WBnV1lpBzifb1APRRU5OWAei33kNGiPoo4rwW9rOwcCK1o3_0-QIVJYwWczyaknvOlDkDQpA5WaAeX-3taGd7RXaZ_kJK8MRx9lPO_lF99gRHrsF3hgvl6p7-Q0gmndb3YjNRf9RJ5iy-K5OsdpbtKoi_nw71OaU6c4JlL9UKEj5ImPeDa_VLXb9UQ"><span class="font-title-md text-title-md text-primary">CityFix</span></div><p class="text-on-surface-variant text-label-md">Empowering citizens to build smarter, cleaner cities through transparent reporting and efficient governance.</p></div><div class="flex gap-12"><div class="flex flex-col gap-2"> <span class="font-label-md text-label-md text-on-surface uppercase tracking-wider mb-2">Information</span><a class="text-on-surface-variant hover:text-primary" href="#">Privacy Policy</a><a class="text-on-surface-variant hover:text-primary" href="#">Terms of Service</a></div><div class="flex flex-col gap-2"> <span class="font-label-md text-label-md text-on-surface uppercase tracking-wider mb-2">Support</span><a class="text-on-surface-variant hover:text-primary" href="#">Help Center</a><a class="text-on-surface-variant hover:text-primary" href="#">Contact Us</a></div></div><div class="flex gap-4 items-center"><a href="https://github.com/Rabbi1067" target="_blank" rel="noopener noreferrer" aria-label="GitHub" class="text-on-surface-variant hover:text-primary transition-colors"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405 1.02 0 2.04.135 3 .405 2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"></path></svg></a><span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary">forum</span><a href="mailto:fazlerabbicse65@gmail.com" aria-label="Email" class="text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined cursor-pointer">mail</span></a></div></div><div class="max-w-container-max mx-auto px-margin-mobile lg:px-margin-desktop mt-12 pt-8 border-t border-outline-variant text-center text-on-surface-variant text-label-sm">
+    © 2026 CityFix. All rights reserved.<br class="sm:hidden"/>
+    <span class="sm:ml-1">Designed and developed by Md Fazley Rabbi · ID: 2023200000686</span>
+</div></footer>
+
+<script>
+    (() => {
+        const loader = document.getElementById('contactPageLoader');
+        const menuToggle = document.getElementById('contactMobileMenuToggle');
+        const nav = document.getElementById('contactPrimaryNav');
+
+        const showLoader = () => loader?.classList.add('is-visible');
+        const hideLoader = () => loader?.classList.remove('is-visible');
+
+        if (menuToggle && nav) {
+            menuToggle.addEventListener('click', () => {
+                const open = menuToggle.getAttribute('aria-expanded') === 'true';
+                menuToggle.setAttribute('aria-expanded', String(!open));
+                menuToggle.setAttribute('aria-label', open ? 'Open navigation menu' : 'Close navigation menu');
+                nav.classList.toggle('is-open', !open);
+                const icon = menuToggle.querySelector('.material-symbols-outlined');
+                if (icon) icon.textContent = open ? 'menu' : 'close';
+            });
+            nav.querySelectorAll('a').forEach(link => link.addEventListener('click', () => {
+                nav.classList.remove('is-open');
+                menuToggle.setAttribute('aria-expanded', 'false');
+            }));
+            window.addEventListener('resize', () => {
+                if (window.innerWidth >= 768) {
+                    nav.classList.remove('is-open');
+                    menuToggle.setAttribute('aria-expanded', 'false');
+                }
+            });
+        }
+
+        document.querySelectorAll('a[href]').forEach(link => {
+            link.addEventListener('click', event => {
+                const href = link.getAttribute('href');
+                if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:') ||
+                    link.target === '_blank' || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+                try {
+                    if (new URL(href, window.location.href).origin === window.location.origin) showLoader();
+                } catch (_) { /* Ignore malformed or external links. */ }
+            });
+        });
+
+        const contactForm = document.getElementById('contactForm');
+        if (contactForm) {
+            contactForm.addEventListener('submit', event => {
+                if (contactForm.checkValidity()) showLoader();
+            });
+        }
+
+        window.addEventListener('pageshow', hideLoader);
+        window.setTimeout(hideLoader, 8000);
+    })();
+</script>
+
+
+</body></html>

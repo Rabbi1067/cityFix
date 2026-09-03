@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title th:text="${view == 'list'} ? 'CityFix - Manage Complaints' : (${view == 'delete'} ? 'CityFix - Delete Complaint' : 'CityFix - Complaint Details')">CityFix - Complaints</title>
+    <!--
+        MERGED FILE — replaces the old 3 separate templates:
+          manage-complaints.html, complaint-delete.html, complaint-details.html
+        Controller picks which section renders by passing a "view" model
+        attribute ("list" / "delete" / "details"). All three routes return
+        the SAME template name: "complaints".
+
+        RESOLUTION FEATURE (this revision):
+          Complaint entity was NOT given more raw columns. Instead a separate
+          ComplaintResolution entity (1:1 JPA relation) holds resolvedAt,
+          costNotes and an after-photo. The details view below now has a
+          "Resolution Notes" field + after-photo upload, and — once resolved —
+          shows the resolved date read-only. This same resolved/cost data is
+          what will feed the upcoming admin "Cost & Resolution Reports" page.
+    -->
+    <style>
+        @layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}
+        /* Native <select> dropdown popups can ignore Tailwind/CSS-variable theme colors.
+           Keep the filter controls and their options readable in the dark UI. */
+        /* Let native select controls follow the active light/dark theme. */
+        select { color-scheme: light dark; }
+        select option {
+            color: rgb(var(--on-surface));
+            background-color: rgb(var(--surface));
+        }
+
+        /* Reference-style filter controls: dark surface, generous height, rounded corners. */
+        #categoryFilter,
+        #statusFilter,
+        #priorityFilter {
+            min-height: 48px;
+            padding: 0 14px;
+            color: rgb(var(--on-surface)) !important;
+            background: rgb(var(--surface-container-high)) !important;
+            border: 1px solid rgb(var(--outline-variant)) !important;
+            border-radius: 12px !important;
+            font-size: 14px;
+            font-weight: 500;
+            appearance: auto;
+            color-scheme: dark;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,.02), 0 2px 8px rgba(0,0,0,.12);
+            transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+        }
+        #categoryFilter:hover,
+        #statusFilter:hover,
+        #priorityFilter:hover {
+            background: rgb(var(--surface-container)) !important;
+            border-color: rgb(var(--outline)) !important;
+        }
+        #categoryFilter:focus,
+        #statusFilter:focus,
+        #priorityFilter:focus {
+            outline: none;
+            border-color: rgb(var(--primary)) !important;
+            box-shadow: 0 0 0 3px rgb(var(--primary) / .18), 0 4px 12px rgba(0,0,0,.18);
+        }
+
+        /* Always render five stars; fill them according to the saved half-step rating. */
+        .citizen-rating-stars {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            color: rgb(var(--outline));
+            line-height: 1;
+        }
+        .citizen-rating-star {
+            display: inline-block;
+            font-size: 22px;
+            color: rgb(var(--outline));
+        }
+        .citizen-rating-star.full {
+            color: #fbbf24;
+        }
+        .citizen-rating-star.half {
+            background: linear-gradient(90deg, #fbbf24 50%, rgb(var(--outline)) 50%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="tailwind-config">tailwind.config={theme:{extend:{"colors":{"tertiary-fixed-dim":"rgb(var(--tertiary-fixed-dim) / <alpha-value>)","on-secondary-fixed-variant":"rgb(var(--on-secondary-fixed-variant) / <alpha-value>)","on-tertiary":"rgb(var(--on-tertiary) / <alpha-value>)","on-tertiary-fixed":"rgb(var(--on-tertiary-fixed) / <alpha-value>)","on-primary-fixed-variant":"rgb(var(--on-primary-fixed-variant) / <alpha-value>)","on-primary":"rgb(var(--on-primary) / <alpha-value>)","primary-container":"rgb(var(--primary-container) / <alpha-value>)","tertiary":"rgb(var(--tertiary) / <alpha-value>)","error":"rgb(var(--error) / <alpha-value>)","secondary":"rgb(var(--secondary) / <alpha-value>)","on-error":"rgb(var(--on-error) / <alpha-value>)","surface-container-highest":"rgb(var(--surface-container-highest) / <alpha-value>)","on-surface":"rgb(var(--on-surface) / <alpha-value>)","secondary-fixed":"rgb(var(--secondary-fixed) / <alpha-value>)","error-container":"rgb(var(--error-container) / <alpha-value>)","surface-container-low":"rgb(var(--surface-container-low) / <alpha-value>)","on-tertiary-container":"rgb(var(--on-tertiary-container) / <alpha-value>)","surface":"rgb(var(--surface) / <alpha-value>)","inverse-primary":"rgb(var(--inverse-primary) / <alpha-value>)","surface-container-high":"rgb(var(--surface-container-high) / <alpha-value>)","on-secondary-container":"rgb(var(--on-secondary-container) / <alpha-value>)","outline":"rgb(var(--outline) / <alpha-value>)","secondary-container":"rgb(var(--secondary-container) / <alpha-value>)","on-secondary-fixed":"rgb(var(--on-secondary-fixed) / <alpha-value>)","surface-bright":"rgb(var(--surface-bright) / <alpha-value>)","outline-variant":"rgb(var(--outline-variant) / <alpha-value>)","primary-fixed-dim":"rgb(var(--primary-fixed-dim) / <alpha-value>)","on-primary-container":"rgb(var(--on-primary-container) / <alpha-value>)","primary":"rgb(var(--primary) / <alpha-value>)","on-surface-variant":"rgb(var(--on-surface-variant) / <alpha-value>)","surface-tint":"rgb(var(--surface-tint) / <alpha-value>)","on-primary-fixed":"rgb(var(--on-primary-fixed) / <alpha-value>)","surface-container":"rgb(var(--surface-container) / <alpha-value>)","primary-fixed":"rgb(var(--primary-fixed) / <alpha-value>)","tertiary-container":"rgb(var(--tertiary-container) / <alpha-value>)","on-error-container":"rgb(var(--on-error-container) / <alpha-value>)","inverse-surface":"rgb(var(--inverse-surface) / <alpha-value>)","on-tertiary-fixed-variant":"rgb(var(--on-tertiary-fixed-variant) / <alpha-value>)","on-secondary":"rgb(var(--on-secondary) / <alpha-value>)","inverse-on-surface":"rgb(var(--inverse-on-surface) / <alpha-value>)","secondary-fixed-dim":"rgb(var(--secondary-fixed-dim) / <alpha-value>)","surface-container-lowest":"rgb(var(--surface-container-lowest) / <alpha-value>)","tertiary-fixed":"rgb(var(--tertiary-fixed) / <alpha-value>)","on-background":"rgb(var(--on-background) / <alpha-value>)","background":"rgb(var(--background) / <alpha-value>)","surface-variant":"rgb(var(--surface-variant) / <alpha-value>)","surface-dim":"rgb(var(--surface-dim) / <alpha-value>)"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"margin-desktop":"32px","margin-mobile":"16px","base":"4px","sidebar-width":"280px","gutter":"24px","container-max":"1440px"},"fontFamily":{"display-lg":["Inter"],"label-sm":["Inter"],"title-md":["Inter"],"label-md":["Inter"],"headline-lg":["Inter"],"body-lg":["Inter"],"headline-lg-mobile":["Inter"],"body-md":["Inter"]},"fontSize":{"display-lg":["48px",{"lineHeight":"1.2","letterSpacing":"-0.02em","fontWeight":"700"}],"label-sm":["12px",{"lineHeight":"1","letterSpacing":"0.05em","fontWeight":"600"}],"title-md":["20px",{"lineHeight":"1.4","fontWeight":"600"}],"label-md":["14px",{"lineHeight":"1.2","letterSpacing":"0.01em","fontWeight":"500"}],"headline-lg":["32px",{"lineHeight":"1.25","letterSpacing":"-0.01em","fontWeight":"600"}],"body-lg":["18px",{"lineHeight":"1.6","fontWeight":"400"}],"headline-lg-mobile":["24px",{"lineHeight":"1.3","fontWeight":"600"}],"body-md":["16px",{"lineHeight":"1.5","fontWeight":"400"}]}}}}</script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet">
+    <script th:src="@{/theme.js}"></script>
+    <link rel="stylesheet" th:href="@{/theme-tokens.css}">
+    <style>
+        /* Responsive shell: desktop design remains unchanged. */
+        html, body { width:100%; min-width:0; min-height:100%; height:auto !important; overflow-x:hidden; overflow-y:auto !important; }
+        body { overscroll-behavior:auto; }
+        main { min-height:calc(100vh - 4rem); height:auto !important; overflow:visible !important; }
+        .cf-complaints-sidebar { transition:transform .25s ease, box-shadow .25s ease; }
+        .cf-complaints-shell { min-width:0; }
+        .cf-complaints-menu-btn { display:none; }
+        .cf-complaints-backdrop { display:none; }
+        .cf-complaints-table-scroll { overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+        .cf-complaints-table-scroll::-webkit-scrollbar { display:none; }
+        .cf-complaints-table-scroll table { min-width:1100px; }
+        .cf-complaints-loader { position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:16px; padding:24px; background:rgb(var(--surface) / .94); backdrop-filter:blur(16px); opacity:0; visibility:hidden; pointer-events:none; transition:opacity .35s ease, visibility .35s ease; }
+        .cf-complaints-loader.is-visible { opacity:1; visibility:visible; pointer-events:auto; }
+        .cf-complaints-loader-spinner { width:42px; height:42px; border:3px solid rgb(var(--primary) / .22); border-top-color:rgb(var(--primary)); border-right-color:rgb(var(--secondary)); border-radius:50%; animation:cf-complaints-spin .8s linear infinite; }
+        .cf-complaints-loader-copy { text-align:center; color:rgb(var(--on-surface)); font-size:14px; font-weight:600; }
+        .cf-complaints-loader-copy span { display:block; margin-top:5px; color:rgb(var(--on-surface-variant)); font-size:12px; font-weight:400; }
+        @keyframes cf-complaints-spin { to { transform:rotate(360deg); } }
+        @media (max-width:1023px) {
+            .cf-complaints-sidebar { width:280px !important; transform:translateX(-100%); }
+            .cf-complaints-sidebar.cf-complaints-sidebar-open { transform:translateX(0); box-shadow:20px 0 48px rgb(0 0 0 / .18); }
+            .cf-complaints-shell { padding-left:0 !important; }
+            .cf-complaints-topbar { left:0 !important; padding-left:24px !important; padding-right:24px !important; }
+            .cf-complaints-menu-btn { display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; border:0; border-radius:999px; color:rgb(var(--on-surface-variant)); background:rgb(var(--surface-container-high)); }
+            .cf-complaints-backdrop.is-visible { display:block; position:fixed; inset:0; z-index:45; background:rgb(0 0 0 / .34); backdrop-filter:blur(2px); }
+            .cf-complaints-table-scroll table { min-width:1100px; }
+        }
+        @media (max-width:639px) {
+            .cf-complaints-topbar { padding-left:16px !important; padding-right:16px !important; }
+            .cf-complaints-topbar .text-label-sm { display:none; }
+            .cf-complaints-topbar-actions { gap:12px !important; }
+            .cf-complaints-shell main .px-margin-desktop { padding-left:16px !important; padding-right:16px !important; }
+            .cf-complaints-shell main .p-6 { padding:20px !important; }
+            .cf-complaints-shell main .p-7 { padding:20px !important; }
+            .cf-complaints-shell main .min-w-\[230px\] { min-width:0 !important; }
+        }
+        @media (prefers-reduced-motion:reduce) { .cf-complaints-loader-spinner { animation:none; } .cf-complaints-loader { transition:none; } }
+    </style>
+</head>
+<body class="bg-surface font-body-md text-on-surface">
+<div id="cf-complaints-loader" class="cf-complaints-loader" role="status" aria-live="polite" aria-label="Loading complaints"><div class="cf-complaints-loader-spinner" aria-hidden="true"></div><div class="cf-complaints-loader-copy">Preparing complaints<span>Loading complaint records</span></div></div>
+<div id="cf-complaints-backdrop" class="cf-complaints-backdrop" aria-hidden="true"></div>
+
+<!-- ============================================================ -->
+<!-- SHARED SIDEBAR (same for all three views)                     -->
+<!-- ============================================================ -->
+<aside class="cf-complaints-sidebar fixed left-0 top-0 h-full w-sidebar-width bg-surface-container-lowest border-r border-outline-variant z-50 flex flex-col">
+    <div class="p-6 flex items-center gap-3 border-b border-outline-variant">
+        <img alt="CityFix Logo" class="h-8 w-auto" th:src="@{/screen.png}">
+        <span class="font-title-md text-title-md text-primary">CityFix</span>
+    </div>
+    <nav class="flex-1 py-6 px-4 space-y-2">
+        <a th:href="@{/admin/dashboard}" class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all">
+            <span class="material-symbols-outlined mr-3">dashboard</span>
+            <span class="font-label-md text-label-md">Dashboard</span>
+        </a>
+        <!-- Always active: this template only ever serves complaint pages (list/delete/details) -->
+        <a th:href="@{/admin/complaints}" class="flex items-center px-4 py-3 rounded-xl bg-secondary-container text-on-secondary-container transition-all">
+            <span class="material-symbols-outlined mr-3">assignment</span>
+            <span class="font-label-md text-label-md">Manage Complaints</span>
+        </a>
+        <a th:href="@{/admin/complaints/reports}" class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all">
+            <span class="material-symbols-outlined mr-3">bar_chart</span>
+            <span class="font-label-md text-label-md">Reports</span>
+        </a>
+        <a th:href="@{/admin/users}" class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all">
+            <span class="material-symbols-outlined mr-3">group</span>
+            <span class="font-label-md text-label-md">Manage Users</span>
+        </a>
+        <a sec:authorize="hasRole('SUPER_ADMIN')" th:href="@{/admin/admins}" class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all">
+            <span class="material-symbols-outlined mr-3">admin_panel_settings</span>
+            <span class="font-label-md text-label-md">Manage Admins</span>
+        </a>
+        <a th:href="@{/admin/profile}" class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all">
+            <span class="material-symbols-outlined mr-3">person</span>
+            <span class="font-label-md text-label-md">Profile</span>
+        </a>
+    </nav>
+    <div class="p-4 mt-auto border-t border-outline-variant">
+        <a th:href="@{/logout}" class="flex items-center px-4 py-3 rounded-xl text-error hover:bg-error-container transition-all">
+            <span class="material-symbols-outlined mr-3">logout</span>
+            <span class="font-label-md text-label-md">Logout</span>
+        </a>
+    </div>
+</aside>
+
+<div class="cf-complaints-shell pl-sidebar-width">
+
+    <!-- ============================================================ -->
+    <!-- SHARED HEADER — renders for ALL three views (list/delete/details).
+         Theme toggle + notification bell (JS/localStorage-driven, same
+         as the dashboard) are now available everywhere, not just list. -->
+    <!-- ============================================================ -->
+    <header class="cf-complaints-topbar fixed top-0 left-sidebar-width right-0 h-16 bg-surface/80 backdrop-blur-xl border-b border-outline-variant z-40 flex items-center justify-between px-margin-desktop">
+        <div class="flex items-center gap-3">
+            <button id="cf-complaints-menu-btn" type="button" class="cf-complaints-menu-btn" aria-label="Open navigation" aria-expanded="false"><span class="material-symbols-outlined">menu</span></button>
+            <span class="material-symbols-outlined text-primary" th:text="${view == 'list'} ? 'assignment' : (${view == 'delete'} ? 'delete' : 'visibility')">assignment</span>
+            <div class="flex flex-col leading-tight">
+                <span class="font-label-md text-label-md text-on-surface"
+                      th:text="${view == 'list'} ? 'Manage Complaints' : (${view == 'delete'} ? 'Delete Complaint' : 'Complaint Details')">Manage Complaints</span>
+                <span class="text-label-sm text-on-surface-variant"
+                      th:text="${view == 'list'} ? 'Review and resolve citizen reports' : (${view == 'delete'} ? 'Confirm removal of this record' : 'Full report and resolution details')">Review and resolve citizen reports</span>
+            </div>
+        </div>
+        <div class="cf-complaints-topbar-actions flex items-center gap-6">
+
+            <div th:replace="~{fragments/themeToggle :: toggle}"></div>
+
+            <!-- Notification bell: all complaints are sent once as raw data and
+                 JavaScript filters HIGH/CRITICAL, non-RESOLVED complaints. -->
+            <div class="relative">
+                <span id="notif-bell" class="material-symbols-outlined text-on-surface-variant cursor-pointer">
+                    notifications
+                </span>
+                <span id="notif-badge"
+                      class="hidden absolute -top-1 -right-1 bg-error text-on-error text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                </span>
+
+                <div id="notif-dropdown" class="hidden absolute right-0 mt-2 w-80 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-lg z-50">
+                    <div class="p-3 border-b border-outline-variant flex justify-between items-center">
+                        <span class="font-label-md text-label-md">High Urgency Complaints</span>
+                        <button id="mark-all-read" class="text-label-sm text-primary hover:underline" type="button">Mark all read</button>
+                    </div>
+
+                    <div id="notif-empty" class="hidden p-4 text-label-sm text-on-surface-variant">
+                        No urgent complaints right now.
+                    </div>
+
+                    <div id="notif-items"></div>
+                </div>
+            </div>
+            <a th:href="@{/admin/profile}" class="flex items-center gap-3 border-l border-outline-variant pl-6 cursor-pointer hover:opacity-80 transition-opacity">
+                <span class="hidden md:block text-right">
+                    <p class="text-label-md font-bold text-on-surface" id="header-name" th:text="${admin.name}">Admin</p>
+                    <p class="text-label-sm text-on-surface-variant">Administrator</p>
+                </span>
+                <img alt="Profile" class="w-9 h-9 rounded-full object-cover border border-outline-variant shadow-sm" id="header-avatar"
+                     th:src="@{${admin.profileImagePath != null ? admin.profileImagePath : '/profile1.jpg'}}">
+            </a>
+        </div>
+    </header>
+
+    <!-- Raw complaint data used by client-side counts, filters, and notifications. -->
+    <div id="complaintsData" class="hidden" aria-hidden="true">
+        <div th:each="c : ${complaints}"
+             class="raw-complaint"
+             th:attr="data-id=${c.id},
+                      data-title=${c.title},
+                      data-category=${c.category},
+                      data-status=${c.status != null ? c.status.name() : 'PENDING'},
+                      data-priority=${c.priority != null ? c.priority.name() : 'LOW'}"></div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- VIEW: LIST (Manage Complaints)                                -->
+    <!-- ============================================================ -->
+    <th:block th:if="${view == 'list'}">
+        <main class="pt-16 min-h-screen bg-surface">
+            <div class="flex flex-col w-full px-margin-desktop py-8 space-y-8">
+
+                <!-- Header & Statistics Row -->
+                <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2 text-primary">
+                            <span class="material-symbols-outlined text-body-lg">admin_panel_settings</span>
+                            <span class="font-label-md text-label-md uppercase tracking-wider">Administrative Console</span>
+                        </div>
+                        <h1 class="font-display-lg text-display-lg text-on-surface">Manage Complaints</h1>
+                        <p class="text-on-surface-variant font-body-md max-w-2xl">Review, assign, and resolve citizen reports across all municipal departments. Monitor real-time status updates and priority escalations.</p>
+                    </div>
+
+                    <!-- Complaint statistics -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 w-full xl:max-w-4xl">
+                        <div class="relative bg-secondary-container/45 p-7 rounded-2xl flex items-center gap-5 min-w-[230px] min-h-[148px] shadow-md overflow-hidden group hover:shadow-lg transition-shadow">
+                            <div class="absolute -right-5 -top-5 w-24 h-24 bg-secondary/10 rounded-full transition-transform group-hover:scale-125"></div>
+                            <div class="relative z-10 w-16 h-16 rounded-full bg-secondary/15 flex items-center justify-center shrink-0">
+                                <span class="material-symbols-outlined text-secondary text-[28px]">search</span>
+                            </div>
+                            <div class="relative z-10 flex flex-col">
+                                <span class="text-label-sm text-on-secondary-container uppercase tracking-wider">Complaints Found</span>
+                                <span id="resultsSummary" class="text-4xl font-bold text-secondary leading-tight" th:text="${complaints.size()}">0</span>
+                            </div>
+                        </div>
+                        <div class="relative bg-surface-container-low p-7 rounded-2xl flex items-center gap-5 min-w-[230px] min-h-[148px] shadow-md overflow-hidden group hover:shadow-lg transition-shadow">
+                            <div class="absolute -right-5 -top-5 w-24 h-24 bg-primary/10 rounded-full transition-transform group-hover:scale-125"></div>
+                            <div class="relative z-10 w-16 h-16 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+                                <span class="material-symbols-outlined text-primary text-[28px]">assignment</span>
+                            </div>
+                            <div class="relative z-10 flex flex-col">
+                                <span class="text-label-sm text-on-surface-variant uppercase tracking-wider">Total Active</span>
+                                <span id="totalActiveCount" class="text-4xl font-bold text-primary leading-tight">0</span>
+                            </div>
+                        </div>
+                        <div class="relative bg-error-container/50 p-7 rounded-2xl flex items-center gap-5 min-w-[230px] min-h-[148px] shadow-md overflow-hidden group hover:shadow-lg transition-shadow">
+                            <div class="absolute -right-5 -top-5 w-24 h-24 bg-error/10 rounded-full transition-transform group-hover:scale-125"></div>
+                            <div class="relative z-10 w-16 h-16 rounded-full bg-error/15 flex items-center justify-center shrink-0">
+                                <span class="material-symbols-outlined text-error text-[28px]">priority_high</span>
+                            </div>
+                            <div class="relative z-10 flex flex-col">
+                                <span class="text-label-sm text-on-error-container uppercase tracking-wider">High Priority</span>
+                                <span id="highPriorityCount" class="text-4xl font-bold text-error leading-tight">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filter guidance -->
+                <div class="flex items-end justify-between gap-4">
+                    <p class="text-label-md text-on-surface-variant">Use the filters below to narrow the complaint list.</p>
+                </div>
+
+                <!-- Filters Panel -->
+                <div class="bg-surface-container-lowest rounded-xl shadow-md p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-label-sm text-on-surface-variant ml-1" for="complaintSearchInput">Search ID, Subject or Citizen</label>
+                            <div class="relative">
+                                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-body-md">search</span>
+                                <input id="complaintSearchInput" class="w-full pl-10 pr-4 py-2.5 bg-surface-container-high rounded-lg border-none focus:ring-2 focus:ring-primary/20 text-label-md outline-none transition-all" placeholder="e.g. CF-9021 or pothole" type="text">
+                            </div>
+                        </div>
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-label-sm text-on-surface-variant ml-1" for="categoryFilter">Category</label>
+                            <select id="categoryFilter" class="w-full px-4 py-2.5 bg-surface-container-high rounded-lg border-none focus:ring-2 focus:ring-primary/20 text-label-md outline-none appearance-none cursor-pointer">
+                                <option value="">All Categories</option>
+                            </select>
+                        </div>
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-label-sm text-on-surface-variant ml-1" for="statusFilter">Current Status</label>
+                            <select id="statusFilter" class="w-full px-4 py-2.5 bg-surface-container-high rounded-lg border-none focus:ring-2 focus:ring-primary/20 text-label-md outline-none appearance-none cursor-pointer">
+                                <option value="">All Statuses</option>
+                                <option value="PENDING">Pending</option>
+                                <option value="IN_PROGRESS">In Progress</option>
+                                <option value="RESOLVED">Resolved</option>
+                                <option value="REJECTED">Rejected</option>
+                            </select>
+                        </div>
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-label-sm text-on-surface-variant ml-1" for="priorityFilter">Priority Level</label>
+                            <select id="priorityFilter" class="w-full px-4 py-2.5 bg-surface-container-high rounded-lg border-none focus:ring-2 focus:ring-primary/20 text-label-md outline-none appearance-none cursor-pointer">
+                                <option value="">Any Priority</option>
+                                <option value="CRITICAL">Critical</option>
+                                <option value="HIGH">High</option>
+                                <option value="MEDIUM">Medium</option>
+                                <option value="LOW">Low</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mt-6 pt-6 border-t border-outline-variant flex justify-between items-center">
+                        <button id="clearFiltersBtn" type="button" class="text-label-md text-primary font-bold hover:underline">Clear all filters</button>
+                        <span class="text-label-sm text-on-surface-variant">Filter by category, status, or priority</span>
+                    </div>
+                </div>
+
+                <!-- Data Table Section -->
+                <div class="bg-surface-container-lowest rounded-xl shadow-md overflow-hidden">
+                    <div class="cf-complaints-table-scroll">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                            <tr class="bg-surface-container text-on-surface-variant border-b border-outline-variant">
+                                <th class="px-6 py-4 font-label-md text-label-sm uppercase tracking-wider">ID</th>
+                                <th class="px-6 py-4 font-label-md text-label-sm uppercase tracking-wider">Subject</th>
+                                <th class="px-6 py-4 font-label-md text-label-sm uppercase tracking-wider">Citizen Name</th>
+                                <th class="px-6 py-4 font-label-md text-label-sm uppercase tracking-wider">Ward</th>
+                                <th class="px-6 py-4 font-label-md text-label-sm uppercase tracking-wider">Category</th>
+                                <th class="px-6 py-4 font-label-md text-label-sm uppercase tracking-wider text-center">Status</th>
+                                <th class="px-6 py-4 font-label-md text-label-sm uppercase tracking-wider text-center">Priority</th>
+                                <th class="px-6 py-4 font-label-md text-label-sm uppercase tracking-wider text-right">Actions</th>
+                            </tr>
+                            </thead>
+                            <tbody class="divide-y divide-outline-variant" id="complaintsBody">
+                            <tr class="hover:bg-surface-container-low transition-colors group js-complaint-row"
+                                th:each="complaint : ${complaints}"
+                                th:attr="data-id=${complaint.id},
+                                          data-subject=${#strings.toLowerCase(complaint.title)},
+                                          data-citizen=${complaint.citizen != null ? #strings.toLowerCase(complaint.citizen.name) : ''},
+                                          data-category=${complaint.category},
+                                          data-status=${complaint.status != null ? complaint.status.name() : 'PENDING'},
+                                          data-priority=${complaint.priority}">
+                                <td class="px-6 py-4 font-label-md text-primary" th:text="'#CF-' + ${complaint.id}">#CF-8942</td>
+                                <td class="px-6 py-4 max-w-xs">
+                                    <div class="flex flex-col">
+                                        <span class="font-title-md text-label-md text-on-surface truncate" th:text="${complaint.title}">Subject</span>
+                                        <span class="text-label-sm text-on-surface-variant" th:text="${#temporals.format(complaint.createdAt, 'MMM dd, yyyy')}">Oct 24, 2023</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary uppercase"
+                                             th:text="${complaint.citizen != null and !#strings.isEmpty(complaint.citizen.name)} ? ${#strings.substring(complaint.citizen.name, 0, 1)} : '?'">JD</div>
+                                        <span class="text-label-md text-on-surface" th:text="${complaint.citizen != null ? complaint.citizen.name : 'Unknown'}">Citizen</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 text-label-md text-on-surface"
+                                    th:text="${(complaint.citizen != null and complaint.citizen.address != null and !#strings.isEmpty(complaint.citizen.address.city)) ? complaint.citizen.address.city : 'Unknown'}">Ward</td>
+                                <td class="px-6 py-4">
+                                    <span class="text-label-md text-on-surface-variant px-2 py-1 bg-surface-container rounded" th:text="${complaint.category}">Category</span>
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    <span th:switch="${complaint.status != null ? complaint.status.name() : 'PENDING'}" class="text-label-sm font-bold">
+                                        <span th:case="'RESOLVED'" class="px-3 py-1 rounded-full bg-surface-container-highest text-on-surface-variant inline-block">Resolved</span>
+                                        <span th:case="'IN_PROGRESS'" class="px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container inline-block">In Progress</span>
+                                        <span th:case="'REJECTED'" class="px-3 py-1 rounded-full bg-error-container text-on-error-container inline-block">Rejected</span>
+                                        <span th:case="*" class="px-3 py-1 rounded-full bg-tertiary-container text-on-tertiary-container inline-block">Pending</span>
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    <span th:switch="${complaint.priority != null ? complaint.priority.name() : 'LOW'}" class="font-bold flex items-center justify-center gap-1">
+                                        <span th:case="'CRITICAL'" class="text-error flex items-center gap-1">
+                                            <span class="material-symbols-outlined text-[16px]">priority_high</span>Critical
+                                        </span>
+                                        <span th:case="'HIGH'" class="text-on-tertiary-container flex items-center gap-1">
+                                            <span class="material-symbols-outlined text-[16px]">priority_high</span>High
+                                        </span>
+                                        <span th:case="'MEDIUM'" class="text-on-tertiary-fixed-variant flex items-center gap-1">
+                                            <span class="material-symbols-outlined text-[16px]">stat_2</span>Medium
+                                        </span>
+                                        <span th:case="*" class="text-on-surface-variant flex items-center gap-1">
+                                            <span class="material-symbols-outlined text-[16px]">stat_1</span>Low
+                                        </span>
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <a th:href="@{'/admin/complaints/' + ${complaint.id} + '/view'}"
+                                           class="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors" title="View Details">
+                                            <span class="material-symbols-outlined">visibility</span>
+                                        </a>
+                                        <a th:href="@{'/admin/complaints/' + ${complaint.id} + '/delete'}"
+                                           class="p-2 hover:bg-error/10 text-error rounded-lg transition-colors" title="Delete">
+                                            <span class="material-symbols-outlined">delete</span>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr th:if="${complaints.isEmpty()}">
+                                <td class="px-6 py-14 text-center" colspan="8">
+                                    <div class="flex flex-col items-center gap-2">
+                                        <span class="material-symbols-outlined text-on-surface-variant text-[32px]">inbox</span>
+                                        <p class="font-title-md text-on-surface">No complaints yet</p>
+                                        <p class="font-body-md text-on-surface-variant">New citizen reports will show up here automatically.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="p-6 border-t border-outline-variant flex flex-col md:flex-row items-center justify-between gap-4">
+                        <p class="text-label-sm text-on-surface-variant" id="jsPageInfo">Showing 0 of 0 complaints</p>
+                        <div class="flex items-center gap-1" id="jsPaginationControls">
+                            <button class="p-2 text-on-surface-variant hover:bg-surface-container rounded-lg transition-all disabled:opacity-30" id="jsPrevBtn" type="button">
+                                <span class="material-symbols-outlined">chevron_left</span>
+                            </button>
+                            <div class="flex items-center gap-1" id="jsPageNumbers"></div>
+                            <button class="p-2 text-on-surface-variant hover:bg-surface-container rounded-lg transition-all disabled:opacity-30" id="jsNextBtn" type="button">
+                                <span class="material-symbols-outlined">chevron_right</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Decorative Accent (static, analytics wiring to be done later) -->
+                <div class="relative w-full h-24 overflow-hidden rounded-xl bg-gradient-to-r from-primary/5 to-transparent flex items-center px-12 border border-primary/10">
+                    <div class="absolute -right-16 top-0 text-[180px] font-bold text-primary/5 select-none pointer-events-none">FIX</div>
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                            <span class="material-symbols-outlined text-primary">analytics</span>
+                        </div>
+                        <div>
+                            <h4 class="font-title-md text-label-md text-on-surface">Cost &amp; Resolution Reports</h4>
+                            <p class="text-label-sm text-on-surface-variant">See location, submitted/resolved dates, and estimated vs final cost for every resolved complaint.</p>
+                        </div>
+                    </div>
+                    <a th:href="@{/admin/complaints/reports}"
+                       class="ml-auto bg-surface-container-lowest text-primary border border-primary/20 px-6 py-2 rounded-full font-label-md hover:bg-primary hover:text-on-primary transition-all">
+                        Open Reports
+                    </a>
+                </div>
+            </div>
+        </main>
+
+        <script>
+            (function () {
+                const rowsPerPage = 5;
+                const tbody = document.getElementById('complaintsBody');
+                const allRows = Array.from(tbody.querySelectorAll('tr.js-complaint-row'));
+                const totalActiveCount = document.getElementById('totalActiveCount');
+                const highPriorityCount = document.getElementById('highPriorityCount');
+
+                // Counts are calculated from the raw complaint rows in the browser.
+                totalActiveCount.textContent = allRows.filter(row => row.dataset.status !== 'RESOLVED').length;
+                highPriorityCount.textContent = allRows.filter(row =>
+                    row.dataset.priority === 'HIGH' || row.dataset.priority === 'CRITICAL'
+                ).length;
+
+                const searchInput = document.getElementById('complaintSearchInput');
+                const categoryFilter = document.getElementById('categoryFilter');
+                const statusFilter = document.getElementById('statusFilter');
+                const priorityFilter = document.getElementById('priorityFilter');
+                const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+
+                const resultsSummary = document.getElementById('resultsSummary');
+                const pageInfo = document.getElementById('jsPageInfo');
+                const prevBtn = document.getElementById('jsPrevBtn');
+                const nextBtn = document.getElementById('jsNextBtn');
+                const pageNumbers = document.getElementById('jsPageNumbers');
+
+                let currentPage = 0;
+
+                function addOptions(select, values, emptyLabel, order) {
+                    const currentValue = select.value;
+                    select.innerHTML = '';
+
+                    const emptyOption = document.createElement('option');
+                    emptyOption.value = '';
+                    emptyOption.textContent = emptyLabel;
+                    select.appendChild(emptyOption);
+
+                    const uniqueValues = Array.from(new Set(values.filter(value => value && value.trim() !== '')));
+                    const orderedValues = order
+                        ? [...order.filter(value => uniqueValues.includes(value)), ...uniqueValues.filter(value => !order.includes(value)).sort()]
+                        : uniqueValues.sort((a, b) => a.localeCompare(b));
+
+                    orderedValues.forEach(value => {
+                        const option = document.createElement('option');
+                        option.value = value;
+                        option.textContent = value === 'IN_PROGRESS'
+                            ? 'In Progress'
+                            : value.charAt(0) + value.slice(1).toLowerCase();
+                        select.appendChild(option);
+                    });
+
+                    if (uniqueValues.includes(currentValue)) {
+                        select.value = currentValue;
+                    }
+                }
+
+                function populateFilterOptions() {
+                    const categories = allRows.map(row => row.getAttribute('data-category'));
+                    const statuses = allRows.map(row => row.getAttribute('data-status'));
+                    const priorities = allRows.map(row => row.getAttribute('data-priority'));
+
+                    // Keep the filters visible and predictable even when no rows are loaded yet.
+                    addOptions(categoryFilter, categories, 'All Categories');
+                    addOptions(statusFilter,
+                        ['PENDING', 'IN_PROGRESS', 'RESOLVED', 'REJECTED', ...statuses],
+                        'All Statuses',
+                        ['PENDING', 'IN_PROGRESS', 'RESOLVED', 'REJECTED']);
+                    addOptions(priorityFilter,
+                        ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', ...priorities],
+                        'Any Priority',
+                        ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']);
+                }
+
+                function getFilteredRows() {
+                    const term = searchInput.value.trim().toLowerCase();
+                    const category = categoryFilter.value;
+                    const status = statusFilter.value;
+                    const priority = priorityFilter.value;
+
+                    return allRows.filter(row => {
+                        const id = row.getAttribute('data-id') || '';
+                        const subject = row.getAttribute('data-subject') || '';
+                        const citizen = row.getAttribute('data-citizen') || '';
+                        const rowCategory = row.getAttribute('data-category') || '';
+                        const rowStatus = row.getAttribute('data-status') || '';
+                        const rowPriority = row.getAttribute('data-priority') || '';
+
+                        const matchesSearch = !term ||
+                            subject.includes(term) ||
+                            citizen.includes(term) ||
+                            id.includes(term) ||
+                            ('cf-' + id).includes(term);
+
+                        const matchesCategory = !category || rowCategory === category;
+                        const matchesStatus = !status || rowStatus === status;
+                        const matchesPriority = !priority || rowPriority === priority;
+
+                        return matchesSearch && matchesCategory && matchesStatus && matchesPriority;
+                    });
+                }
+
+                function renderPageNumbers(totalPages) {
+                    pageNumbers.innerHTML = '';
+                    for (let i = 0; i < totalPages; i++) {
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.textContent = i + 1;
+                        btn.className = 'w-10 h-10 flex items-center justify-center rounded-lg font-label-md transition-all ' +
+                            (i === currentPage ? 'bg-primary text-on-primary shadow-md' : 'hover:bg-surface-container text-on-surface-variant');
+                        btn.addEventListener('click', () => {
+                            currentPage = i;
+                            render();
+                        });
+                        pageNumbers.appendChild(btn);
+                    }
+                }
+
+                function render() {
+                    allRows.forEach(row => row.style.display = 'none');
+
+                    const filtered = getFilteredRows();
+                    const totalPages = Math.max(1, Math.ceil(filtered.length / rowsPerPage));
+
+                    if (currentPage >= totalPages) currentPage = totalPages - 1;
+                    if (currentPage < 0) currentPage = 0;
+
+                    const start = currentPage * rowsPerPage;
+                    const end = start + rowsPerPage;
+                    const pageRows = filtered.slice(start, end);
+
+                    pageRows.forEach(row => row.style.display = '');
+
+                    const showingFrom = filtered.length === 0 ? 0 : start + 1;
+                    const showingTo = Math.min(end, filtered.length);
+                    pageInfo.textContent = `Showing ${showingFrom}-${showingTo} of ${filtered.length} complaints`;
+
+                    resultsSummary.textContent = filtered.length;
+
+                    prevBtn.disabled = currentPage === 0;
+                    nextBtn.disabled = currentPage >= totalPages - 1;
+
+                    renderPageNumbers(totalPages);
+                }
+
+                searchInput.addEventListener('input', () => { currentPage = 0; render(); });
+                categoryFilter.addEventListener('change', () => { currentPage = 0; render(); });
+                statusFilter.addEventListener('change', () => { currentPage = 0; render(); });
+                priorityFilter.addEventListener('change', () => { currentPage = 0; render(); });
+
+                clearFiltersBtn.addEventListener('click', () => {
+                    searchInput.value = '';
+                    categoryFilter.value = '';
+                    statusFilter.value = '';
+                    priorityFilter.value = '';
+                    currentPage = 0;
+                    render();
+                });
+
+                prevBtn.addEventListener('click', () => { if (currentPage > 0) { currentPage--; render(); } });
+                nextBtn.addEventListener('click', () => { currentPage++; render(); });
+
+                populateFilterOptions();
+                render();
+            })();
+        </script>
+    </th:block>
+
+    <!-- ============================================================ -->
+    <!-- VIEW: DELETE (confirmation)                                   -->
+    <!-- ============================================================ -->
+    <th:block th:if="${view == 'delete'}">
+        <main class="pt-16 min-h-screen bg-surface flex items-center justify-center px-margin-desktop py-12">
+            <div class="w-full max-w-md">
+                <div class="bg-surface-container-lowest rounded-2xl shadow-xl overflow-hidden border border-outline-variant/20">
+
+                    <div class="p-8 flex flex-col items-center text-center border-b border-outline-variant/30">
+                        <div class="w-16 h-16 rounded-full bg-error-container flex items-center justify-center mb-4">
+                            <span class="material-symbols-outlined text-error text-[32px]">warning</span>
+                        </div>
+                        <h1 class="font-headline-lg text-headline-lg text-on-surface mb-2">Delete this complaint?</h1>
+                        <p class="font-body-md text-on-surface-variant">This action cannot be undone. The complaint record and its attached image will be permanently removed.</p>
+                    </div>
+
+                    <div class="p-8">
+                        <div class="bg-surface-container rounded-xl p-5 mb-6">
+                            <p class="font-label-md text-on-surface-variant mb-1" th:text="'#CF-' + ${complaint.id}">#CF-8942</p>
+                            <p class="font-title-md text-on-surface leading-snug" th:text="${complaint.title}">Complaint Title</p>
+                        </div>
+
+                        <dl class="space-y-3 mb-8">
+                            <div class="flex items-center justify-between">
+                                <dt class="font-label-md text-on-surface-variant">Category</dt>
+                                <dd class="font-label-md text-on-surface font-semibold" th:text="${complaint.category}">Roads</dd>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <dt class="font-label-md text-on-surface-variant">Status</dt>
+                                <dd class="font-label-md text-on-surface font-semibold" th:text="${complaint.status}">PENDING</dd>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <dt class="font-label-md text-on-surface-variant">Reported By</dt>
+                                <dd class="font-label-md text-on-surface font-semibold"
+                                    th:text="${complaint.citizen != null ? complaint.citizen.name : 'Unknown'}">Citizen Name</dd>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <dt class="font-label-md text-on-surface-variant">Submitted</dt>
+                                <dd class="font-label-md text-on-surface font-semibold"
+                                    th:text="${#temporals.format(complaint.createdAt, 'MMM dd, yyyy')}">Jan 01, 2026</dd>
+                            </div>
+                        </dl>
+
+                        <div class="flex items-center gap-3">
+                            <a th:href="@{/admin/complaints}"
+                               class="flex-1 h-12 flex items-center justify-center rounded-lg border border-outline-variant text-on-surface font-label-md hover:bg-surface-container transition-all">
+                                Cancel
+                            </a>
+                            <form th:action="@{'/admin/complaints/' + ${complaint.id} + '/delete'}" method="post" class="flex-1">
+                                <button type="submit"
+                                        class="w-full h-12 flex items-center justify-center gap-2 rounded-lg bg-error text-on-error font-label-md hover:opacity-90 active:scale-[0.98] transition-all">
+                                    <span class="material-symbols-outlined text-[20px]">delete</span>
+                                    Delete
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </th:block>
+
+    <!-- ============================================================ -->
+    <!-- VIEW: DETAILS                                                 -->
+    <!-- ============================================================ -->
+    <th:block th:if="${view == 'details'}">
+        <main class="pt-16 min-h-screen bg-surface flex items-center justify-center px-margin-desktop py-12">
+            <div class="w-full max-w-3xl">
+                <div class="bg-surface-container-lowest rounded-2xl shadow-xl overflow-hidden border border-outline-variant/20">
+
+                    <div class="p-8 border-b border-outline-variant/30 flex items-start justify-between gap-4">
+                        <div>
+                            <span class="font-label-md text-label-md text-primary" th:text="'#CF-' + ${complaint.id}">#CF-8942</span>
+                            <h1 class="font-headline-lg text-headline-lg text-on-surface mt-1" th:text="${complaint.title}">Complaint Title</h1>
+                            <p class="font-label-sm text-on-surface-variant mt-1" th:text="${#temporals.format(complaint.createdAt, 'MMM dd, yyyy - hh:mm a')}">Oct 24, 2023</p>
+                        </div>
+                        <span th:switch="${complaint.status != null ? complaint.status.name() : 'PENDING'}" class="text-label-sm font-bold shrink-0">
+                            <span th:case="'RESOLVED'" class="px-3 py-1.5 rounded-full bg-surface-container-highest text-on-surface-variant inline-block">Resolved</span>
+                            <span th:case="'IN_PROGRESS'" class="px-3 py-1.5 rounded-full bg-secondary-container text-on-secondary-container inline-block">In Progress</span>
+                            <span th:case="*" class="px-3 py-1.5 rounded-full bg-tertiary-container text-on-tertiary-container inline-block">Pending</span>
+                        </span>
+                    </div>
+
+                    <div th:if="${resolutionError != null}" class="mx-8 mt-6 flex items-start gap-3 rounded-xl border border-error/30 bg-error-container px-4 py-3 text-on-error-container" role="alert">
+                        <span class="material-symbols-outlined text-error" aria-hidden="true">error</span>
+                        <p class="font-label-md" th:text="${resolutionError}">Please upload an After Resolved image before saving.</p>
+                    </div>
+
+                    <div class="p-8">
+                        <div class="mb-8" th:if="${complaint.hasImage()}">
+                            <p class="font-label-md text-label-md text-on-surface-variant mb-2">Visual Evidence (Before)</p>
+                            <div class="flex justify-center rounded-xl bg-surface-container-low p-3">
+                                <img th:src="${complaint.imageUrl}" alt="Complaint evidence"
+                                     class="block max-w-full max-h-[62vh] w-auto h-auto object-contain rounded-xl border border-outline-variant shadow-sm">
+                            </div>
+                        </div>
+                        <div class="mb-8 flex flex-col items-center justify-center gap-2 h-40 rounded-xl border-2 border-dashed border-outline-variant bg-surface-container-low"
+                             th:if="${!complaint.hasImage()}">
+                            <span class="material-symbols-outlined text-on-surface-variant text-[32px]">image_not_supported</span>
+                            <span class="font-label-md text-on-surface-variant">No image attached</span>
+                        </div>
+
+                        <div class="mb-8" th:if="${complaint.resolution != null and complaint.resolution.hasResolutionImage()}">
+                            <p class="font-label-md text-label-md text-on-surface-variant mb-2">After Resolved</p>
+                            <div class="flex justify-center rounded-xl bg-surface-container-low p-3">
+                                <img th:src="${complaint.resolution.resolutionImageUrl}" alt="After resolved evidence"
+                                     class="block max-w-full max-h-[62vh] w-auto h-auto object-contain rounded-xl border border-outline-variant shadow-sm">
+                            </div>
+                            <div th:if="${complaint.resolution.citizenRating != null}"
+                                 class="mt-3 flex items-center justify-center gap-3 text-label-md text-on-surface-variant"
+                                 th:attr="aria-label='Citizen rating: ' + ${complaint.resolution.citizenRating / 2.0} + ' out of 5'">
+                                <span class="citizen-rating-stars" aria-hidden="true">
+                                    <th:block th:each="displayStar : ${#numbers.sequence(1, 5)}">
+                                        <span class="citizen-rating-star"
+                                              th:classappend="${complaint.resolution.citizenRating >= displayStar * 2} ? ' full' : (${complaint.resolution.citizenRating == displayStar * 2 - 1} ? ' half' : ' empty')">★</span>
+                                    </th:block>
+                                </span>
+                                <span class="font-semibold" th:text="${complaint.resolution.citizenRating / 2.0} + ' / 5'">3.5 / 5</span>
+                            </div>
+                        </div>
+
+                        <!-- AI-Estimated Resolution Cost -->
+                        <div class="mb-8 rounded-xl border border-primary/20 bg-primary/5 p-6">
+                            <div class="flex items-center gap-2 mb-4">
+                                <span class="material-symbols-outlined text-primary text-[20px]">payments</span>
+                                <h3 class="font-title-md text-label-md text-on-surface">Estimated Resolution Cost</h3>
+                                <span class="ml-auto text-label-sm text-primary bg-primary/10 px-2 py-0.5 rounded-full">AI Suggested</span>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <p class="font-label-md text-label-sm text-on-surface-variant mb-1">System Estimate</p>
+                                    <p id="estimatedCostValue" class="font-display-lg text-headline-lg text-primary"
+                                       th:text="${complaint.estimatedCost != null} ? ('৳' + ${complaint.estimatedCost}) : 'Not calculated yet'"
+                                       th:attr="data-raw-value=${complaint.estimatedCost}">
+                                        ৳7,500
+                                    </p>
+                                    <p class="text-label-sm text-on-surface-variant mt-1">Based on category &amp; priority</p>
+
+                                    <button type="button" id="useAiSuggestionBtn"
+                                            th:if="${complaint.estimatedCost != null}"
+                                            class="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-label-sm font-label-md hover:bg-primary/20 transition-all">
+                                        <span class="material-symbols-outlined text-[16px]">auto_awesome</span>
+                                        Use AI Suggestion
+                                    </button>
+                                </div>
+
+                                <div class="flex flex-col gap-1.5">
+                                    <label class="font-label-md text-label-sm text-on-surface-variant" for="finalCostInput">
+                                        Final Cost
+                                        <span class="text-error" th:if="${complaint.status == null or complaint.status.name() != 'RESOLVED'}">*</span>
+                                        <span th:if="${complaint.status != null and complaint.status.name() == 'RESOLVED'}"
+                                              class="text-label-sm text-on-surface-variant">(locked — complaint resolved)</span>
+                                    </label>
+                                    <div class="relative">
+                                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant">৳</span>
+                                        <input id="finalCostInput" form="resolveComplaintForm" name="finalCost" type="number" step="0.01" min="0"
+                                               th:value="${complaint.finalCost}"
+                                               th:readonly="${complaint.status != null and complaint.status.name() == 'RESOLVED'}"
+                                               placeholder="Enter final cost"
+                                               th:classappend="${complaint.status != null and complaint.status.name() == 'RESOLVED'} ? ' opacity-60 cursor-not-allowed' : ''"
+                                               class="w-full pl-8 pr-4 py-2.5 bg-surface-container-lowest rounded-lg border border-outline-variant focus:ring-2 focus:ring-primary/20 text-label-md outline-none">
+                                    </div>
+                                    <p class="text-label-sm text-on-surface-variant mt-1">Type manually, or use the AI suggestion on the left</p>
+
+                                    <!-- Cost variance vs the AI estimate, once both numbers exist -->
+                                    <p th:if="${complaint.estimatedCost != null and complaint.finalCost != null}"
+                                       class="text-label-sm mt-1"
+                                       th:classappend="${complaint.finalCost > complaint.estimatedCost} ? 'text-error' : 'text-on-surface-variant'"
+                                       th:text="${complaint.finalCost > complaint.estimatedCost}
+                 ? ('Went ৳' + (${complaint.finalCost} - ${complaint.estimatedCost}) + ' over the estimate')
+                 : ('৳' + (${complaint.estimatedCost} - ${complaint.finalCost}) + ' under the estimate')">
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Resolution notes + after-photo + resolved-date. Written onto the separate
+                             ComplaintResolution entity (not new columns on Complaint) via
+                             ComplaintService.resolveOrUpdateComplaint(). -->
+                        <div class="mb-8 rounded-xl border border-outline-variant bg-surface-container-low p-6">
+                            <div class="flex items-center gap-2 mb-4">
+                                <span class="material-symbols-outlined text-on-surface-variant text-[20px]">fact_check</span>
+                                <h3 class="font-title-md text-label-md text-on-surface">Resolution Details</h3>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="flex flex-col gap-1.5">
+                                    <label class="font-label-md text-label-sm text-on-surface-variant" for="costNotesInput">
+                                        Resolution Notes (materials, labor, vendor, etc.)
+                                    </label>
+                                    <textarea id="costNotesInput" form="resolveComplaintForm" name="costNotes" rows="3"
+                                              th:text="${complaint.resolution != null ? complaint.resolution.costNotes : ''}"
+                                              placeholder="e.g. 3 bags of asphalt + 2 workers, half-day job"
+                                              class="w-full px-4 py-2.5 bg-surface-container-lowest rounded-lg border border-outline-variant focus:ring-2 focus:ring-primary/20 text-label-md outline-none resize-none"></textarea>
+                                </div>
+
+                                <div class="flex flex-col gap-1.5">
+                                    <label class="font-label-md text-label-sm text-on-surface-variant" for="resolutionImageInput">
+                                        After Resolved <span class="text-error" aria-hidden="true">*</span>
+                                    </label>
+                                    <input id="resolutionImageInput" form="resolveComplaintForm" name="resolutionImage" type="file" accept="image/*"
+                                           th:attr="data-has-existing-after-photo=${complaint.resolution != null and complaint.resolution.hasResolutionImage()}"                                           class="w-full text-label-sm text-on-surface-variant file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-primary/10 file:text-primary file:font-label-md file:cursor-pointer cursor-pointer">
+                                    <p id="resolutionImageHelp" class="text-label-sm text-on-surface-variant mt-1">Required when changing status to Resolved. Uploading a new image replaces the current after-photo.</p>
+                                </div>
+                            </div>
+
+                            <p th:if="${complaint.resolution != null and complaint.resolution.resolvedAt != null}"
+                               class="flex items-center gap-2 mt-5 pt-5 border-t border-outline-variant text-label-md text-on-surface">
+                                <span class="material-symbols-outlined text-[18px] text-primary">event_available</span>
+                                Resolved on
+                                <span class="font-semibold" th:text="${#temporals.format(complaint.resolution.resolvedAt, 'MMM dd, yyyy - hh:mm a')}">Jan 01, 2026</span>
+                            </p>
+                        </div>
+
+                        <script th:inline="javascript">
+                            (function () {
+                                const btn = document.getElementById('useAiSuggestionBtn');
+                                if (!btn) return;
+
+                                btn.addEventListener('click', function () {
+                                    const estimatedEl = document.getElementById('estimatedCostValue');
+                                    const finalCostInput = document.getElementById('finalCostInput');
+                                    const rawValue = estimatedEl.getAttribute('data-raw-value');
+                                    if (rawValue) {
+                                        finalCostInput.value = rawValue;
+                                        finalCostInput.focus();
+                                    }
+                                });
+                            })();
+                        </script>
+
+                        <!-- id="resolveComplaintForm" so the finalCost / costNotes / resolutionImage
+                             fields above (which live visually inside their own cards, outside this
+                             <form>) still submit with it via the HTML `form="..."` attribute. -->
+                        <form id="resolveComplaintForm" th:action="@{'/admin/complaints/' + ${complaint.id} + '/edit'}"
+                              method="post" enctype="multipart/form-data">
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                                <div>
+                                    <p class="font-label-md text-label-md text-on-surface-variant mb-1">Category</p>
+                                    <p class="font-body-md text-on-surface font-semibold" th:text="${complaint.category}">Roads</p>
+                                </div>
+                                <div>
+                                    <p class="font-label-md text-label-md text-on-surface-variant mb-1">Location</p>
+                                    <p class="font-body-md text-on-surface font-semibold" th:text="${complaint.location}">Main St.</p>
+                                </div>
+                                <div>
+                                    <p class="font-label-md text-label-md text-on-surface-variant mb-1">Reported By</p>
+                                    <p class="font-body-md text-on-surface font-semibold"
+                                       th:text="${complaint.citizen != null ? complaint.citizen.name : 'Unknown'}">Citizen Name</p>
+                                </div>
+                                <div></div>
+
+                                <div class="flex flex-col gap-1.5">
+                                    <label class="font-label-md text-label-md text-on-surface-variant" for="statusSelect">Status</label>
+                                    <select id="statusSelect" name="status"
+                                            th:disabled="${complaint.status != null and complaint.status.name() == 'RESOLVED'}"
+                                            th:classappend="${complaint.status != null and complaint.status.name() == 'RESOLVED'} ? ' opacity-60 cursor-not-allowed' : ''"
+                                            class="w-full px-4 py-2.5 bg-surface-container-high rounded-lg border-none focus:ring-2 focus:ring-primary/20 text-label-md outline-none appearance-none cursor-pointer">
+                                        <option value="PENDING" th:selected="${complaint.status != null and complaint.status.name() == 'PENDING'}">Pending</option>
+                                        <option value="IN_PROGRESS" th:selected="${complaint.status != null and complaint.status.name() == 'IN_PROGRESS'}">In Progress</option>
+                                        <option value="RESOLVED" th:selected="${complaint.status != null and complaint.status.name() == 'RESOLVED'}">Resolved</option>
+                                    </select>
+                                    <!-- disabled select ভ্যালু submit করে না, তাই hidden input দিয়ে carry করছি -->
+                                    <input type="hidden" name="status" form="resolveComplaintForm"
+                                           th:if="${complaint.status != null and complaint.status.name() == 'RESOLVED'}"
+                                           value="RESOLVED"/>
+                                </div>
+
+                                <div class="flex flex-col gap-1.5">
+                                    <label class="font-label-md text-label-md text-on-surface-variant" for="prioritySelect">Priority</label>
+                                    <select id="prioritySelect" name="priority"
+                                            th:disabled="${complaint.status != null and complaint.status.name() == 'RESOLVED'}"
+                                            th:classappend="${complaint.status != null and complaint.status.name() == 'RESOLVED'} ? ' opacity-60 cursor-not-allowed' : ''"
+                                            class="w-full px-4 py-2.5 bg-surface-container-high rounded-lg border-none focus:ring-2 focus:ring-primary/20 text-label-md outline-none appearance-none cursor-pointer">
+                                        <option value="LOW" th:selected="${complaint.priority != null and complaint.priority.name() == 'LOW'}">Low</option>
+                                        <option value="MEDIUM" th:selected="${complaint.priority != null and complaint.priority.name() == 'MEDIUM'}">Medium</option>
+                                        <option value="HIGH" th:selected="${complaint.priority != null and complaint.priority.name() == 'HIGH'}">High</option>
+                                        <option value="CRITICAL" th:selected="${complaint.priority != null and complaint.priority.name() == 'CRITICAL'}">Critical</option>
+                                    </select>
+                                    <input type="hidden" name="priority" form="resolveComplaintForm"
+                                           th:if="${complaint.status != null and complaint.status.name() == 'RESOLVED'}"
+                                           th:value="${complaint.priority}"/>
+                                </div>
+                            </div>
+
+                            <div class="mb-8">
+                                <p class="font-label-md text-label-md text-on-surface-variant mb-2">Description</p>
+                                <p class="font-body-md text-on-surface bg-surface-container rounded-xl p-4 leading-relaxed" th:text="${complaint.description}">
+                                    Full description of the issue goes here.
+                                </p>
+                            </div>
+
+                            <div class="flex items-center gap-3 pt-6 border-t border-outline-variant/30">
+                                <a th:href="@{/admin/complaints}"
+                                   class="flex-1 h-12 flex items-center justify-center rounded-lg border border-outline-variant text-on-surface font-label-md hover:bg-surface-container transition-all">
+                                    Back to List
+                                </a>
+                                <button type="submit"
+                                        class="flex-1 h-12 flex items-center justify-center gap-2 rounded-lg bg-primary text-on-primary font-label-md hover:opacity-90 transition-all">
+                                    <span class="material-symbols-outlined text-[20px]">save</span>
+                                    Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </th:block>
+
+</div>
+
+<!-- ============================================================ -->
+<!-- SHARED SCRIPTS — run once, apply to whichever view rendered   -->
+<!-- ============================================================ -->
+
+<!-- Keeps header avatar in sync with the photo picked on the Admin Profile page
+     (that upload is only saved to this browser's localStorage, not the server) -->
+<script th:inline="javascript">
+    (function () {
+        const avatarKey = 'cityfix-avatar-' + /*[[${admin.email}]]*/ '';
+        const savedAvatar = localStorage.getItem(avatarKey);
+        if (savedAvatar) {
+            document.getElementById('header-avatar').src = savedAvatar;
+        }
+    })();
+</script>
+
+<!-- Notification bell: read/unread state lives only in this browser's localStorage. -->
+<script>
+    (function () {
+        const bell = document.getElementById('notif-bell');
+        const dropdown = document.getElementById('notif-dropdown');
+        const badge = document.getElementById('notif-badge');
+        const emptyMsg = document.getElementById('notif-empty');
+        const markAllBtn = document.getElementById('mark-all-read');
+        const itemsContainer = document.getElementById('notif-items');
+        const rawComplaints = Array.from(document.querySelectorAll('.raw-complaint'));
+        const STORAGE_KEY = 'cityfix_read_notifications';
+
+        function getReadIds() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                return raw ? JSON.parse(raw) : [];
+            } catch (error) {
+                return [];
+            }
+        }
+
+        function saveReadIds(ids) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(ids));
+        }
+
+        function getUrgentComplaints() {
+            return rawComplaints.filter(complaint => {
+                const priority = complaint.dataset.priority;
+                const status = complaint.dataset.status;
+                return (priority === 'HIGH' || priority === 'CRITICAL') && status !== 'RESOLVED';
+            });
+        }
+
+        function renderNotificationItems() {
+            itemsContainer.innerHTML = '';
+            getUrgentComplaints().forEach(complaint => {
+                const item = document.createElement('div');
+                item.className = 'notif-item flex items-center justify-between p-3 border-b border-outline-variant hover:bg-surface-container-high';
+                item.dataset.id = complaint.dataset.id;
+                item.innerHTML = `
+                    <a href="/admin/complaints/${encodeURIComponent(complaint.dataset.id)}/view" class="flex-1">
+                        <p class="text-label-md font-bold"></p>
+                        <p class="text-label-sm text-on-surface-variant"></p>
+                    </a>
+                    <button class="mark-read-btn material-symbols-outlined text-outline text-[18px] hover:text-error" type="button" title="Mark as read">close</button>`;
+                item.querySelector('p:first-child').textContent = complaint.dataset.title || 'Untitled complaint';
+                item.querySelector('p:last-of-type').textContent = `${complaint.dataset.category || 'Uncategorized'} • ${complaint.dataset.priority}`;
+                itemsContainer.appendChild(item);
+            });
+        }
+
+        function refreshNotifications() {
+            const readIds = getReadIds();
+            const items = document.querySelectorAll('.notif-item');
+            let visibleCount = 0;
+            items.forEach(item => {
+                const isRead = readIds.includes(item.dataset.id);
+                item.style.display = isRead ? 'none' : 'flex';
+                if (!isRead) visibleCount++;
+            });
+            badge.textContent = visibleCount;
+            badge.classList.toggle('hidden', visibleCount === 0);
+            emptyMsg.classList.toggle('hidden', visibleCount > 0);
+        }
+
+        bell.addEventListener('click', () => dropdown.classList.toggle('hidden'));
+        document.addEventListener('click', event => {
+            if (!bell.contains(event.target) && !dropdown.contains(event.target)) dropdown.classList.add('hidden');
+        });
+        itemsContainer.addEventListener('click', event => {
+            const button = event.target.closest('.mark-read-btn');
+            if (!button) return;
+            event.preventDefault();
+            event.stopPropagation();
+            const id = button.closest('.notif-item').dataset.id;
+            const readIds = getReadIds();
+            if (!readIds.includes(id)) readIds.push(id);
+            saveReadIds(readIds);
+            refreshNotifications();
+        });
+        markAllBtn.addEventListener('click', () => {
+            saveReadIds(getUrgentComplaints().map(complaint => complaint.dataset.id));
+            refreshNotifications();
+        });
+
+        renderNotificationItems();
+        refreshNotifications();
+    })();
+</script>
+
+<script>
+    (function () {
+        const statusSelect = document.getElementById('statusSelect');
+        const resolutionForm = document.getElementById('resolveComplaintForm');
+        const resolutionImageInput = document.getElementById('resolutionImageInput');
+        const resolutionImageHelp = document.getElementById('resolutionImageHelp');
+        const finalCostInput = document.getElementById('finalCostInput');
+        if (!statusSelect || !resolutionForm || !resolutionImageInput) return;
+
+        const hasExistingAfterPhoto = resolutionImageInput.dataset.hasExistingAfterPhoto === 'true';
+
+        function syncAfterPhotoRequirement() {
+            const isResolved = statusSelect.value === 'RESOLVED';
+            resolutionImageInput.required = isResolved && !hasExistingAfterPhoto;
+            if (resolutionImageHelp) {
+                resolutionImageHelp.textContent = isResolved && !hasExistingAfterPhoto
+                    ? 'Upload an image to provide visual proof before resolving this complaint.'
+                    : 'Optional while updating this complaint. Uploading a new image replaces the current after-photo.';
+            }
+
+            // 💰 Resolved করতে final cost বাধ্যতামূলক (readonly না হলেই শুধু required বসাও)
+            if (finalCostInput && !finalCostInput.readOnly) {
+                finalCostInput.required = isResolved;
+            }
+        }
+
+        resolutionForm.addEventListener('submit', function (event) {
+            // After-photo validation
+            if (statusSelect.value === 'RESOLVED' && !hasExistingAfterPhoto && !resolutionImageInput.files.length) {
+                event.preventDefault();
+                resolutionImageInput.setCustomValidity('Please upload an After Resolved image before saving.');
+                resolutionImageInput.reportValidity();
+                return;
+            } else {
+                resolutionImageInput.setCustomValidity('');
+            }
+
+            // Final cost validation (client-side; backend এও validate হবে)
+            if (finalCostInput && !finalCostInput.readOnly && statusSelect.value === 'RESOLVED'
+                && (finalCostInput.value === '' || finalCostInput.value === null)) {
+                event.preventDefault();
+                finalCostInput.setCustomValidity('Final cost is required when marking a complaint as resolved.');
+                finalCostInput.reportValidity();
+                return;
+            } else if (finalCostInput) {
+                finalCostInput.setCustomValidity('');
+            }
+        });
+
+        resolutionImageInput.addEventListener('change', () => resolutionImageInput.setCustomValidity(''));
+        if (finalCostInput) {
+            finalCostInput.addEventListener('input', () => finalCostInput.setCustomValidity(''));
+        }
+        statusSelect.addEventListener('change', syncAfterPhotoRequirement);
+        syncAfterPhotoRequirement();
+    })();
+</script>
+
+<script>
+    (function () {
+        const loader = document.getElementById('cf-complaints-loader');
+        const menu = document.getElementById('cf-complaints-menu-btn');
+        const sidebar = document.querySelector('.cf-complaints-sidebar');
+        const backdrop = document.getElementById('cf-complaints-backdrop');
+        const closeNav = () => { sidebar?.classList.remove('cf-complaints-sidebar-open'); backdrop?.classList.remove('is-visible'); menu?.setAttribute('aria-expanded','false'); if (menu) menu.querySelector('.material-symbols-outlined').textContent = 'menu'; };
+        menu?.addEventListener('click', () => { const open = !sidebar?.classList.contains('cf-complaints-sidebar-open'); sidebar?.classList.toggle('cf-complaints-sidebar-open', open); backdrop?.classList.toggle('is-visible', open); menu?.setAttribute('aria-expanded', String(open)); if (menu) menu.querySelector('.material-symbols-outlined').textContent = open ? 'close' : 'menu'; });
+        backdrop?.addEventListener('click', closeNav);
+        sidebar?.querySelectorAll('a').forEach(link => link.addEventListener('click', closeNav));
+
+        if (!loader) return;
+        let finished = false;
+        let showTimer = setTimeout(() => { if (!finished) loader.classList.add('is-visible'); }, 5000);
+        const hideLoader = () => { if (finished) return; finished = true; clearTimeout(showTimer); loader.classList.remove('is-visible'); };
+        // Cancel the timer as soon as the page content is ready; external fonts/images
+        // must not make the loader appear after a fast page transition.
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', hideLoader, { once:true });
+        } else {
+            hideLoader();
+        }
+        setTimeout(hideLoader, 15000);
+    })();
+</script>
+</body>
+</html>

@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>CityFix - Admin Dashboard</title>
+    <style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="tailwind-config">tailwind.config={theme:{extend:{"colors":{"tertiary-fixed-dim":"rgb(var(--tertiary-fixed-dim) / <alpha-value>)","on-secondary-fixed-variant":"rgb(var(--on-secondary-fixed-variant) / <alpha-value>)","on-tertiary":"rgb(var(--on-tertiary) / <alpha-value>)","on-tertiary-fixed":"rgb(var(--on-tertiary-fixed) / <alpha-value>)","on-primary-fixed-variant":"rgb(var(--on-primary-fixed-variant) / <alpha-value>)","on-primary":"rgb(var(--on-primary) / <alpha-value>)","primary-container":"rgb(var(--primary-container) / <alpha-value>)","tertiary":"rgb(var(--tertiary) / <alpha-value>)","error":"rgb(var(--error) / <alpha-value>)","secondary":"rgb(var(--secondary) / <alpha-value>)","on-error":"rgb(var(--on-error) / <alpha-value>)","surface-container-highest":"rgb(var(--surface-container-highest) / <alpha-value>)","on-surface":"rgb(var(--on-surface) / <alpha-value>)","secondary-fixed":"rgb(var(--secondary-fixed) / <alpha-value>)","error-container":"rgb(var(--error-container) / <alpha-value>)","surface-container-low":"rgb(var(--surface-container-low) / <alpha-value>)","on-tertiary-container":"rgb(var(--on-tertiary-container) / <alpha-value>)","surface":"rgb(var(--surface) / <alpha-value>)","inverse-primary":"rgb(var(--inverse-primary) / <alpha-value>)","surface-container-high":"rgb(var(--surface-container-high) / <alpha-value>)","on-secondary-container":"rgb(var(--on-secondary-container) / <alpha-value>)","outline":"rgb(var(--outline) / <alpha-value>)","secondary-container":"rgb(var(--secondary-container) / <alpha-value>)","on-secondary-fixed":"rgb(var(--on-secondary-fixed) / <alpha-value>)","surface-bright":"rgb(var(--surface-bright) / <alpha-value>)","outline-variant":"rgb(var(--outline-variant) / <alpha-value>)","primary-fixed-dim":"rgb(var(--primary-fixed-dim) / <alpha-value>)","on-primary-container":"rgb(var(--on-primary-container) / <alpha-value>)","primary":"rgb(var(--primary) / <alpha-value>)","on-surface-variant":"rgb(var(--on-surface-variant) / <alpha-value>)","surface-tint":"rgb(var(--surface-tint) / <alpha-value>)","on-primary-fixed":"rgb(var(--on-primary-fixed) / <alpha-value>)","surface-container":"rgb(var(--surface-container) / <alpha-value>)","primary-fixed":"rgb(var(--primary-fixed) / <alpha-value>)","tertiary-container":"rgb(var(--tertiary-container) / <alpha-value>)","on-error-container":"rgb(var(--on-error-container) / <alpha-value>)","inverse-surface":"rgb(var(--inverse-surface) / <alpha-value>)","on-tertiary-fixed-variant":"rgb(var(--on-tertiary-fixed-variant) / <alpha-value>)","on-secondary":"rgb(var(--on-secondary) / <alpha-value>)","inverse-on-surface":"rgb(var(--inverse-on-surface) / <alpha-value>)","secondary-fixed-dim":"rgb(var(--secondary-fixed-dim) / <alpha-value>)","surface-container-lowest":"rgb(var(--surface-container-lowest) / <alpha-value>)","tertiary-fixed":"rgb(var(--tertiary-fixed) / <alpha-value>)","on-background":"rgb(var(--on-background) / <alpha-value>)","background":"rgb(var(--background) / <alpha-value>)","surface-variant":"rgb(var(--surface-variant) / <alpha-value>)","surface-dim":"rgb(var(--surface-dim) / <alpha-value>)"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"margin-desktop":"32px","margin-mobile":"16px","base":"4px","sidebar-width":"280px","gutter":"24px","container-max":"1440px"},"fontFamily":{"display-lg":["Inter"],"label-sm":["Inter"],"title-md":["Inter"],"label-md":["Inter"],"headline-lg":["Inter"],"body-lg":["Inter"],"headline-lg-mobile":["Inter"],"body-md":["Inter"]},"fontSize":{"display-lg":["48px",{"lineHeight":"1.2","letterSpacing":"-0.02em","fontWeight":"700"}],"label-sm":["12px",{"lineHeight":"1","letterSpacing":"0.05em","fontWeight":"600"}],"title-md":["20px",{"lineHeight":"1.4","fontWeight":"600"}],"label-md":["14px",{"lineHeight":"1.2","letterSpacing":"0.01em","fontWeight":"500"}],"headline-lg":["32px",{"lineHeight":"1.25","letterSpacing":"-0.01em","fontWeight":"600"}],"body-lg":["18px",{"lineHeight":"1.6","fontWeight":"400"}],"headline-lg-mobile":["24px",{"lineHeight":"1.3","fontWeight":"600"}],"body-md":["16px",{"lineHeight":"1.5","fontWeight":"400"}]}}}}</script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet">
+    <script th:src="@{/theme.js}"></script>
+    <link rel="stylesheet" th:href="@{/theme-tokens.css}">
+    <style>
+        /* Live map chrome - pulsing "LIVE" indicator + marker ping animation.
+           Written with plain CSS (not Tailwind utilities) since it needs keyframes. */
+        @keyframes cf-pulse-dot {
+            0%   { box-shadow: 0 0 0 0 rgb(var(--error) / 0.55); }
+            70%  { box-shadow: 0 0 0 8px rgb(var(--error) / 0); }
+            100% { box-shadow: 0 0 0 0 rgb(var(--error) / 0); }
+        }
+        .cf-live-dot { animation: cf-pulse-dot 1.8s infinite; }
+        .cf-marker-enter { animation: cf-marker-pop 0.5s ease-out; }
+        @keyframes cf-marker-pop {
+            0%   { transform: scale(0); opacity: 0; }
+            60%  { transform: scale(1.25); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+            background: rgb(var(--surface-container-lowest));
+            color: rgb(var(--on-surface));
+        }
+
+        .cf-view-enter { animation: cf-view-enter 0.28s ease-out both; }
+        @keyframes cf-view-enter {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .cf-settings-nav button[aria-selected="true"] {
+            background: rgb(var(--secondary-container));
+            color: rgb(var(--on-secondary-container));
+        }
+        .cf-switch input:checked + span { background: rgb(var(--primary)); }
+        .cf-switch input:checked + span::after { transform: translateX(20px); }
+        .cf-switch span::after {
+            content: "";
+            position: absolute;
+            left: 3px;
+            top: 3px;
+            width: 18px;
+            height: 18px;
+            border-radius: 9999px;
+            background: rgb(var(--surface-container-lowest));
+            box-shadow: 0 1px 3px rgb(0 0 0 / 0.22);
+            transition: transform 0.2s ease;
+        }
+        .cf-toast { animation: cf-toast-in 0.25s ease-out both; }
+        @keyframes cf-toast-in {
+            from { opacity: 0; transform: translate(-50%, 12px); }
+            to { opacity: 1; transform: translate(-50%, 0); }
+        }
+
+        /* Non-visual responsive shell: preserve the existing admin design on desktop. */
+        html, body { width:100%; min-width:0; min-height:100%; height:auto !important; overflow-x:hidden; overflow-y:auto !important; }
+        body { overscroll-behavior:auto; }
+        main, #settingsView { height:auto !important; min-height:calc(100vh - 4rem); overflow:visible !important; }
+        .cf-page-shell { min-width:0; }
+        .cf-topbar-actions { margin-left:auto; display:flex; align-items:center; justify-content:flex-end; gap:24px; min-width:max-content; }
+        .cf-topbar-actions > * { flex-shrink:0; }
+        .cf-mobile-menu-btn { display:none; }
+        .cf-mobile-nav-backdrop { display:none; }
+        .cf-loader { position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:18px; padding:24px; background:rgb(var(--surface) / .94); backdrop-filter:blur(16px); opacity:0; visibility:hidden; pointer-events:none; transition:opacity .35s ease, visibility .35s ease; }
+        .cf-loader.is-visible { opacity:1; visibility:visible; pointer-events:auto; }
+        .cf-loader.is-hidden { opacity:0; visibility:hidden; }
+        .cf-loader-orbit { position:relative; width:96px; height:96px; display:grid; place-items:center; perspective:440px; }
+        .cf-loader-orbit::before,.cf-loader-orbit::after { content:""; position:absolute; inset:5px; border:1px solid rgb(var(--primary) / .24); border-radius:50%; transform:rotateX(68deg) rotateZ(18deg); animation:cf-orbit 2.4s linear infinite; }
+        .cf-loader-orbit::after { inset:14px; border-color:rgb(var(--secondary) / .4); transform:rotateY(68deg) rotateZ(-18deg); animation-direction:reverse; animation-duration:1.8s; }
+        .cf-loader-cube { width:38px; height:38px; position:relative; transform-style:preserve-3d; animation:cf-cube 2.2s ease-in-out infinite; }
+        .cf-loader-cube span { position:absolute; inset:0; border:1px solid rgb(var(--primary) / .58); background:linear-gradient(135deg,rgb(var(--primary) / .82),rgb(var(--secondary) / .72)); box-shadow:0 0 26px rgb(var(--primary) / .3); }
+        .cf-loader-cube span:nth-child(1){transform:translateZ(19px)} .cf-loader-cube span:nth-child(2){transform:rotateY(180deg) translateZ(19px)} .cf-loader-cube span:nth-child(3){transform:rotateY(90deg) translateZ(19px)} .cf-loader-cube span:nth-child(4){transform:rotateY(-90deg) translateZ(19px)} .cf-loader-cube span:nth-child(5){transform:rotateX(90deg) translateZ(19px)} .cf-loader-cube span:nth-child(6){transform:rotateX(-90deg) translateZ(19px)}
+        .cf-loader-copy { text-align:center; } .cf-loader-copy strong { display:block; color:rgb(var(--on-surface)); font-size:15px; letter-spacing:.01em; } .cf-loader-copy span { display:block; margin-top:5px; color:rgb(var(--on-surface-variant)); font-size:12px; }
+        @keyframes cf-cube { 0%,100%{transform:rotateX(-18deg) rotateY(0deg) translateY(0)} 50%{transform:rotateX(28deg) rotateY(180deg) translateY(-5px)} } @keyframes cf-orbit { to{transform:rotateX(68deg) rotateZ(378deg)} }
+        @media (max-width:1023px) {
+            .cf-sidebar { width:280px !important; transform:translateX(-100%); transition:transform .25s ease, box-shadow .25s ease; }
+            .cf-sidebar.cf-sidebar-open { transform:translateX(0); box-shadow:20px 0 48px rgb(0 0 0 / .18); }
+            .cf-page-shell { padding-left:0 !important; }
+            .cf-topbar { left:0 !important; padding-left:24px !important; padding-right:24px !important; }
+            .cf-mobile-menu-btn { display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; border:0; border-radius:999px; color:rgb(var(--on-surface-variant)); background:rgb(var(--surface-container-high)); }
+            .cf-mobile-nav-backdrop.is-visible { display:block; position:fixed; inset:0; z-index:45; background:rgb(0 0 0 / .34); backdrop-filter:blur(2px); }
+            .cf-page-shell #dashboardView > div, .cf-page-shell #settingsView > div { padding-left:24px !important; padding-right:24px !important; }
+        }
+        @media (max-width:639px) {
+            .cf-topbar { padding-left:16px !important; padding-right:16px !important; }
+            .cf-topbar-actions { gap:12px !important; }
+            .cf-page-shell #dashboardView > div, .cf-page-shell #settingsView > div { padding-left:16px !important; padding-right:16px !important; }
+            .cf-page-shell #dashboardView .grid, .cf-page-shell #settingsView .grid { min-width:0; }
+            .cf-page-shell canvas { max-width:100%; }
+        }
+        .cf-urgent-table-scroll { overflow-x:auto; overflow-y:hidden; overscroll-behavior-x:contain; scrollbar-width:thin; scrollbar-color:rgb(var(--primary)) rgb(var(--surface-container)); }
+        .cf-urgent-table-scroll::-webkit-scrollbar { display:block; height:8px; }
+        .cf-urgent-table-scroll::-webkit-scrollbar-track { background:rgb(var(--surface-container)); border-radius:999px; }
+        .cf-urgent-table-scroll::-webkit-scrollbar-thumb { background:rgb(var(--primary)); border-radius:999px; }
+        .cf-urgent-table-scroll::-webkit-scrollbar-thumb:hover { background:rgb(var(--secondary)); }
+        @media (max-width:1023px) { .cf-urgent-table-scroll table { min-width:900px; } }
+        @media (prefers-reduced-motion: reduce) { .cf-loader-cube,.cf-loader-orbit::before,.cf-loader-orbit::after { animation:none; } .cf-loader { transition:none; } }
+
+    </style>
+</head>
+<body class="bg-surface font-body-md text-on-surface">
+<div id="cityfix-loader" class="cf-loader" role="status" aria-live="polite" aria-label="Loading admin dashboard"><div class="cf-loader-orbit" aria-hidden="true"><div class="cf-loader-cube"><span></span><span></span><span></span><span></span><span></span><span></span></div></div><div class="cf-loader-copy"><strong>Preparing operations dashboard</strong><span>Syncing live city data</span></div></div>
+
+<aside class="cf-sidebar fixed left-0 top-0 h-full w-sidebar-width bg-surface-container-lowest border-r border-outline-variant z-50 flex flex-col">
+    <div class="p-6 flex items-center gap-3 border-b border-outline-variant">
+        <img alt="CityFix Logo" class="h-8 w-auto" th:src="@{/screen.png}">
+        <span class="font-title-md text-title-md text-primary">CityFix</span>
+    </div>
+    <nav class="flex-1 py-6 px-4 space-y-2">
+        <a th:href="@{/admin/dashboard}" class="flex items-center px-4 py-3 rounded-xl transition-all bg-secondary-container text-on-secondary-container">
+            <span class="material-symbols-outlined mr-3">dashboard</span>
+            <span class="font-label-md text-label-md">Dashboard</span>
+        </a>
+        <a th:href="@{/admin/complaints}" class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all">
+            <span class="material-symbols-outlined mr-3">assignment</span>
+            <span class="font-label-md text-label-md">Manage Complaints</span>
+        </a>
+        <a th:href="@{/admin/complaints/reports}" class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all">
+            <span class="material-symbols-outlined mr-3">bar_chart</span>
+            <span class="font-label-md text-label-md">Reports</span>
+        </a>
+        <a th:href="@{/admin/users}" class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all">
+            <span class="material-symbols-outlined mr-3">group</span>
+            <span class="font-label-md text-label-md">Manage Users</span>
+        </a>
+        <a sec:authorize="hasRole('SUPER_ADMIN')" th:href="@{/admin/admins}" class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all">
+            <span class="material-symbols-outlined mr-3">admin_panel_settings</span>
+            <span class="font-label-md text-label-md">Manage Admins</span>
+        </a>
+        <a th:href="@{/admin/profile}" class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all">
+            <span class="material-symbols-outlined mr-3">person</span>
+            <span class="font-label-md text-label-md">Profile</span>
+        </a>
+
+    </nav>
+    <div class="p-4 mt-auto border-t border-outline-variant">
+        <a th:href="@{/logout}" class="flex items-center px-4 py-3 rounded-xl text-error hover:bg-error-container transition-all">
+            <span class="material-symbols-outlined mr-3">logout</span>
+            <span class="font-label-md text-label-md">Logout</span>
+        </a>
+    </div>
+</aside>
+<div id="mobile-nav-backdrop" class="cf-mobile-nav-backdrop" aria-hidden="true"></div>
+
+<div class="cf-page-shell pl-sidebar-width">
+    <header class="cf-topbar fixed top-0 left-sidebar-width right-0 h-16 bg-surface/80 backdrop-blur-xl border-b border-outline-variant z-40 flex items-center justify-between px-margin-desktop">
+        <div class="flex items-center gap-3">
+            <button id="mobile-nav-toggle" type="button" class="cf-mobile-menu-btn" aria-label="Open navigation" aria-expanded="false"><span class="material-symbols-outlined">menu</span></button>
+            <span class="material-symbols-outlined text-primary">dashboard</span>
+            <div class="flex flex-col leading-tight">
+                <span class="font-label-md text-label-md text-on-surface">Admin Dashboard</span>
+                <span class="text-label-sm text-on-surface-variant">City operations overview</span>
+            </div>
+        </div>
+        <div class="cf-topbar-actions flex items-center gap-6">
+
+            <div th:replace="~{fragments/themeToggle :: toggle}"></div>
+
+            <!-- Notification bell: server sends the raw urgent-complaint list (via AdminNotificationAdvice),
+                 JS filters out anything already marked "read" in localStorage and controls the badge/dropdown. -->
+            <div class="relative">
+                <span id="notif-bell" class="material-symbols-outlined text-on-surface-variant cursor-pointer text-[26px]">
+                    notifications
+                </span>
+                <!-- Badge: starts hidden, JS shows/updates it based on localStorage read-state -->
+                <span id="notif-badge"
+                      class="hidden absolute -top-1.5 -right-1.5 bg-error text-on-error text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                </span>
+
+                <div id="notif-dropdown" class="hidden absolute right-0 mt-2 w-80 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-lg z-50">
+                    <div class="p-3 border-b border-outline-variant flex justify-between items-center">
+                        <span class="font-label-md text-label-md">High Urgency Complaints</span>
+                        <button id="mark-all-read" class="text-label-sm text-primary hover:underline" type="button">Mark all read</button>
+                    </div>
+
+                    <!-- Shown/hidden by JS depending on how many items are left unread -->
+                    <div id="notif-empty" class="hidden p-4 text-label-sm text-on-surface-variant">
+                        No urgent complaints right now.
+                    </div>
+
+                    <div th:each="c : ${urgentNotifications}"
+                         class="notif-item flex items-center justify-between p-3 border-b border-outline-variant hover:bg-surface-container-high"
+                         th:attr="data-id=${c.id}">
+                        <a th:href="@{'/admin/complaints/' + ${c.id} + '/view'}" class="flex-1">
+                            <p class="text-label-md font-bold" th:text="${c.title}">Title</p>
+                            <p class="text-label-sm text-on-surface-variant" th:text="${c.category} + ' • ' + ${c.priority}">Category</p>
+                        </a>
+                        <button class="mark-read-btn material-symbols-outlined text-outline text-[18px] hover:text-error" type="button" title="Mark as read">
+                            close
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <a th:href="@{/admin/profile}" class="flex items-center gap-3 border-l border-outline-variant pl-6 cursor-pointer hover:opacity-80 transition-opacity">
+                <span class="hidden md:block text-right">
+                    <p class="text-label-md font-bold text-on-surface" id="header-name" th:text="${admin.name}">Admin</p>
+                    <p class="text-label-sm text-on-surface-variant">Administrator</p>
+                </span>
+                <img alt="Profile" class="w-9 h-9 rounded-full object-cover border border-outline-variant shadow-sm" id="header-avatar"
+                     th:src="@{${admin.profileImagePath != null ? admin.profileImagePath : '/profile1.jpg'}}">
+            </a>
+        </div>
+    </header>
+
+    <main id="dashboardView" class="pt-16 min-h-screen bg-surface">
+        <div class="flex flex-col w-full p-margin-desktop">
+
+            <!-- Header Section with Stats -->
+            <div class="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+                <div class="flex flex-col">
+                    <span class="font-label-sm text-label-sm text-primary uppercase tracking-widest mb-2">Executive Overview</span>
+                    <h1 class="font-display-lg text-display-lg text-on-surface">City Operations <span class="text-primary">Live</span></h1>
+                </div>
+                <div class="flex items-center gap-4 bg-surface-container-low p-2 rounded-full shadow-sm">
+                    <a th:href="@{/admin/complaints/reports}" class="px-6 py-2 rounded-full bg-primary text-on-primary font-label-md text-label-md transition-all hover:shadow-lg hover:scale-105 inline-block">Export Report</a>                    <button id="openSettingsBtn" type="button" class="px-6 py-2 rounded-full bg-surface-container-highest text-on-surface-variant font-label-md text-label-md hover:bg-outline-variant transition-colors">Settings</button>
+                </div>
+            </div>
+
+            <!-- Quick Stats Bento Grid. totalCitizens still comes straight from the backend
+                 count (no client-side list to derive it from); the rest is filled in by
+                 the dashboard script below from the raw `complaints` data. -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter mb-12">
+                <div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow group relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-150"></div>
+                    <div class="relative z-10">
+                        <span class="material-symbols-outlined text-primary mb-4">group</span>
+                        <p class="font-label-md text-label-md text-on-surface-variant">Total Citizens</p>
+                        <h2 class="font-display-lg text-display-lg text-on-surface mt-1" th:text="${totalCitizens}">0</h2>
+                        <div class="flex items-center mt-2 text-on-surface-variant text-label-sm font-label-sm">
+                            <span class="material-symbols-outlined text-sm mr-1">group</span>
+                            <span>Registered on the platform</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow group relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-24 h-24 bg-tertiary/5 rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-150"></div>
+                    <div class="relative z-10">
+                        <span class="material-symbols-outlined text-tertiary mb-4">report_problem</span>
+                        <p class="font-label-md text-label-md text-on-surface-variant">Today's Reports</p>
+                        <h2 class="font-display-lg text-display-lg text-on-surface mt-1" id="statTodaysReports">0</h2>
+                        <div class="flex items-center mt-2 text-on-surface-variant text-label-sm font-label-sm">
+                            <span class="material-symbols-outlined text-sm mr-1">today</span>
+                            <span>Filed since midnight</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow group relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-24 h-24 bg-secondary/5 rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-150"></div>
+                    <div class="relative z-10">
+                        <span class="material-symbols-outlined text-secondary mb-4">task_alt</span>
+                        <p class="font-label-md text-label-md text-on-surface-variant">Resolution Rate</p>
+                        <h2 class="font-display-lg text-display-lg text-on-surface mt-1" id="statResolutionRate">0%</h2>
+                        <div class="w-full bg-surface-container mt-4 h-1.5 rounded-full overflow-hidden">
+                            <div class="bg-secondary h-full transition-all duration-1000" id="statResolutionBar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow group relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-24 h-24 bg-outline/5 rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-150"></div>
+                    <div class="relative z-10">
+                        <span class="material-symbols-outlined text-on-surface-variant mb-4">pending_actions</span>
+                        <p class="font-label-md text-label-md text-on-surface-variant">Pending Review</p>
+                        <h2 class="font-display-lg text-display-lg text-on-surface mt-1" id="statPendingReview">0</h2>
+                        <div class="flex items-center mt-2 text-on-surface-variant text-label-sm font-label-sm">
+                            <span class="material-symbols-outlined text-sm mr-1">hourglass_empty</span>
+                            <span>Awaiting resolution</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Charts Section (Chart.js). Trend + category data is computed
+                 client-side from the raw `complaints` list injected below. -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter mb-12">
+                <div class="lg:col-span-2 bg-surface-container-lowest p-8 rounded-xl shadow-sm">
+                    <div class="flex items-center justify-between mb-8">
+                        <div>
+                            <h3 class="font-headline-lg text-headline-lg text-on-surface">Resolution Trends</h3>
+                            <p class="font-body-md text-body-md text-on-surface-variant">Monthly case completion performance</p>
+                        </div>
+                        <select id="trendRangeSelect" class="bg-surface-container px-4 py-2 rounded-lg border-none outline-none font-label-md text-label-md text-on-surface">
+                            <option value="6">Last 6 Months</option>
+                            <option value="12">Last Year</option>
+                        </select>
+                        <!-- Trend data (12 months) is now computed entirely client-side from the raw
+                             `complaints` list sent by the backend. The 6/12 toggle just slices that
+                             12-month array, so both options always work regardless of what the
+                             backend sends. -->
+                    </div>
+                    <div class="h-80 w-full">
+                        <canvas id="resolutionTrendChart"></canvas>
+                    </div>
+                </div>
+                <div class="bg-surface-container-lowest p-8 rounded-xl shadow-sm flex flex-col">
+                    <h3 class="font-headline-lg text-headline-lg text-on-surface mb-2">Category Split</h3>
+                    <p class="font-body-md text-body-md text-on-surface-variant mb-8">Distribution of reports</p>
+                    <div class="flex-1 flex items-center justify-center relative">
+                        <canvas id="categoryDoughnutChart"></canvas>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                            <span class="font-display-lg text-display-lg text-on-surface" id="categoryTotalLabel">0</span>
+                            <span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Total</span>
+                        </div>
+                    </div>
+                    <!-- Legend: populated client-side, one entry per category actually present in `complaints` -->
+                    <div class="grid grid-cols-2 gap-4 mt-8" id="categoryLegend">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table Section: Recent Urgent Complaints. Rows (HIGH/CRITICAL priority, top 5)
+                 are built client-side from the raw `complaints` list. -->
+            <div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden mb-12">
+                <div class="p-8 border-b border-outline-variant flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h3 class="font-headline-lg text-headline-lg text-on-surface">Recent Urgent Complaints</h3>
+                        <p class="font-body-md text-body-md text-on-surface-variant">Immediate action required for high-priority items</p>
+                    </div>
+                </div>
+                <div class="cf-urgent-table-scroll overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                        <tr class="bg-surface-container/50 text-on-surface-variant uppercase text-label-sm font-label-sm">
+                            <th class="px-8 py-4">Complaint ID</th>
+                            <th class="px-8 py-4">Subject</th>
+                            <th class="px-8 py-4">Citizen</th>
+                            <th class="px-8 py-4">Location</th>
+                            <th class="px-8 py-4">Priority</th>
+                            <th class="px-8 py-4">Status</th>
+                            <th class="px-8 py-4 text-right">Action</th>
+                        </tr>
+                        </thead>
+                        <tbody class="divide-y divide-outline-variant" id="urgentComplaintsBody">
+                        </tbody>
+                    </table>
+                </div>
+                <div class="p-6 bg-surface-container/30 border-t border-outline-variant flex items-center justify-between">
+                    <span class="text-label-sm font-label-sm text-on-surface-variant" id="urgentComplaintsFooterText">Showing 0 of 0 complaints</span>
+                    <div class="flex gap-4">
+                        <a th:href="@{/admin/complaints}" class="text-label-sm font-label-sm text-primary hover:underline">View All Active Cases</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Map (Leaflet + OpenStreetMap, no API key). Markers refresh on an interval
+                 so the map genuinely updates while the page is open, instead of being drawn once. -->
+            <div class="w-full relative h-[400px] rounded-2xl overflow-hidden mb-12 shadow-xl group">
+                <div id="liveIncidentMap" class="w-full h-full"></div>
+                <div class="absolute inset-0 bg-gradient-to-t from-on-surface/60 to-transparent pointer-events-none"></div>
+
+                <!-- LIVE badge + last-updated timestamp -->
+                <div class="absolute top-6 left-6 flex items-center gap-2 bg-surface-container-lowest/90 backdrop-blur-md px-4 py-2 rounded-full shadow-lg pointer-events-none">
+                    <span class="w-2.5 h-2.5 rounded-full bg-error cf-live-dot"></span>
+                    <span class="text-label-sm font-bold text-on-surface uppercase tracking-wider">Live</span>
+                    <span class="text-label-sm text-on-surface-variant" id="mapLastUpdated">just now</span>
+                </div>
+
+                <div class="absolute bottom-8 left-8 right-8 flex items-end justify-between pointer-events-none">
+                    <div class="bg-surface-container-lowest/90 backdrop-blur-md p-6 rounded-xl border border-white/20 shadow-2xl pointer-events-auto">
+                        <h4 class="font-headline-lg text-headline-lg text-on-surface mb-2">Live Incident Map</h4>
+                        <p class="font-body-md text-body-md text-on-surface-variant">Real-time geographical distribution of reports across the city.</p>
+                        <div class="flex gap-4 mt-4">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-error"></span>
+                                <span class="text-label-sm font-label-sm">Critical</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-tertiary"></span>
+                                <span class="text-label-sm font-label-sm">In Progress</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="bg-primary text-on-primary p-4 rounded-full shadow-2xl pointer-events-auto hover:scale-110 transition-transform" id="mapFullscreenBtn" type="button">
+                        <span class="material-symbols-outlined">fullscreen</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+
+    <!-- In-file Settings View: opened from the dashboard action, never added to the sidebar. -->
+    <section id="settingsView" class="hidden pt-16 min-h-screen bg-surface">
+        <div class="w-full max-w-7xl mx-auto p-margin-desktop cf-view-enter">
+            <div class="flex flex-col xl:flex-row xl:items-end justify-between gap-6 mb-8">
+                <div>
+                    <div class="flex items-center gap-2 text-primary text-label-sm uppercase tracking-widest font-bold mb-3">
+                        <span class="material-symbols-outlined text-[18px]">admin_panel_settings</span>
+                        Admin control center
+                    </div>
+                    <h1 class="font-headline-lg text-headline-lg md:text-display-lg text-on-surface">Settings</h1>
+                    <p class="font-body-md text-body-md text-on-surface-variant mt-2 max-w-2xl">Control access, alerts, and workspace preferences without leaving your operations dashboard.</p>
+                </div>
+                <button id="backToDashboardBtn" type="button" class="inline-flex items-center justify-center gap-2 rounded-full bg-surface-container-highest px-5 py-3 text-label-md font-bold text-on-surface-variant hover:bg-outline-variant transition-colors">
+                    <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+                    Back to dashboard
+                </button>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <div class="rounded-2xl border border-outline-variant bg-surface-container-lowest p-5 shadow-sm">
+                    <div class="flex items-center justify-between"><span class="text-label-sm uppercase tracking-wide text-on-surface-variant font-bold">Session</span><span class="material-symbols-outlined text-secondary">verified_user</span></div>
+                    <p class="mt-3 text-label-md font-bold text-on-surface">Active now</p>
+                    <p class="mt-1 text-label-sm text-on-surface-variant">Dhaka · Current device</p>
+                </div>
+                <div class="rounded-2xl border border-outline-variant bg-surface-container-lowest p-5 shadow-sm">
+                    <div class="flex items-center justify-between"><span class="text-label-sm uppercase tracking-wide text-on-surface-variant font-bold">2FA</span><span class="material-symbols-outlined text-primary">key</span></div>
+                    <p id="security2faStatus" class="mt-3 text-label-md font-bold text-on-surface">Not configured</p>
+                    <p class="mt-1 text-label-sm text-on-surface-variant">Recommended for admins</p>
+                </div>
+                <div class="rounded-2xl border border-outline-variant bg-surface-container-lowest p-5 shadow-sm">
+                    <div class="flex items-center justify-between"><span class="text-label-sm uppercase tracking-wide text-on-surface-variant font-bold">Active sessions</span><span class="material-symbols-outlined text-tertiary">devices</span></div>
+                    <p class="mt-3 text-label-md font-bold text-on-surface">3 devices</p>
+                    <p class="mt-1 text-label-sm text-on-surface-variant">1 current · 2 other</p>
+                </div>
+                <div class="rounded-2xl border border-outline-variant bg-surface-container-lowest p-5 shadow-sm">
+                    <div class="flex items-center justify-between"><span class="text-label-sm uppercase tracking-wide text-on-surface-variant font-bold">Last review</span><span class="material-symbols-outlined text-on-surface-variant">history</span></div>
+                    <p class="mt-3 text-label-md font-bold text-on-surface">Today</p>
+                    <p class="mt-1 text-label-sm text-on-surface-variant">Security settings checked</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-[248px_minmax(0,1fr)] gap-6 lg:gap-8 items-start">
+                <aside class="bg-surface-container-lowest rounded-2xl border border-outline-variant p-3 shadow-sm cf-settings-nav" aria-label="Settings sections">
+                    <p class="px-3 pt-2 pb-3 text-label-sm uppercase tracking-widest text-on-surface-variant font-bold">Workspace settings</p>
+                    <div class="space-y-1">
+                        <button type="button" data-settings-tab="security" aria-selected="true" class="w-full flex items-center gap-3 rounded-xl px-3 py-3 text-left text-label-md font-semibold text-on-surface-variant transition-colors hover:bg-surface-container-high" role="tab"><span class="material-symbols-outlined text-[20px]">shield_lock</span><span>Security</span></button>
+                        <button type="button" data-settings-tab="notifications" aria-selected="false" class="w-full flex items-center gap-3 rounded-xl px-3 py-3 text-left text-label-md font-semibold text-on-surface-variant transition-colors hover:bg-surface-container-high" role="tab"><span class="material-symbols-outlined text-[20px]">notifications</span><span>Notifications</span></button>
+                        <button type="button" data-settings-tab="appearance" aria-selected="false" class="w-full flex items-center gap-3 rounded-xl px-3 py-3 text-left text-label-md font-semibold text-on-surface-variant transition-colors hover:bg-surface-container-high" role="tab"><span class="material-symbols-outlined text-[20px]">palette</span><span>Appearance</span></button>
+                        <button type="button" data-settings-tab="danger" aria-selected="false" class="w-full flex items-center gap-3 rounded-xl px-3 py-3 text-left text-label-md font-semibold text-error transition-colors hover:bg-error-container"><span class="material-symbols-outlined text-[20px]">warning</span><span>Danger zone</span></button>
+                    </div>
+                    <div class="mt-5 rounded-xl bg-primary/5 p-4">
+                        <span class="material-symbols-outlined text-primary">lock</span>
+                        <p class="mt-2 text-label-md font-bold text-on-surface">Protect your admin access</p>
+                        <p class="mt-1 text-label-sm text-on-surface-variant">Enable two-factor authentication before your next shift.</p>
+                    </div>
+                </aside>
+
+                <div class="space-y-6">
+                    <section data-settings-panel="security" class="bg-surface-container-lowest rounded-2xl border border-outline-variant shadow-sm overflow-hidden" role="tabpanel">
+                        <div class="p-6 md:p-8 border-b border-outline-variant">
+                            <p class="text-label-sm uppercase tracking-widest text-primary font-bold">Access protection</p>
+                            <h2 class="font-headline-lg text-headline-lg text-on-surface mt-2">Security & access</h2>
+                            <p class="text-body-md text-on-surface-variant mt-2">Manage how your administrator account is protected and where it is signed in.</p>
+                        </div>
+                        <div class="divide-y divide-outline-variant">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-5 p-6 md:p-8">
+                                <div class="flex items-start gap-4"><span class="material-symbols-outlined text-primary text-[28px]">password</span><div><p class="text-label-md font-bold text-on-surface">Password</p><p class="text-label-sm text-on-surface-variant mt-1">Use a strong, unique password for your CityFix administrator account.</p><p class="text-label-sm text-on-surface-variant mt-2">Last changed 30 days ago</p></div></div>
+                                <button id="changePasswordBtn" type="button" th:attr="data-href=@{/admin/profile}" class="shrink-0 rounded-full bg-surface-container-highest px-4 py-2 text-label-md font-bold text-on-surface-variant hover:bg-outline-variant transition-colors">Change password</button>
+                            </div>
+                            <label class="flex items-center justify-between gap-6 p-6 md:p-8 cursor-pointer hover:bg-surface-container-low transition-colors">
+                                <div class="flex items-start gap-4"><span class="material-symbols-outlined text-secondary text-[28px]">phonelink_lock</span><span><span class="block text-label-md font-bold text-on-surface">Two-factor authentication</span><span class="block text-label-sm text-on-surface-variant mt-1">Require a verification code when signing in from a new device.</span><span class="inline-flex mt-3 rounded-full bg-tertiary-fixed px-3 py-1 text-label-sm font-bold text-on-tertiary-fixed">Recommended</span></span></div>
+                                <span class="cf-switch relative shrink-0"><input id="twoFactorToggle" type="checkbox" class="sr-only"><span class="block relative w-11 h-6 rounded-full bg-outline-variant transition-colors"></span></span>
+                            </label>
+                            <label class="flex items-center justify-between gap-6 p-6 md:p-8 cursor-pointer hover:bg-surface-container-low transition-colors">
+                                <div class="flex items-start gap-4"><span class="material-symbols-outlined text-primary text-[28px]">login</span><span><span class="block text-label-md font-bold text-on-surface">New login alerts</span><span class="block text-label-sm text-on-surface-variant mt-1">Get notified when your admin account is accessed from a new device.</span></span></div>
+                                <span class="cf-switch relative shrink-0"><input id="loginAlerts" type="checkbox" class="sr-only" checked><span class="block relative w-11 h-6 rounded-full bg-outline-variant transition-colors"></span></span>
+                            </label>
+                        </div>
+                        <div class="p-6 md:p-8 bg-surface-container-low/60">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4"><div><h3 class="text-title-md font-bold text-on-surface">Active sessions</h3><p class="text-label-sm text-on-surface-variant mt-1">Review devices currently signed in to your account.</p></div><button id="signOutOtherSessionsBtn" type="button" class="rounded-full bg-surface-container-highest px-4 py-2 text-label-md font-bold text-on-surface-variant hover:bg-outline-variant transition-colors">Sign out other sessions</button></div>
+                            <div class="space-y-3">
+                                <div class="flex items-center gap-4 rounded-xl bg-surface-container-lowest p-4 border border-secondary/30">
+                                    <span class="material-symbols-outlined text-secondary" id="currentSessionIcon">laptop_mac</span>
+                                    <div class="min-w-0">
+                                        <p class="text-label-md font-bold text-on-surface" id="currentSessionDevice">This device <span class="ml-2 rounded-full bg-secondary-container px-2 py-1 text-label-sm text-on-secondary-container">Current</span></p>
+                                        <p class="text-label-sm text-on-surface-variant mt-1" id="currentSessionMeta">Active now</p>
+                                    </div>
+                                </div>
+                                <!-- Other signed-in devices can't be detected from the browser alone —
+                                     that needs a server-side session store keyed by admin id. -->
+                                <p class="text-label-sm text-on-surface-variant px-1">Other signed-in devices will show up here once server-side session tracking is added.</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section data-settings-panel="notifications" class="hidden bg-surface-container-lowest rounded-2xl border border-outline-variant shadow-sm overflow-hidden" role="tabpanel">
+                        <div class="p-6 md:p-8 border-b border-outline-variant"><p class="text-label-sm uppercase tracking-widest text-primary font-bold">Operational awareness</p><h2 class="font-headline-lg text-headline-lg text-on-surface mt-2">Notifications</h2><p class="text-body-md text-on-surface-variant mt-2">Choose which events should interrupt your operations workflow.</p></div>
+                        <div class="divide-y divide-outline-variant">
+                            <label class="flex items-center justify-between gap-6 p-6 md:p-8 cursor-pointer hover:bg-surface-container-low transition-colors"><span><span class="block text-label-md font-bold text-on-surface">High-priority complaints</span><span class="block text-label-sm text-on-surface-variant mt-1">Alert me when a critical or high-priority complaint is filed.</span></span><span class="cf-switch relative shrink-0"><input id="notifyUrgent" type="checkbox" class="sr-only" checked><span class="block relative w-11 h-6 rounded-full bg-outline-variant transition-colors"></span></span></label>
+                            <label class="flex items-center justify-between gap-6 p-6 md:p-8 cursor-pointer hover:bg-surface-container-low transition-colors"><span><span class="block text-label-md font-bold text-on-surface">Daily operations digest</span><span class="block text-label-sm text-on-surface-variant mt-1">Receive a concise summary of city activity each morning.</span></span><span class="cf-switch relative shrink-0"><input id="notifyDigest" type="checkbox" class="sr-only" checked><span class="block relative w-11 h-6 rounded-full bg-outline-variant transition-colors"></span></span></label>
+                            <label class="flex items-center justify-between gap-6 p-6 md:p-8 cursor-pointer hover:bg-surface-container-low transition-colors"><span><span class="block text-label-md font-bold text-on-surface">Resolution updates</span><span class="block text-label-sm text-on-surface-variant mt-1">Notify me when assigned cases change status.</span></span><span class="cf-switch relative shrink-0"><input id="notifyResolution" type="checkbox" class="sr-only"><span class="block relative w-11 h-6 rounded-full bg-outline-variant transition-colors"></span></span></label>
+                        </div>
+                    </section>
+
+                    <section data-settings-panel="appearance" class="hidden bg-surface-container-lowest rounded-2xl border border-outline-variant shadow-sm overflow-hidden" role="tabpanel">
+                        <div class="p-6 md:p-8 border-b border-outline-variant"><p class="text-label-sm uppercase tracking-widest text-primary font-bold">Admin workspace</p><h2 class="font-headline-lg text-headline-lg text-on-surface mt-2">Appearance</h2><p class="text-body-md text-on-surface-variant mt-2">Tune the interface for clear, comfortable daily use.</p></div>
+                        <div class="p-6 md:p-8 space-y-6">
+                            <label class="flex flex-col sm:flex-row sm:items-center justify-between gap-4"><span><span class="block text-label-md font-bold text-on-surface">Interface theme</span><span class="block text-label-sm text-on-surface-variant mt-1">Choose the default appearance for your workspace.</span></span><select id="settingsTheme" class="rounded-xl bg-surface-container px-4 py-3 text-label-md text-on-surface outline-none ring-1 ring-transparent focus:ring-primary"><option value="light">Light</option><option value="dark">Dark</option></select></label>
+                            <label class="flex items-center justify-between gap-6 cursor-pointer"><span><span class="block text-label-md font-bold text-on-surface">Reduce motion</span><span class="block text-label-sm text-on-surface-variant mt-1">Limit animations across charts, maps, and navigation.</span></span><span class="cf-switch relative shrink-0"><input id="reduceMotion" type="checkbox" class="sr-only"><span class="block relative w-11 h-6 rounded-full bg-outline-variant transition-colors"></span></span></label>
+                            <label class="flex items-center justify-between gap-6 cursor-pointer"><span><span class="block text-label-md font-bold text-on-surface">Usage analytics</span><span class="block text-label-sm text-on-surface-variant mt-1">Help improve CityFix by sharing anonymous workspace usage data.</span></span><span class="cf-switch relative shrink-0"><input id="dataUsage" type="checkbox" class="sr-only" checked><span class="block relative w-11 h-6 rounded-full bg-outline-variant transition-colors"></span></span></label>
+                        </div>
+                    </section>
+
+                    <section data-settings-panel="danger" class="hidden rounded-2xl border border-error/40 bg-error-container/20 shadow-sm overflow-hidden" role="tabpanel">
+                        <div class="p-6 md:p-8 border-b border-error/30"><div class="flex items-center gap-3"><span class="material-symbols-outlined text-error text-[30px]">warning</span><div><p class="text-label-sm uppercase tracking-widest text-error font-bold">Irreversible actions</p><h2 class="font-headline-lg text-headline-lg text-on-surface mt-1">Danger zone</h2></div></div><p class="text-body-md text-on-surface-variant mt-4 max-w-2xl">These actions affect your account and stored workspace data. Review each option carefully before continuing.</p></div>
+                        <div class="p-6 md:p-8 space-y-5">
+                            <div class="flex flex-col md:flex-row md:items-center justify-between gap-5 rounded-xl bg-surface-container-lowest p-5 border border-outline-variant"><div class="flex items-start gap-4"><span class="material-symbols-outlined text-primary text-[26px]">download</span><div><p class="text-label-md font-bold text-on-surface">Export workspace data</p><p class="text-label-sm text-on-surface-variant mt-1">Download a copy of your admin preferences and activity records.</p></div></div><button id="exportDataBtn" type="button" class="shrink-0 rounded-full bg-surface-container-highest px-4 py-2 text-label-md font-bold text-on-surface-variant hover:bg-outline-variant transition-colors">Request export</button></div>
+                            <div class="flex flex-col md:flex-row md:items-center justify-between gap-5 rounded-xl bg-error-container/50 p-5 border border-error/30"><div class="flex items-start gap-4"><span class="material-symbols-outlined text-error text-[26px]">delete_forever</span><div><p class="text-label-md font-bold text-on-surface">Permanently delete account</p><p class="text-label-sm text-on-surface-variant mt-1">Delete your admin access and associated account data. This cannot be undone.</p></div></div><button id="openDeleteModalBtn" type="button" class="shrink-0 rounded-full bg-error px-4 py-2 text-label-md font-bold text-on-error hover:brightness-110 transition">Delete account</button></div>
+                        </div>
+                    </section>
+
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl border border-outline-variant bg-surface-container-lowest p-5 md:p-6 shadow-sm"><p class="text-label-sm text-on-surface-variant">Changes are stored for this browser session.</p><div class="flex items-center gap-4"><button id="restoreSettingsBtn" type="button" class="text-label-md font-bold text-on-surface-variant hover:text-error transition-colors">Restore defaults</button><button id="saveSettingsBtn" type="button" class="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-label-md font-bold text-on-primary shadow-sm hover:shadow-lg hover:scale-[1.02] transition-all"><span class="material-symbols-outlined text-[20px]">save</span>Save changes</button></div></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="deleteAccountModal" class="hidden fixed inset-0 z-[80] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle">
+            <div class="absolute inset-0 bg-on-surface/70 backdrop-blur-sm" data-close-delete-modal></div>
+            <div class="relative w-full max-w-lg rounded-2xl bg-surface-container-lowest border border-error/40 shadow-2xl overflow-hidden">
+                <div class="p-6 md:p-8 border-b border-error/30"><div class="flex items-start gap-4"><span class="material-symbols-outlined text-error text-[34px]">delete_forever</span><div><h2 id="deleteModalTitle" class="font-headline-lg text-headline-lg text-on-surface">Permanently delete account?</h2><p class="text-body-md text-on-surface-variant mt-2">This action is permanent. Your access and account data may not be recoverable.</p></div></div></div>
+                <div class="p-6 md:p-8 space-y-5"><div class="rounded-xl bg-error-container/50 p-4 text-label-sm text-on-surface-variant"><strong class="text-on-surface">Important:</strong> This confirmation only prepares the request in the interface. Connect the final action to your server-side delete-account endpoint before enabling production deletion.</div><label class="block"><span class="block text-label-sm uppercase tracking-wide font-bold text-on-surface-variant mb-2">Type DELETE to continue</span><input id="deleteConfirmText" type="text" autocomplete="off" class="w-full rounded-xl bg-surface-container px-4 py-3 text-label-md text-on-surface uppercase outline-none ring-1 ring-transparent focus:ring-error" placeholder="DELETE" /></label><label class="flex items-start gap-3 cursor-pointer"><input id="deleteConfirmCheck" type="checkbox" class="mt-1 h-4 w-4 accent-error" /><span class="text-label-sm text-on-surface-variant">I understand that this action cannot be undone.</span></label><div class="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-2"><button id="cancelDeleteBtn" type="button" class="rounded-full bg-surface-container-highest px-5 py-3 text-label-md font-bold text-on-surface-variant hover:bg-outline-variant transition-colors">Cancel</button><button id="confirmDeleteBtn" type="button" disabled class="rounded-full bg-error px-5 py-3 text-label-md font-bold text-on-error opacity-50 cursor-not-allowed transition">Confirm permanent deletion</button></div></div>
+            </div>
+        </div>
+    </section>
+
+</div>
+
+<!-- Keeps header avatar in sync with the photo picked on the Admin Profile page
+     (that upload is only saved to this browser's localStorage, not the server) -->
+<script th:inline="javascript">
+    (function () {
+        const avatarKey = 'cityfix-avatar-' + /*[[${admin.email}]]*/ '';
+        const savedAvatar = localStorage.getItem(avatarKey);
+        if (savedAvatar) {
+            document.getElementById('header-avatar').src = savedAvatar;
+        }
+    })();
+</script>
+
+<!-- Raw complaint data from the backend. All aggregation that used to happen in
+     AdminController (today's report count, resolution rate, pending count, the
+     12-month trend, category split, and the urgent shortlist) is now computed
+     client-side in JS below, from this one list. -->
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const complaints = /*[[${complaints}]]*/ [];
+    /*]]>*/
+</script>
+
+<!-- Optional: real live incident coordinates from the backend, if the controller provides them.
+     Falls back to a frontend-only simulation when this isn't present, so the map still works
+     without any backend changes. -->
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    let liveIncidents = /*[[${liveIncidents}]]*/ null;
+    const liveIncidentsEndpoint = /*[[${liveIncidentsEndpoint}]]*/ '';
+    /*]]>*/
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+        const categoryColors = ['#00288e', '#006c49', '#ffb59a', '#ba1a1a', '#872d00', '#611e00', '#b8c4ff', '#4edea3'];
+
+        function escapeHtml(str) {
+            return String(str).replace(/[&<>'"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[ch]));
+        }
+
+        /* ============ Client-side aggregation ============
+           The backend now only sends the raw `complaints` list (see the script tag
+           above). Everything that used to be computed with Java streams in
+           AdminController — today's count, resolution rate, pending count, the
+           12-month trend, the category split, and the urgent shortlist — is derived
+           here instead. */
+        function startOfToday() {
+            const d = new Date();
+            d.setHours(0, 0, 0, 0);
+            return d;
+        }
+
+        function parseCreatedAt(c) {
+            return c.createdAt ? new Date(c.createdAt) : null;
+        }
+
+        function computeDashboardStats(list) {
+            const total = list.length;
+            const todayStart = startOfToday();
+
+            const todaysReports = list.filter(c => {
+                const d = parseCreatedAt(c);
+                return d && d >= todayStart;
+            }).length;
+
+            const resolvedCount = list.filter(c => c.status === 'RESOLVED').length;
+            const resolutionRate = total === 0 ? 0 : Math.round((resolvedCount * 100 / total) * 10) / 10;
+            const pendingReview = list.filter(c => c.status !== 'RESOLVED').length;
+
+            const monthFormatter = new Intl.DateTimeFormat('en-US', { month: 'short' });
+            const now = new Date();
+            const months = [];
+            for (let i = 11; i >= 0; i--) {
+                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                months.push({ year: d.getFullYear(), month: d.getMonth(), label: monthFormatter.format(d) });
+            }
+            const trendLabels = months.map(m => m.label);
+            const trendReported = months.map(m => list.filter(c => {
+                const d = parseCreatedAt(c);
+                return d && d.getFullYear() === m.year && d.getMonth() === m.month;
+            }).length);
+            const trendResolved = months.map(m => list.filter(c => {
+                const d = parseCreatedAt(c);
+                return d && d.getFullYear() === m.year && d.getMonth() === m.month && c.status === 'RESOLVED';
+            }).length);
+
+            const categoryCounts = {};
+            list.forEach(c => {
+                const cat = c.category || 'Uncategorized';
+                categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+            });
+            const categoryLabels = Object.keys(categoryCounts);
+            const categoryValues = categoryLabels.map(label => categoryCounts[label]);
+
+            // `list` is already newest-first (backend query), so this preserves that order.
+            const urgentComplaints = list
+                .filter(c => c.priority === 'HIGH' || c.priority === 'CRITICAL')
+                .slice(0, 5);
+
+            return {
+                total, todaysReports, resolutionRate, pendingReview,
+                trendLabels, trendReported, trendResolved,
+                categoryLabels, categoryValues, urgentComplaints
+            };
+        }
+
+        const stats = computeDashboardStats(complaints);
+
+        function renderStatCards(s) {
+            document.getElementById('statTodaysReports').textContent = s.todaysReports;
+            document.getElementById('statResolutionRate').textContent = s.resolutionRate + '%';
+            document.getElementById('statResolutionBar').style.width = s.resolutionRate + '%';
+            document.getElementById('statPendingReview').textContent = s.pendingReview;
+            document.getElementById('categoryTotalLabel').textContent = s.total;
+        }
+
+        function renderCategoryLegend(s) {
+            const legendEl = document.getElementById('categoryLegend');
+            legendEl.innerHTML = '';
+            if (s.categoryLabels.length === 0) {
+                legendEl.innerHTML = '<p class="text-label-sm text-on-surface-variant col-span-2">No complaints yet.</p>';
+                return;
+            }
+            s.categoryLabels.forEach((label, idx) => {
+                const item = document.createElement('div');
+                item.className = 'flex items-center gap-2';
+                const dot = document.createElement('div');
+                dot.className = 'w-3 h-3 rounded-full';
+                dot.style.backgroundColor = categoryColors[idx % categoryColors.length];
+                const span = document.createElement('span');
+                span.className = 'text-label-sm font-label-sm text-on-surface-variant';
+                span.textContent = label;
+                item.appendChild(dot);
+                item.appendChild(span);
+                legendEl.appendChild(item);
+            });
+        }
+
+        function priorityBadgeHtml(priority) {
+            if (priority === 'CRITICAL') {
+                return '<span class="bg-error-container text-on-error-container px-3 py-1 rounded-full text-label-sm font-bold uppercase">Critical</span>';
+            }
+            if (priority === 'HIGH') {
+                return '<span class="bg-tertiary-fixed text-on-tertiary-fixed px-3 py-1 rounded-full text-label-sm font-bold uppercase">High</span>';
+            }
+            return `<span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-label-sm font-bold uppercase">${escapeHtml(priority || 'Medium')}</span>`;
+        }
+
+        function statusDotClass(status) {
+            if (status === 'RESOLVED') return 'w-2 h-2 rounded-full bg-secondary';
+            if (status === 'IN_PROGRESS') return 'w-2 h-2 rounded-full bg-tertiary';
+            return 'w-2 h-2 rounded-full bg-error animate-pulse';
+        }
+
+        function renderUrgentTable(s) {
+            const tbody = document.getElementById('urgentComplaintsBody');
+            tbody.innerHTML = '';
+
+            if (s.urgentComplaints.length === 0) {
+                tbody.innerHTML = `<tr>
+                    <td class="px-8 py-14 text-center" colspan="7">
+                        <div class="flex flex-col items-center gap-2">
+                            <span class="material-symbols-outlined text-on-surface-variant text-[32px]">check_circle</span>
+                            <p class="font-title-md text-on-surface">No urgent complaints</p>
+                            <p class="font-body-md text-on-surface-variant">Everything is currently under control.</p>
+                        </div>
+                    </td>
+                </tr>`;
+            } else {
+                s.urgentComplaints.forEach(c => {
+                    const citizenName = c.citizenName || 'Unknown';
+                    const initial = citizenName.trim().length > 0 ? escapeHtml(citizenName.trim()[0].toUpperCase()) : '?';
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-surface-container-low/50 transition-colors';
+                    tr.innerHTML = `
+                        <td class="px-8 py-6 font-label-md text-label-md text-primary">#CF-${c.id}</td>
+                        <td class="px-8 py-6">
+                            <span class="font-label-md text-label-md text-on-surface">${escapeHtml(c.title || '')}</span>
+                        </td>
+                        <td class="px-8 py-6">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-[11px] font-bold text-primary uppercase">${initial}</div>
+                                <span class="text-label-md font-label-md text-on-surface">${escapeHtml(citizenName)}</span>
+                            </div>
+                        </td>
+                        <td class="px-8 py-6 text-label-sm font-label-sm text-on-surface-variant">${escapeHtml(c.location || '')}</td>
+                        <td class="px-8 py-6">${priorityBadgeHtml(c.priority)}</td>
+                        <td class="px-8 py-6">
+                            <div class="flex items-center gap-2">
+                                <div class="${statusDotClass(c.status)}"></div>
+                                <span class="text-label-sm font-label-sm">${escapeHtml(c.status || '')}</span>
+                            </div>
+                        </td>
+                        <td class="px-8 py-6 text-right">
+                            <a href="/admin/complaints/${c.id}/view" class="text-primary hover:bg-primary/10 p-2 rounded-full transition-colors inline-block">
+                                <span class="material-symbols-outlined">visibility</span>
+                            </a>
+                        </td>`;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            document.getElementById('urgentComplaintsFooterText').textContent =
+                `Showing ${s.urgentComplaints.length} of ${s.total} complaints`;
+        }
+
+        renderStatCards(stats);
+        renderCategoryLegend(stats);
+        renderUrgentTable(stats);
+
+        /* ============ Theme-aware Chart.js text (fixes unreadable "Resolved"/"Reported"
+           legend + axis text in dark mode) ============
+           Chart.js paints its own text/gridlines, so it doesn't automatically follow
+           Tailwind's dark-mode classes. Instead we read the same CSS variables the rest
+           of the page uses (--on-surface-variant, --outline-variant, --surface-container-lowest)
+           and pass them to Chart.js as real colors, then re-apply whenever the theme toggle changes
+           the <html> class/attribute (theme.js controls exactly how, so we just watch for any
+           attribute/class mutation rather than assuming one mechanism). */
+        function cssVar(name) {
+            const val = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+            return val ? `rgb(${val})` : null;
+        }
+
+        // Declared up front (not const-after-use) so nothing here can ever hit a
+        // "temporal dead zone" reference error again - that bug was the root cause of
+        // the doughnut chart not rendering and the live map script never running at all.
+        let trendChart = null;
+        let categoryChart = null;
+
+        function applyChartTheme() {
+            const textColor = cssVar('--on-surface-variant') || '#6b7280';
+            const strongTextColor = cssVar('--on-surface') || '#1f2937';
+            const gridColor = cssVar('--outline-variant') || 'rgba(0,0,0,0.08)';
+            Chart.defaults.color = textColor;
+            Chart.defaults.borderColor = gridColor;
+            Chart.defaults.font.family = 'Inter';
+            [trendChart, categoryChart].forEach(chart => {
+                if (!chart) return;
+                if (chart.options.plugins?.legend?.labels) {
+                    chart.options.plugins.legend.labels.color = strongTextColor;
+                }
+                if (chart.options.scales) {
+                    Object.values(chart.options.scales).forEach(scale => {
+                        if (scale.ticks) scale.ticks.color = strongTextColor;
+                        if (scale.grid) scale.grid.color = gridColor;
+                    });
+                }
+                chart.update('none');
+            });
+        }
+
+        /* ============ Category Split (client-computed) - created FIRST so it exists
+           before anything else touches `categoryChart` ============ */
+        const ctxCategory = document.getElementById('categoryDoughnutChart').getContext('2d');
+        categoryChart = new Chart(ctxCategory, {
+            type: 'doughnut',
+            data: {
+                labels: stats.categoryLabels,
+                datasets: [{ data: stats.categoryValues, backgroundColor: categoryColors, borderWidth: 0, hoverOffset: 10 }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '80%',
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        /* ============ Resolution Trends (client-computed, 6/12 month toggle via slicing) ============ */
+        function renderTrendChart(months) {
+            const labels = stats.trendLabels.slice(-months);
+            const reported = stats.trendReported.slice(-months);
+            const resolved = stats.trendResolved.slice(-months);
+
+            const ctx = document.getElementById('resolutionTrendChart').getContext('2d');
+            if (trendChart) trendChart.destroy();
+            trendChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Resolved', data: resolved, backgroundColor: '#1e40af', borderRadius: 8, barThickness: 24 },
+                        { label: 'Reported', data: reported, backgroundColor: '#e0e3e5', borderRadius: 8, barThickness: 24 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { usePointStyle: true, font: { family: 'Inter', size: 13, weight: '600' }, padding: 16 }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { display: false },
+                            ticks: { precision: 0, font: { size: 12 } }
+                        },
+                        x: {
+                            grid: { display: false },
+                            // Bigger, bolder month labels + no forced rotation so "Jan/Feb/Mar..."
+                            // reads clearly instead of being squeezed/rotated.
+                            ticks: { font: { size: 13, weight: '600' }, maxRotation: 0, autoSkip: true }
+                        }
+                    }
+                }
+            });
+            applyChartTheme();
+        }
+
+        renderTrendChart(6);
+        document.getElementById('trendRangeSelect').addEventListener('change', (e) => {
+            renderTrendChart(parseInt(e.target.value, 10));
+        });
+
+        applyChartTheme();
+
+        // Re-color charts whenever the theme toggle flips dark mode on/off, no matter
+        // whether theme.js does that via a class, a data-attribute, or inline style.
+        new MutationObserver(applyChartTheme).observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ['class', 'data-theme', 'style']
+        });
+
+        /* ============ Live Map (Leaflet + OpenStreetMap) ============
+           The map accepts server-injected `liveIncidents` and can optionally poll a
+           controller-provided `liveIncidentsEndpoint`. Without either, it uses a clearly
+           labelled demo fallback so the UI remains usable during development. */
+        const cityCenter = [23.8103, 90.4125]; // Dhaka default center
+        const mapEl = document.getElementById('liveIncidentMap');
+        const map = L.map(mapEl, { zoomControl: false, preferCanvas: true }).setView(cityCenter, 12);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+        const incidentTypes = {
+            CRITICAL: { color: '#ba1a1a', label: 'Critical' },
+            IN_PROGRESS: { color: '#611e00', label: 'In Progress' },
+            DEFAULT: { color: '#1e40af', label: 'Reported' }
+        };
+        const markerLayer = L.layerGroup().addTo(map);
+        const lastUpdatedEl = document.getElementById('mapLastUpdated');
+        const liveBadgeText = document.querySelector('#liveIncidentMap')?.parentElement?.querySelector('.absolute.top-6 .text-label-sm.font-bold');
+        const liveIncidentsUrl = typeof liveIncidentsEndpoint === 'string' ? liveIncidentsEndpoint.trim() : '';
+        let refreshTimer = null;
+        let requestInFlight = false;
+        let isDemoMode = !liveIncidentsUrl && !Array.isArray(liveIncidents);
+
+        function setMapStatus(text, demo = false) {
+            if (lastUpdatedEl) lastUpdatedEl.textContent = text;
+            if (liveBadgeText) liveBadgeText.textContent = demo ? 'Demo' : 'Live';
+        }
+
+        function normalizeIncident(incident) {
+            if (!incident || typeof incident !== 'object') return null;
+            const lat = Number(incident.lat ?? incident.latitude);
+            const lng = Number(incident.lng ?? incident.lon ?? incident.longitude);
+            if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+            const priority = String(incident.priority || incident.status || '').toUpperCase();
+            const type = priority === 'CRITICAL' ? incidentTypes.CRITICAL : priority === 'IN_PROGRESS' ? incidentTypes.IN_PROGRESS : incidentTypes.DEFAULT;
+            return { lat, lng, type, title: incident.title || incident.subject || 'City incident', status: incident.status || type.label, id: incident.id || '' };
+        }
+
+        function addMarker(incident) {
+            const markerData = normalizeIncident(incident);
+            if (!markerData) return false;
+            const marker = L.circleMarker([markerData.lat, markerData.lng], {
+                radius: 8, color: markerData.type.color, fillColor: markerData.type.color,
+                fillOpacity: 0.68, weight: 2, className: 'cf-marker-enter'
+            });
+            const safeTitle = String(markerData.title).replace(/[&<>'"]/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[character]);
+            marker.bindPopup(`<strong>${safeTitle}</strong><br>${markerData.type.label} · ${markerData.status}`);
+            marker.addTo(markerLayer);
+            return true;
+        }
+
+        function renderMarkers(incidents, demo = false) {
+            markerLayer.clearLayers();
+            const validIncidents = Array.isArray(incidents) ? incidents : [];
+            const renderedCount = validIncidents.reduce((count, incident) => count + (addMarker(incident) ? 1 : 0), 0);
+            setMapStatus(`${renderedCount} marker${renderedCount === 1 ? '' : 's'} · ${new Date().toLocaleTimeString()}`, demo);
+        }
+
+        function randomOffset() { return (Math.random() - 0.5) * 0.08; }
+        function demoIncidents() {
+            const count = 6 + Math.floor(Math.random() * 6);
+            return Array.from({ length: count }, (_, index) => ({
+                id: `demo-${index}`,
+                lat: cityCenter[0] + randomOffset(),
+                lng: cityCenter[1] + randomOffset(),
+                priority: Math.random() > 0.6 ? 'CRITICAL' : 'IN_PROGRESS',
+                title: 'Demo incident'
+            }));
+        }
+
+        async function refreshLiveMarkers() {
+            if (requestInFlight) return;
+            requestInFlight = true;
+            try {
+                if (liveIncidentsUrl) {
+                    const response = await fetch(liveIncidentsUrl, {
+                        method: 'GET', headers: { Accept: 'application/json' }, cache: 'no-store', credentials: 'same-origin'
+                    });
+                    if (!response.ok) throw new Error(`Live incidents request failed: ${response.status}`);
+                    const payload = await response.json();
+                    liveIncidents = Array.isArray(payload) ? payload : (Array.isArray(payload.incidents) ? payload.incidents : []);
+                    isDemoMode = false;
+                    renderMarkers(liveIncidents, false);
+                } else if (Array.isArray(liveIncidents)) {
+                    isDemoMode = false;
+                    renderMarkers(liveIncidents, false);
+                } else {
+                    isDemoMode = true;
+                    renderMarkers(demoIncidents(), true);
+                }
+            } catch (error) {
+                console.warn('[CityFix map] live refresh failed:', error);
+                if (!Array.isArray(liveIncidents)) {
+                    isDemoMode = true;
+                    renderMarkers(demoIncidents(), true);
+                } else {
+                    renderMarkers(liveIncidents, false);
+                    setMapStatus('Last data · ' + new Date().toLocaleTimeString(), false);
+                }
+            } finally {
+                requestInFlight = false;
+            }
+        }
+
+        function scheduleRefresh() {
+            if (refreshTimer) clearInterval(refreshTimer);
+            refreshTimer = setInterval(refreshLiveMarkers, 8000);
+        }
+
+        refreshLiveMarkers();
+        scheduleRefresh();
+
+        document.getElementById('mapFullscreenBtn')?.addEventListener('click', async () => {
+            try {
+                if (!document.fullscreenElement) await mapEl.parentElement.requestFullscreen?.();
+                else await document.exitFullscreen?.();
+            } catch (error) { console.warn('[CityFix map] fullscreen request failed:', error); }
+        });
+        document.addEventListener('fullscreenchange', () => setTimeout(() => map.invalidateSize(), 250));
+        window.addEventListener('cityfix:dashboard-visible', () => setTimeout(() => map.invalidateSize(), 300));
+        window.addEventListener('resize', () => map.invalidateSize());
+        setTimeout(() => map.invalidateSize(), 300);
+    });
+</script>
+
+<!-- Notification bell: read/unread state lives only in this browser's localStorage.
+     Same script must be present on every admin page that has the bell. -->
+<script>
+    (function () {
+        const bell = document.getElementById('notif-bell');
+        const dropdown = document.getElementById('notif-dropdown');
+        const badge = document.getElementById('notif-badge');
+        const emptyMsg = document.getElementById('notif-empty');
+        const markAllBtn = document.getElementById('mark-all-read');
+
+        const STORAGE_KEY = 'cityfix_read_notifications';
+        const SETTINGS_KEY = 'cityfix-admin-settings';
+
+        function getReadIds() {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            return raw ? JSON.parse(raw) : [];
+        }
+
+        function saveReadIds(ids) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(ids));
+        }
+
+        // Settings > Notifications > "High-priority complaints" toggle controls this.
+        // Defaults to on when nothing has been saved yet.
+        function urgentNotificationsEnabled() {
+            try {
+                const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+                return saved.notifyUrgent !== false;
+            } catch (_) {
+                return true;
+            }
+        }
+
+        function refreshNotifications() {
+            const enabled = urgentNotificationsEnabled();
+            const readIds = getReadIds();
+            const items = document.querySelectorAll('.notif-item');
+            let visibleCount = 0;
+
+            items.forEach(item => {
+                const id = item.getAttribute('data-id');
+                if (!enabled || readIds.includes(id)) {
+                    item.style.display = 'none';
+                } else {
+                    item.style.display = 'flex';
+                    visibleCount++;
+                }
+            });
+
+            // The bell icon itself always stays visible — only the badge count and the
+            // dropdown's contents react to the notifyUrgent setting.
+            if (enabled && visibleCount > 0) {
+                badge.textContent = visibleCount;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+
+            emptyMsg.textContent = enabled ? 'No urgent complaints right now.' : 'Notifications are turned off in Settings.';
+            emptyMsg.classList.toggle('hidden', enabled && visibleCount > 0);
+        }
+
+        // Let the Settings panel trigger an immediate refresh when notifyUrgent changes,
+        // without needing a full page reload.
+        window.cityfixRefreshNotifications = refreshNotifications;
+
+        bell.addEventListener('click', () => {
+            dropdown.classList.toggle('hidden');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!bell.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        document.querySelectorAll('.mark-read-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const item = btn.closest('.notif-item');
+                const id = item.getAttribute('data-id');
+
+                const readIds = getReadIds();
+                if (!readIds.includes(id)) {
+                    readIds.push(id);
+                    saveReadIds(readIds);
+                }
+                refreshNotifications();
+            });
+        });
+
+        markAllBtn.addEventListener('click', () => {
+            const allIds = Array.from(document.querySelectorAll('.notif-item'))
+                .map(item => item.getAttribute('data-id'));
+            saveReadIds(allIds);
+            refreshNotifications();
+        });
+
+        refreshNotifications();
+    })();
+</script>
+
+
+
+<!-- Settings view controller. Preferences are scoped to this browser; destructive actions require explicit confirmation. -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const dashboardView = document.getElementById('dashboardView');
+        const settingsView = document.getElementById('settingsView');
+        const openSettingsBtn = document.getElementById('openSettingsBtn');
+        const backToDashboardBtn = document.getElementById('backToDashboardBtn');
+        const headerIcon = document.querySelector('header > div:first-child > .material-symbols-outlined');
+        const headerTitle = document.querySelector('header > div:first-child span.font-label-md');
+        const headerSubtitle = document.querySelector('header > div:first-child span.text-label-sm');
+        const settingsStateKey = 'cityfix-admin-settings';
+
+        function setHeader(isSettings) {
+            if (!headerIcon || !headerTitle || !headerSubtitle) return;
+            headerIcon.textContent = isSettings ? 'admin_panel_settings' : 'dashboard';
+            headerTitle.textContent = isSettings ? 'Settings' : 'Admin Dashboard';
+            headerSubtitle.textContent = isSettings ? 'Access and workspace controls' : 'City operations overview';
+        }
+        function openSettings() {
+            dashboardView.classList.add('hidden'); settingsView.classList.remove('hidden');
+            const shell = settingsView.querySelector(':scope > div'); shell.classList.remove('cf-view-enter'); void settingsView.offsetWidth; shell.classList.add('cf-view-enter');
+            setHeader(true); window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        function closeSettings() {
+            settingsView.classList.add('hidden'); dashboardView.classList.remove('hidden'); setHeader(false); window.scrollTo({ top: 0, behavior: 'smooth' });
+            window.dispatchEvent(new CustomEvent('cityfix:dashboard-visible'));
+        }
+        openSettingsBtn?.addEventListener('click', openSettings); backToDashboardBtn?.addEventListener('click', closeSettings);
+
+        document.querySelectorAll('[data-settings-tab]').forEach(tab => tab.addEventListener('click', () => {
+            const selected = tab.dataset.settingsTab;
+            document.querySelectorAll('[data-settings-tab]').forEach(item => item.setAttribute('aria-selected', String(item === tab)));
+            document.querySelectorAll('[data-settings-panel]').forEach(panel => panel.classList.toggle('hidden', panel.dataset.settingsPanel !== selected));
+        }));
+
+        function getSettings() { try { return JSON.parse(localStorage.getItem(settingsStateKey) || '{}'); } catch (_) { return {}; } }
+        const settingIds = ['twoFactorToggle', 'loginAlerts', 'notifyUrgent', 'notifyDigest', 'notifyResolution', 'reduceMotion', 'dataUsage'];
+
+        // Theme: the real, site-wide source of truth is localStorage['cityfix-theme'] +
+        // <html data-theme="...">, set by theme.js (used by the header day/night toggle).
+        // The Settings dropdown reads/writes that same key so it stays in sync with the
+        // toggle button and applies instantly across the whole app, not just this page.
+        const THEME_KEY = 'cityfix-theme';
+        const themeSelect = document.getElementById('settingsTheme');
+        function currentTheme() {
+            return localStorage.getItem(THEME_KEY) || document.documentElement.getAttribute('data-theme') || 'light';
+        }
+        function applyTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem(THEME_KEY, theme);
+        }
+        if (themeSelect) {
+            themeSelect.value = currentTheme();
+            themeSelect.addEventListener('change', () => applyTheme(themeSelect.value));
+        }
+
+        function applyStoredSettings() {
+            const saved = getSettings();
+            settingIds.forEach(id => { if (typeof saved[id] === 'boolean') document.getElementById(id).checked = saved[id]; });
+            updateTwoFactorStatus();
+        }
+        function updateTwoFactorStatus() { const enabled = document.getElementById('twoFactorToggle').checked; document.getElementById('security2faStatus').textContent = enabled ? 'Enabled' : 'Not configured'; }
+        document.getElementById('twoFactorToggle')?.addEventListener('change', updateTwoFactorStatus);
+
+        function showToast(message, icon = 'check_circle') {
+            document.querySelector('.cf-toast')?.remove(); const toast = document.createElement('div');
+            toast.className = 'cf-toast fixed bottom-6 left-1/2 z-[90] -translate-x-1/2 flex items-center gap-2 rounded-full bg-on-surface px-5 py-3 text-label-md font-bold text-surface-container-lowest shadow-2xl';
+            toast.innerHTML = `<span class="material-symbols-outlined text-[20px] text-secondary">${icon}</span><span>${message}</span>`; document.body.appendChild(toast); setTimeout(() => toast.remove(), 3200);
+        }
+        document.getElementById('saveSettingsBtn')?.addEventListener('click', () => {
+            const values = {}; settingIds.forEach(id => values[id] = document.getElementById(id).checked);
+            localStorage.setItem(settingsStateKey, JSON.stringify(values));
+            updateTwoFactorStatus();
+            // Reflect the notifyUrgent toggle in the header bell immediately, without a page reload.
+            window.cityfixRefreshNotifications?.();
+            showToast('Security and workspace settings saved');
+        });
+        document.getElementById('restoreSettingsBtn')?.addEventListener('click', () => {
+            document.getElementById('twoFactorToggle').checked = false; document.getElementById('loginAlerts').checked = true; document.getElementById('notifyUrgent').checked = true; document.getElementById('notifyDigest').checked = true; document.getElementById('notifyResolution').checked = false; document.getElementById('reduceMotion').checked = false; document.getElementById('dataUsage').checked = true;
+            if (themeSelect) { themeSelect.value = 'light'; applyTheme('light'); }
+            localStorage.removeItem(settingsStateKey); updateTwoFactorStatus(); window.cityfixRefreshNotifications?.(); showToast('Default preferences restored', 'restart_alt');
+        });
+        document.getElementById('changePasswordBtn')?.addEventListener('click', (e) => {
+            const target = e.currentTarget.getAttribute('data-href');
+            if (target) window.location.href = target;
+        });
+        document.getElementById('signOutOtherSessionsBtn')?.addEventListener('click', () => showToast('No other sessions to sign out of', 'logout'));
+        document.getElementById('exportDataBtn')?.addEventListener('click', () => showToast('Data export request queued', 'download'));
+
+        // Current-device session card: the only thing genuinely detectable client-side
+        // (browser + OS from the user agent). Other devices need server-side session
+        // tracking, so we no longer fake them.
+        (function detectCurrentSession() {
+            const ua = navigator.userAgent;
+            let browser = 'Unknown browser';
+            if (ua.includes('Edg/')) browser = 'Edge';
+            else if (ua.includes('OPR/') || ua.includes('Opera')) browser = 'Opera';
+            else if (ua.includes('Chrome/') && !ua.includes('Chromium')) browser = 'Chrome';
+            else if (ua.includes('Firefox/')) browser = 'Firefox';
+            else if (ua.includes('Safari/') && !ua.includes('Chrome')) browser = 'Safari';
+
+            let osLabel = 'Unknown OS';
+            let icon = 'devices';
+            if (ua.includes('Windows')) { osLabel = 'Windows'; icon = 'desktop_windows'; }
+            else if (ua.includes('Mac OS X') && !ua.includes('iPhone') && !ua.includes('iPad')) { osLabel = 'macOS'; icon = 'laptop_mac'; }
+            else if (ua.includes('Android')) { osLabel = 'Android'; icon = 'phone_android'; }
+            else if (ua.includes('iPhone') || ua.includes('iPad')) { osLabel = 'iOS'; icon = 'phone_iphone'; }
+            else if (ua.includes('Linux')) { osLabel = 'Linux'; icon = 'laptop_mac'; }
+
+            const deviceEl = document.getElementById('currentSessionDevice');
+            const metaEl = document.getElementById('currentSessionMeta');
+            const iconEl = document.getElementById('currentSessionIcon');
+            if (deviceEl) deviceEl.innerHTML = `${browser} on ${osLabel} <span class="ml-2 rounded-full bg-secondary-container px-2 py-1 text-label-sm text-on-secondary-container">Current</span>`;
+            if (metaEl) metaEl.textContent = 'Active now';
+            if (iconEl) iconEl.textContent = icon;
+        })();
+
+        const modal = document.getElementById('deleteAccountModal'), deleteText = document.getElementById('deleteConfirmText'), deleteCheck = document.getElementById('deleteConfirmCheck'), confirmDelete = document.getElementById('confirmDeleteBtn');
+        function updateDeleteState() { const valid = deleteText.value.trim().toUpperCase() === 'DELETE' && deleteCheck.checked; confirmDelete.disabled = !valid; confirmDelete.classList.toggle('opacity-50', !valid); confirmDelete.classList.toggle('cursor-not-allowed', !valid); }
+        function closeDeleteModal() { modal.classList.add('hidden'); document.body.classList.remove('overflow-hidden'); }
+        document.getElementById('openDeleteModalBtn')?.addEventListener('click', () => { deleteText.value = ''; deleteCheck.checked = false; updateDeleteState(); modal.classList.remove('hidden'); document.body.classList.add('overflow-hidden'); setTimeout(() => deleteText.focus(), 50); });
+        document.getElementById('cancelDeleteBtn')?.addEventListener('click', closeDeleteModal);
+        modal?.querySelector('[data-close-delete-modal]')?.addEventListener('click', closeDeleteModal);
+        deleteText?.addEventListener('input', updateDeleteState); deleteCheck?.addEventListener('change', updateDeleteState);
+        confirmDelete?.addEventListener('click', () => { if (confirmDelete.disabled) return; closeDeleteModal(); showToast('Deletion confirmed — connect the server-side delete endpoint', 'warning'); });
+        document.addEventListener('keydown', event => { if (event.key === 'Escape' && modal && !modal.classList.contains('hidden')) closeDeleteModal(); });
+        applyStoredSettings();
+    });
+</script>
+
+<!-- Login success popup -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const params = new URLSearchParams(window.location.search);
+
+        if (params.get('loginSuccess') !== 'true') {
+            return;
+        }
+
+        const toast = document.createElement('div');
+        toast.setAttribute('role', 'alert');
+        toast.setAttribute('aria-live', 'polite');
+        toast.className = 'fixed top-20 right-4 sm:right-8 z-[9999] flex items-center gap-3 rounded-2xl bg-secondary-container text-on-secondary-container px-5 py-4 shadow-2xl';
+        toast.innerHTML = `
+            <span class="material-symbols-outlined text-[22px]">check_circle</span>
+            <span class="font-label-md">Login successful. Welcome back!</span>
+            <button type="button" class="ml-2 rounded-lg p-1 hover:bg-on-secondary-container/10" aria-label="Close notification">
+                <span class="material-symbols-outlined text-[18px]">close</span>
+            </button>
+        `;
+
+        document.body.appendChild(toast);
+
+        const removeToast = () => toast.remove();
+        toast.querySelector('button')?.addEventListener('click', removeToast);
+        setTimeout(removeToast, 3000);
+
+        // Prevent the popup from appearing again after browser refresh.
+        window.history.replaceState({}, document.title, window.location.pathname);
+    });
+</script>
+
+<script>
+    (function () {
+        const toggle = document.getElementById('mobile-nav-toggle');
+        const sidebar = document.querySelector('.cf-sidebar');
+        const backdrop = document.getElementById('mobile-nav-backdrop');
+        const closeNav = () => { sidebar?.classList.remove('cf-sidebar-open'); backdrop?.classList.remove('is-visible'); toggle?.setAttribute('aria-expanded','false'); if (toggle) toggle.querySelector('.material-symbols-outlined').textContent='menu'; };
+        toggle?.addEventListener('click', () => { const open = !sidebar?.classList.contains('cf-sidebar-open'); sidebar?.classList.toggle('cf-sidebar-open', open); backdrop?.classList.toggle('is-visible', open); toggle?.setAttribute('aria-expanded', String(open)); if (toggle) toggle.querySelector('.material-symbols-outlined').textContent=open?'close':'menu'; });
+        backdrop?.addEventListener('click', closeNav); sidebar?.querySelectorAll('a').forEach(a => a.addEventListener('click', closeNav));
+        const loader = document.getElementById('cityfix-loader'); let slowTimer = setTimeout(() => loader?.classList.add('is-visible'), 2300);
+        const finish = () => { clearTimeout(slowTimer); setTimeout(() => loader?.classList.remove('is-visible'), 180); };
+        if (document.readyState === 'complete') finish(); else window.addEventListener('load', finish, {once:true});
+        document.addEventListener('click', event => { const link = event.target.closest('a[href]'); if (!link || link.target === '_blank' || link.origin !== location.origin || link.getAttribute('href').startsWith('#')) return; loader?.classList.add('is-visible'); });
+    })();
+</script>
+</body>
+</html>

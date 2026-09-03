@@ -1,0 +1,710 @@
+<html lang="en" xmlns:th="http://www.thymeleaf.org"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>CityFix - Login</title><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={theme:{extend:{"colors":{"on-error-container":"rgb(var(--on-error-container) / <alpha-value>)","surface-bright":"rgb(var(--surface-bright) / <alpha-value>)","tertiary":"rgb(var(--tertiary) / <alpha-value>)","inverse-on-surface":"rgb(var(--inverse-on-surface) / <alpha-value>)","secondary-fixed-dim":"rgb(var(--secondary-fixed-dim) / <alpha-value>)","on-tertiary-container":"rgb(var(--on-tertiary-container) / <alpha-value>)","outline-variant":"rgb(var(--outline-variant) / <alpha-value>)","primary":"rgb(var(--primary) / <alpha-value>)","on-background":"rgb(var(--on-background) / <alpha-value>)","surface":"rgb(var(--surface) / <alpha-value>)","surface-container-high":"rgb(var(--surface-container-high) / <alpha-value>)","on-primary-fixed":"rgb(var(--on-primary-fixed) / <alpha-value>)","tertiary-fixed-dim":"rgb(var(--tertiary-fixed-dim) / <alpha-value>)","on-secondary":"rgb(var(--on-secondary) / <alpha-value>)","surface-container-highest":"rgb(var(--surface-container-highest) / <alpha-value>)","primary-fixed-dim":"rgb(var(--primary-fixed-dim) / <alpha-value>)","surface-tint":"rgb(var(--surface-tint) / <alpha-value>)","outline":"rgb(var(--outline) / <alpha-value>)","surface-container-lowest":"rgb(var(--surface-container-lowest) / <alpha-value>)","surface-container-low":"rgb(var(--surface-container-low) / <alpha-value>)","on-tertiary":"rgb(var(--on-tertiary) / <alpha-value>)","error":"rgb(var(--error) / <alpha-value>)","on-primary-fixed-variant":"rgb(var(--on-primary-fixed-variant) / <alpha-value>)","secondary-container":"rgb(var(--secondary-container) / <alpha-value>)","tertiary-container":"rgb(var(--tertiary-container) / <alpha-value>)","on-surface-variant":"rgb(var(--on-surface-variant) / <alpha-value>)","inverse-primary":"rgb(var(--inverse-primary) / <alpha-value>)","on-secondary-fixed":"rgb(var(--on-secondary-fixed) / <alpha-value>)","on-secondary-container":"rgb(var(--on-secondary-container) / <alpha-value>)","on-error":"rgb(var(--on-error) / <alpha-value>)","tertiary-fixed":"rgb(var(--tertiary-fixed) / <alpha-value>)","primary-fixed":"rgb(var(--primary-fixed) / <alpha-value>)","secondary-fixed":"rgb(var(--secondary-fixed) / <alpha-value>)","on-tertiary-fixed-variant":"rgb(var(--on-tertiary-fixed-variant) / <alpha-value>)","on-surface":"rgb(var(--on-surface) / <alpha-value>)","on-primary-container":"rgb(var(--on-primary-container) / <alpha-value>)","error-container":"rgb(var(--error-container) / <alpha-value>)","background":"rgb(var(--background) / <alpha-value>)","surface-variant":"rgb(var(--surface-variant) / <alpha-value>)","surface-dim":"rgb(var(--surface-dim) / <alpha-value>)","on-primary":"rgb(var(--on-primary) / <alpha-value>)","secondary":"rgb(var(--secondary) / <alpha-value>)","on-tertiary-fixed":"rgb(var(--on-tertiary-fixed) / <alpha-value>)","inverse-surface":"rgb(var(--inverse-surface) / <alpha-value>)","primary-container":"rgb(var(--primary-container) / <alpha-value>)","on-secondary-fixed-variant":"rgb(var(--on-secondary-fixed-variant) / <alpha-value>)","surface-container":"rgb(var(--surface-container) / <alpha-value>)"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"margin-mobile":"16px","margin-desktop":"32px","base":"4px","sidebar-width":"280px","container-max":"1440px","gutter":"24px"},"fontFamily":{"body-lg":["Inter"],"headline-lg-mobile":["Inter"],"body-md":["Inter"],"label-md":["Inter"],"headline-lg":["Inter"],"display-lg":["Inter"],"title-md":["Inter"],"label-sm":["Inter"]},"fontSize":{"body-lg":["18px",{"lineHeight":"1.6","fontWeight":"400"}],"headline-lg-mobile":["24px",{"lineHeight":"1.3","fontWeight":"600"}],"body-md":["16px",{"lineHeight":"1.5","fontWeight":"400"}],"label-md":["14px",{"lineHeight":"1.2","letterSpacing":"0.01em","fontWeight":"500"}],"headline-lg":["32px",{"lineHeight":"1.25","letterSpacing":"-0.01em","fontWeight":"600"}],"display-lg":["48px",{"lineHeight":"1.2","letterSpacing":"-0.02em","fontWeight":"700"}],"title-md":["20px",{"lineHeight":"1.4","fontWeight":"600"}],"label-sm":["12px",{"lineHeight":"1","letterSpacing":"0.05em","fontWeight":"600"}]}}}}</script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/>
+    <script th:src="@{/theme.js}"></script>
+    <link rel="stylesheet" th:href="@{/theme-tokens.css}">
+    <style>
+        .login-loader { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; padding: 24px; background: rgb(15 23 42 / 35%); backdrop-filter: blur(10px); opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .25s ease, visibility .25s ease; }
+        .login-loader.is-visible { opacity: 1; visibility: visible; pointer-events: auto; }
+        .login-loader-card { width: min(360px, 100%); display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 30px 26px; text-align: center; border: 1px solid rgb(255 255 255 / 25%); border-radius: 22px; background: rgb(255 255 255 / 94%); box-shadow: 0 24px 70px rgb(0 0 0 / 22%); }
+        .login-loader-logo { width: 52px; height: 52px; object-fit: contain; border-radius: 14px; }
+        .login-loader-spinner { width: 36px; height: 36px; border-radius: 999px; border: 3px solid #dbe3f5; border-top-color: #00288e; border-right-color: #006c49; animation: loginLoaderSpin .8s linear infinite; }
+        .login-loader-title { margin: 0; color: #00288e; font: 700 16px/1.3 Inter, sans-serif; }
+        .login-loader-text { margin: 0; color: #475569; font: 400 13px/1.4 Inter, sans-serif; }
+        @keyframes loginLoaderSpin { to { transform: rotate(360deg); } }
+        @media (prefers-reduced-motion: reduce) { .login-loader-spinner { animation: none; } }
+        @media (max-width: 767px) {
+            .login-header-nav.is-open { display: flex; }
+            .login-header-nav a { width: 100%; padding: 12px 14px; border-radius: 10px; }
+            .login-header-nav a:hover { background: rgb(148 163 184 / 12%); }
+        }
+        /* Forgot password modal */
+        #forgotPasswordModal { transition: opacity .2s ease; }
+        #forgotPasswordModal .fp-panel { animation: fpPopIn .2s ease; }
+        @keyframes fpPopIn { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        .fp-btn-primary { width: 100%; height: 48px; background: rgb(var(--primary)); color: rgb(var(--on-primary)); font-weight: 600; font-size: 14px; border-radius: 10px; transition: opacity .2s, transform .1s; }
+        .fp-btn-primary:hover { opacity: .92; }
+        .fp-btn-primary:active { transform: scale(.98); }
+        .fp-btn-primary:disabled { opacity: .6; cursor: not-allowed; }
+        .fp-input { width: 100%; height: 48px; padding: 0 16px; background: rgb(var(--surface-container-low)); border: none; border-radius: 10px; outline: none; color: rgb(var(--on-surface)); }
+        .fp-input:focus { box-shadow: 0 0 0 2px rgb(var(--primary) / .2); }
+        .fp-error-text { color: rgb(var(--error)); font-size: 12px; margin-top: 4px; }
+        .fp-otp-boxes { display: flex; gap: 8px; justify-content: center; }
+        .fp-otp-box { width: 44px; height: 52px; text-align: center; font-size: 20px; font-weight: 600; background: rgb(var(--surface-container-low)); border: none; border-radius: 10px; outline: none; color: rgb(var(--on-surface)); }
+        .fp-otp-box:focus { box-shadow: 0 0 0 2px rgb(var(--primary) / .2); }
+    </style>
+</head><body class="bg-background font-body-md text-on-surface">
+<div id="loginPageLoader" class="login-loader" role="status" aria-live="polite" aria-label="Loading CityFix">
+    <div class="login-loader-card">
+        <img class="login-loader-logo" th:src="@{/screen.png}" alt="CityFix">
+        <div class="login-loader-spinner" aria-hidden="true"></div>
+        <p class="login-loader-title">CityFix</p>
+        <p class="login-loader-text">Please wait while we take you there...</p>
+    </div>
+</div>
+
+<!-- Login error popup -->
+<div id="topNotification"
+     role="alert"
+     aria-live="assertive"
+     th:if="${param.error != null or param.logout != null}"
+     class="fixed top-20 right-4 sm:right-8 z-[100] w-[calc(100%-2rem)] sm:w-auto sm:min-w-[360px] max-w-md rounded-2xl border border-error/25 bg-surface-container-lowest shadow-2xl shadow-slate-950/15 px-4 py-4">
+    <div class="flex items-center gap-3">
+        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-error-container text-error">
+            <span class="material-symbols-outlined text-[20px]" th:if="${param.logout != null}">check_circle</span>
+            <span class="material-symbols-outlined text-[20px]" th:if="${param.error != null}">error</span>
+        </div>
+
+        <p class="flex-1 text-sm font-semibold text-on-surface"
+           th:if="${param.logout != null}">
+            You have been logged out successfully.
+        </p>
+
+        <p class="flex-1 text-sm font-semibold text-on-surface"
+           th:if="${param.error != null and param.error[0] == 'disabled'}">
+            This admin account has been blocked. Contact a super admin.
+        </p>
+
+        <p class="flex-1 text-sm font-semibold text-on-surface"
+           th:if="${param.error != null and param.error[0] != 'disabled'}">
+            Email or password is invalid.
+        </p>
+
+        <button id="closeTopNotification"
+                type="button"
+                class="rounded-lg p-1 text-on-surface-variant transition-colors hover:bg-surface-container-high"
+                aria-label="Close notification">
+            <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+    </div>
+</div>
+
+<!-- Forgot Password status popup (mirrors topNotification style) -->
+<div id="fpNotification"
+     role="alert"
+     aria-live="assertive"
+     class="fixed top-20 right-4 sm:right-8 z-[210] hidden w-[calc(100%-2rem)] sm:w-auto sm:min-w-[360px] max-w-md rounded-2xl border bg-surface-container-lowest shadow-2xl shadow-slate-950/15 px-4 py-4">
+    <div class="flex items-center gap-3">
+        <div id="fpNotificationIconWrap" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl">
+            <span class="material-symbols-outlined text-[20px]" id="fpNotificationIcon">info</span>
+        </div>
+        <p class="flex-1 text-sm font-semibold text-on-surface" id="fpNotificationText"></p>
+        <button id="closeFpNotification" type="button" class="rounded-lg p-1 text-on-surface-variant transition-colors hover:bg-surface-container-high" aria-label="Close notification">
+            <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+    </div>
+</div>
+
+<header class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
+    <div class="h-16 max-w-container-max mx-auto px-margin-mobile lg:px-margin-desktop flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <img alt="CityFix Logo" class="h-8 w-auto object-contain" th:src="@{/screen.png}"/>
+            <span class="font-title-md text-title-md text-primary tracking-tight">CityFix</span>
+        </div>
+        <button id="loginMobileMenuToggle" type="button" class="md:hidden inline-flex h-11 w-11 items-center justify-center rounded-xl border border-outline-variant bg-surface-container text-on-surface" aria-controls="loginPrimaryNav" aria-expanded="false" aria-label="Open navigation menu">
+            <span class="material-symbols-outlined" aria-hidden="true">menu</span>
+        </button>
+        <nav id="loginPrimaryNav" class="login-header-nav hidden md:flex flex-col md:flex-row items-stretch md:items-center gap-2 md:gap-8 absolute md:static top-[72px] left-4 right-4 md:top-auto md:left-auto md:right-auto rounded-2xl md:rounded-none border md:border-0 border-outline-variant bg-surface-container-lowest md:bg-transparent p-3 md:p-0 shadow-xl md:shadow-none">
+            <a class="transition-colors"
+               th:classappend="${activePage == 'home'} ? 'text-primary font-semibold' : 'text-on-surface-variant hover:text-on-surface'"
+               th:href="@{/}">Home</a>
+
+            <a class="transition-colors"
+               th:classappend="${activePage == 'about'} ? 'text-primary font-semibold' : 'text-on-surface-variant hover:text-on-surface'"
+               th:href="@{/about}">About</a>
+
+            <a class="transition-colors"
+               th:classappend="${activePage == 'contact'} ? 'text-primary font-semibold' : 'text-on-surface-variant hover:text-on-surface'"
+               th:href="@{/contact}">Contact</a>
+
+            <a class="transition-colors"
+               th:classappend="${activePage == 'login'} ? 'text-primary font-semibold' : 'text-on-surface-variant hover:text-on-surface'"
+               th:href="@{/login}">Login</a>
+
+            <a class="bg-primary text-on-primary px-4 py-2 rounded-lg hover:bg-primary-container transition-all" th:href="@{/register}">Register</a>
+            <div th:replace="~{fragments/themeToggle :: toggle}"></div>
+
+        </nav>
+    </div>
+</header>
+
+<main class="w-full pt-16 bg-background min-h-screen flex flex-col justify-center">
+    <div class="flex flex-col w-full">
+        <!-- Interactive Background Element -->
+        <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+            <div class="absolute -top-[10%] -left-[5%] w-[40%] h-[40%] rounded-full bg-primary/5 blur-[120px] animate-pulse"></div>
+            <div class="absolute top-[60%] -right-[10%] w-[50%] h-[50%] rounded-full bg-secondary/5 blur-[120px]" style="animation: pulse 8s infinite alternate"></div>
+        </div>
+        <div class="relative z-10 flex min-h-[calc(100vh-64px)] items-center justify-center px-margin-mobile lg:px-margin-desktop py-12">
+            <!-- Login Container -->
+            <div class="w-full max-w-[1100px] flex flex-col lg:flex-row bg-surface-container-lowest rounded-xl shadow-xl overflow-hidden min-h-[640px]">
+                <!-- Visual Side (Hidden on Mobile) -->
+                <div class="hidden lg:flex lg:w-1/2 relative bg-primary-container items-end p-12 overflow-hidden">
+                    <div class="absolute inset-0 z-0">
+                        <div class="w-full h-full bg-cover bg-center opacity-40 mix-blend-overlay" data-alt="A clean, high-angle aerial view of a modern, well-maintained city center with green parks, organized streets, and sustainable architecture." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCaihCBdrUIThs6EDLkBfgzsVWGiq9fX-ZMwlPe7Sa7tDXn6WicGAOm39whwAsJ3Ryyo-reF6TeQPDr9WxP9kmZc0M_YQwDK4KSmS2prj0fiMIwU60c37Pz4v66filRVcBKfX5d519APVUO1Y_4Q0lGkZbSo9ZqHEjs7eEg93jozNrRli5_eTTRWbV7ubO626iVWMJp8j5371xyRTS2CJxuK4732vUausFnEUczMVAb9QD2Ca_t-wCssw')"></div>
+                        <div class="absolute inset-0 bg-gradient-to-t from-primary/80 via-primary/20 to-transparent"></div>
+                    </div>
+                    <div class="relative z-10">
+                        <div class="mb-6 inline-flex items-center justify-center w-12 h-12 rounded-lg bg-on-primary/10 backdrop-blur-md">
+                            <span class="material-symbols-outlined text-on-primary text-[28px]">account_balance</span>
+                        </div>
+                        <h1 class="font-display-lg text-display-lg text-on-primary mb-4 leading-tight">Civic service,<br/>reimagined.</h1>
+                        <p class="font-body-lg text-on-primary/80 max-w-sm">Access your municipal dashboard to report issues, track resolutions, and engage with your local community infrastructure.</p>
+                        <div class="mt-12 flex items-center gap-6">
+                            <div class="flex flex-col">
+                                <span class="font-label-sm text-on-primary/60 uppercase tracking-widest mb-1">Status</span>
+                                <div class="flex items-center gap-2">
+                                    <div class="w-2 h-2 rounded-full bg-secondary-fixed animate-ping"></div>
+                                    <span class="font-label-md text-on-primary">Systems Operational</span>
+                                </div>
+                            </div>
+                            <div class="h-8 w-px bg-on-primary/20"></div>
+                            <div class="flex flex-col">
+                                <span class="font-label-sm text-on-primary/60 uppercase tracking-widest mb-1">Users</span>
+                                <span class="font-label-md text-on-primary">12.4k Active</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Form Side -->
+                <div class="w-full lg:w-1/2 p-8 lg:p-16 flex flex-col justify-center bg-surface-container-lowest">
+                    <div class="max-w-md mx-auto w-full">
+                        <header class="mb-10">
+                            <div class="lg:hidden mb-6">
+                                <img alt="CityFix logo" class="h-10 w-auto object-contain" th:src="@{/screen.png}"/>
+                            </div>
+                            <h2 class="font-headline-lg text-headline-lg text-on-surface mb-2">Welcome Back</h2>
+                            <p class="font-body-md text-on-surface-variant">Please enter your credentials to access the portal.</p>
+                        </header>
+
+
+                        <form class="space-y-6" id="loginForm" method="post" th:action="@{/login}">
+                            <div class="space-y-1.5">
+                                <label class="font-label-md text-on-surface-variant ml-1" for="email">Email Address</label>
+                                <div class="relative group">
+                                    <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors text-[20px]">mail</span>
+                                    <input class="w-full h-12 pl-12 pr-4 bg-surface-container-low rounded-lg border-none focus:ring-2 focus:ring-primary/20 focus:bg-surface-container-lowest transition-all outline-none text-on-surface placeholder:text-outline" id="email" name="email" placeholder="name@agency.gov" required type="email"/>
+                                </div>
+                            </div>
+                            <div class="space-y-1.5">
+                                <div class="flex justify-between items-center px-1">
+                                    <label class="font-label-md text-on-surface-variant" for="password">Password</label>
+                                    <a class="font-label-md text-primary hover:underline decoration-2 underline-offset-4" href="#" id="forgotPasswordLink">Forgot password?</a>
+                                </div>
+                                <div class="relative group">
+                                    <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors text-[20px]">lock</span>
+                                    <input class="w-full h-12 pl-12 pr-12 bg-surface-container-low rounded-lg border-none focus:ring-2 focus:ring-primary/20 focus:bg-surface-container-lowest transition-all outline-none text-on-surface placeholder:text-outline" id="password" name="password" placeholder="••••••••" required type="password"/>
+                                    <button class="absolute right-4 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface transition-colors" onclick="togglePassword()" type="button">
+                                        <span class="material-symbols-outlined text-[20px]" id="passwordIcon">visibility</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3 px-1">
+                                <div class="relative flex items-center h-5">
+                                    <input class="w-5 h-5 rounded border-outline text-primary focus:ring-primary/20 cursor-pointer accent-primary" id="remember" type="checkbox"/>
+                                </div>
+                                <label class="font-label-md text-on-surface-variant cursor-pointer select-none" for="remember">Remember this device for 30 days</label>
+                            </div>
+                            <button class="w-full h-12 bg-primary text-on-primary font-label-md rounded-lg shadow-md hover:shadow-lg hover:bg-primary-fixed-variant transition-all transform active:scale-[0.98] flex items-center justify-center gap-2" type="submit">
+                                <span>Sign In to Portal</span>
+                                <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+                            </button>
+                        </form>
+
+                        <section class="mt-8 rounded-xl border border-outline-variant/40 bg-surface-container-low p-4" aria-labelledby="demo-access-title">
+                            <div class="flex items-center justify-between gap-3 mb-3">
+                                <div>
+                                    <h3 id="demo-access-title" class="font-label-md text-on-surface">Demo access</h3>
+                                    <p class="text-xs text-on-surface-variant mt-1">Click an account to fill the login form.</p>
+                                </div>
+                                <span class="material-symbols-outlined text-primary" aria-hidden="true">touch_app</span>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                <button type="button" class="demo-account" data-email="admin@cityfix.com" data-password="Admin@123" data-role="Super Admin">
+                                    <span class="material-symbols-outlined text-[18px]">shield_person</span>
+                                    <span>Super Admin</span>
+                                </button>
+                                <button type="button" class="demo-account" data-email="admin@gmail.com" data-password="admin123" data-role="Admin">
+                                    <span class="material-symbols-outlined text-[18px]">admin_panel_settings</span>
+                                    <span>Admin</span>
+                                </button>
+                                <button type="button" class="demo-account" data-email="user@gmail.com" data-password="user123" data-role="Citizen">
+                                    <span class="material-symbols-outlined text-[18px]">person</span>
+                                    <span>Citizen</span>
+                                </button>
+                            </div>
+                        </section>
+
+                        <footer class="mt-12 text-center border-t border-surface-container-high pt-8">
+                            <p class="font-body-md text-on-surface-variant">
+                                Don't have an account?
+                                <a class="text-primary font-title-md ml-1 hover:underline decoration-2 underline-offset-4" th:href="@{/register}">Create one</a>
+                            </p>
+                            <div class="mt-8 flex items-center justify-center gap-4 grayscale opacity-50">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="material-symbols-outlined text-[16px]">verified_user</span>
+                                    <span class="font-label-sm uppercase tracking-tighter">Secure Access</span>
+                                </div>
+                                <div class="w-1 h-1 rounded-full bg-outline"></div>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="material-symbols-outlined text-[16px]">gavel</span>
+                                    <span class="font-label-sm uppercase tracking-tighter">Public Terms</span>
+                                </div>
+                            </div>
+                        </footer>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script>
+            function togglePassword() {
+                const input = document.getElementById('password');
+                const icon = document.getElementById('passwordIcon');
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.innerText = 'visibility_off';
+                } else {
+                    input.type = 'password';
+                    icon.innerText = 'visibility';
+                }
+            }
+
+            (function () {
+                const emailInput = document.getElementById('email');
+                const passwordInput = document.getElementById('password');
+                const rememberInput = document.getElementById('remember');
+                const loginForm = document.getElementById('loginForm');
+                const storageKey = 'cityfix-demo-login';
+                const maxAge = 30 * 24 * 60 * 60 * 1000;
+
+                function clearSavedLogin() {
+                    localStorage.removeItem(storageKey);
+                }
+
+                function saveLogin() {
+                    if (!rememberInput.checked) {
+                        clearSavedLogin();
+                        return;
+                    }
+                    localStorage.setItem(storageKey, JSON.stringify({
+                        email: emailInput.value,
+                        password: passwordInput.value,
+                        savedAt: Date.now()
+                    }));
+                }
+
+                try {
+                    const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
+                    if (saved && Date.now() - saved.savedAt < maxAge) {
+                        emailInput.value = saved.email || '';
+                        passwordInput.value = saved.password || '';
+                        rememberInput.checked = true;
+                    } else {
+                        clearSavedLogin();
+                    }
+                } catch (_) {
+                    clearSavedLogin();
+                }
+
+                document.querySelectorAll('.demo-account').forEach(function (button) {
+                    button.addEventListener('click', function () {
+                        emailInput.value = button.dataset.email;
+                        passwordInput.value = button.dataset.password;
+                        rememberInput.checked = true;
+                        emailInput.dispatchEvent(new Event('input', { bubbles: true }));
+                        passwordInput.dispatchEvent(new Event('input', { bubbles: true }));
+                        emailInput.focus();
+                    });
+                });
+
+                rememberInput.addEventListener('change', saveLogin);
+                loginForm.addEventListener('submit', saveLogin);
+            })();
+        </script>
+        <style>
+            @keyframes pulse {
+                from { transform: scale(1) translate(0, 0); opacity: 0.4; }
+                to { transform: scale(1.1) translate(20px, -20px); opacity: 0.6; }
+            }
+            .form-side::-webkit-scrollbar {
+                width: 4px;
+            }
+            .form-side::-webkit-scrollbar-thumb {
+                background: #e2e8f0;
+                border-radius: 10px;
+            }
+            .demo-account {
+                min-height: 42px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                padding: 8px 10px;
+                border: 1px solid rgb(196 197 213 / .65);
+                border-radius: 9px;
+                color: var(--on-surface, #191c1e);
+                background: var(--surface-container-lowest, #fff);
+                font-size: 12px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: transform .2s, background .2s, border-color .2s;
+            }
+            .demo-account:hover {
+                background: var(--surface-container-low, #f2f4f6);
+                border-color: var(--primary, #00288e);
+                transform: translateY(-1px);
+            }
+            .demo-account:focus-visible {
+                outline: 3px solid rgb(0 40 142 / .25);
+                outline-offset: 2px;
+            }
+        </style>
+    </div>
+</main>
+
+<!-- ===================== Forgot Password Modal ===================== -->
+<div id="forgotPasswordModal" class="fixed inset-0 z-[200] hidden items-center justify-center bg-slate-950/50 backdrop-blur-sm px-4">
+    <div class="fp-panel w-full max-w-md bg-surface-container-lowest rounded-2xl shadow-2xl p-8 relative">
+        <button id="closeForgotModal" type="button" class="absolute right-4 top-4 text-on-surface-variant hover:text-on-surface" aria-label="Close">
+            <span class="material-symbols-outlined">close</span>
+        </button>
+
+        <!-- Step 1: Email -->
+        <div id="fpStepEmail" class="fp-step">
+            <div class="mb-5 inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary-container">
+                <span class="material-symbols-outlined text-primary text-[24px]">mail</span>
+            </div>
+            <h3 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-2">Reset your password</h3>
+            <p class="text-sm text-on-surface-variant mb-6">Enter the email linked to your account and we'll send you a verification code.</p>
+            <label class="font-label-md text-on-surface-variant ml-1" for="fpEmail">Email Address</label>
+            <input type="email" id="fpEmail" placeholder="name@agency.gov" class="fp-input mt-1.5" autocomplete="email"/>
+            <p id="fpEmailError" class="fp-error-text hidden"></p>
+            <button id="fpSendOtpBtn" type="button" class="fp-btn-primary mt-5 flex items-center justify-center gap-2">
+                <span>Send Verification Code</span>
+            </button>
+        </div>
+
+        <!-- Step 2: OTP -->
+        <div id="fpStepOtp" class="fp-step hidden">
+            <div class="mb-5 inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary-container">
+                <span class="material-symbols-outlined text-primary text-[24px]">pin</span>
+            </div>
+            <h3 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-2">Enter verification code</h3>
+            <p class="text-sm text-on-surface-variant mb-6">We sent a 6-digit code to <span id="fpOtpEmailLabel" class="font-semibold text-on-surface"></span></p>
+            <input type="text" id="fpOtp" maxlength="6" inputmode="numeric" pattern="[0-9]*" placeholder="••••••" class="fp-input text-center tracking-[0.5em] font-semibold"/>
+            <p id="fpOtpError" class="fp-error-text hidden"></p>
+            <button id="fpVerifyOtpBtn" type="button" class="fp-btn-primary mt-5">Verify Code</button>
+            <button id="fpResendOtpBtn" type="button" class="w-full mt-3 text-sm text-primary hover:underline font-label-md">Resend code</button>
+        </div>
+
+        <!-- Step 3: New Password -->
+        <div id="fpStepPassword" class="fp-step hidden">
+            <div class="mb-5 inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary-container">
+                <span class="material-symbols-outlined text-primary text-[24px]">lock_reset</span>
+            </div>
+            <h3 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-2">Set new password</h3>
+            <p class="text-sm text-on-surface-variant mb-6">Choose a strong new password for your account.</p>
+
+            <label class="font-label-md text-on-surface-variant ml-1" for="fpNewPassword">New Password</label>
+            <input type="password" id="fpNewPassword" placeholder="••••••••" class="fp-input mt-1.5 mb-4" autocomplete="new-password"/>
+
+            <label class="font-label-md text-on-surface-variant ml-1" for="fpConfirmPassword">Confirm Password</label>
+            <input type="password" id="fpConfirmPassword" placeholder="••••••••" class="fp-input mt-1.5" autocomplete="new-password"/>
+
+            <p id="fpPasswordError" class="fp-error-text hidden"></p>
+            <button id="fpResetBtn" type="button" class="fp-btn-primary mt-5">Reset Password</button>
+        </div>
+
+        <!-- Step 4: Success -->
+        <div id="fpStepSuccess" class="fp-step hidden text-center py-4">
+            <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-secondary-container">
+                <span class="material-symbols-outlined text-secondary text-[28px]">check_circle</span>
+            </div>
+            <h3 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-2">Password reset!</h3>
+            <p class="text-sm text-on-surface-variant mb-6">Your password has been updated. You can now sign in with your new password.</p>
+            <button id="fpDoneBtn" type="button" class="fp-btn-primary">Back to Login</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const notification = document.getElementById('topNotification');
+        const closeNotification = document.getElementById('closeTopNotification');
+        if (!notification) return;
+
+        function hideNotification() {
+            notification.classList.add('hidden');
+            notification.classList.remove('flex');
+        }
+
+        if (closeNotification) closeNotification.addEventListener('click', hideNotification);
+        window.setTimeout(hideNotification, 6500);
+    });
+</script>
+<script>
+    (() => {
+        const loader = document.getElementById('loginPageLoader');
+        const toggle = document.getElementById('loginMobileMenuToggle');
+        const nav = document.getElementById('loginPrimaryNav');
+        const showLoader = () => loader?.classList.add('is-visible');
+        const hideLoader = () => loader?.classList.remove('is-visible');
+
+        if (toggle && nav) {
+            toggle.addEventListener('click', () => {
+                const open = toggle.getAttribute('aria-expanded') === 'true';
+                toggle.setAttribute('aria-expanded', String(!open));
+                toggle.setAttribute('aria-label', open ? 'Open navigation menu' : 'Close navigation menu');
+                nav.classList.toggle('is-open', !open);
+                const icon = toggle.querySelector('.material-symbols-outlined');
+                if (icon) icon.textContent = open ? 'menu' : 'close';
+            });
+            nav.querySelectorAll('a').forEach(link => link.addEventListener('click', () => {
+                nav.classList.remove('is-open');
+                toggle.setAttribute('aria-expanded', 'false');
+            }));
+            window.addEventListener('resize', () => {
+                if (window.innerWidth >= 768) {
+                    nav.classList.remove('is-open');
+                    toggle.setAttribute('aria-expanded', 'false');
+                }
+            });
+        }
+
+        document.querySelectorAll('a[href]').forEach(link => {
+            link.addEventListener('click', event => {
+                const href = link.getAttribute('href');
+                if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:') || link.target === '_blank' || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+                try { if (new URL(href, window.location.href).origin === window.location.origin) showLoader(); } catch (_) { /* Ignore malformed URLs. */ }
+            });
+        });
+
+        const loginForm = document.getElementById('loginForm');
+        if (loginForm) loginForm.addEventListener('submit', event => {
+            if (loginForm.checkValidity()) showLoader();
+        });
+
+        window.addEventListener('pageshow', hideLoader);
+        window.setTimeout(hideLoader, 8000);
+    })();
+</script>
+
+<!-- ===================== Forgot Password Logic ===================== -->
+<script>
+    (() => {
+        const modal = document.getElementById('forgotPasswordModal');
+        const openLink = document.getElementById('forgotPasswordLink');
+        const closeBtn = document.getElementById('closeForgotModal');
+
+        const steps = {
+            email: document.getElementById('fpStepEmail'),
+            otp: document.getElementById('fpStepOtp'),
+            password: document.getElementById('fpStepPassword'),
+            success: document.getElementById('fpStepSuccess')
+        };
+
+        const fpToast = document.getElementById('fpNotification');
+        const fpToastText = document.getElementById('fpNotificationText');
+        const fpToastIconWrap = document.getElementById('fpNotificationIconWrap');
+        const fpToastIcon = document.getElementById('fpNotificationIcon');
+        const closeFpToast = document.getElementById('closeFpNotification');
+
+        let currentEmail = '';
+        let fpToastTimer = null;
+
+        function showToast(message, type) {
+            fpToastText.textContent = message;
+            fpToast.classList.remove('hidden', 'border-error/25', 'border-secondary/25');
+            fpToastIconWrap.classList.remove('bg-error-container', 'text-error', 'bg-secondary-container', 'text-secondary');
+
+            if (type === 'error') {
+                fpToast.classList.add('border-error/25');
+                fpToastIconWrap.classList.add('bg-error-container', 'text-error');
+                fpToastIcon.textContent = 'error';
+            } else {
+                fpToast.classList.add('border-secondary/25');
+                fpToastIconWrap.classList.add('bg-secondary-container', 'text-secondary');
+                fpToastIcon.textContent = 'check_circle';
+            }
+
+            fpToast.classList.remove('hidden');
+            clearTimeout(fpToastTimer);
+            fpToastTimer = setTimeout(() => fpToast.classList.add('hidden'), 5000);
+        }
+
+        closeFpToast.addEventListener('click', () => fpToast.classList.add('hidden'));
+
+        function showStep(name) {
+            Object.values(steps).forEach(el => el.classList.add('hidden'));
+            steps[name].classList.remove('hidden');
+        }
+
+        function clearFieldErrors() {
+            ['fpEmailError', 'fpOtpError', 'fpPasswordError'].forEach(id => {
+                const el = document.getElementById(id);
+                el.classList.add('hidden');
+                el.textContent = '';
+            });
+        }
+
+        function openModal() {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            showStep('email');
+            document.getElementById('fpEmail').value = '';
+            document.getElementById('fpOtp').value = '';
+            document.getElementById('fpNewPassword').value = '';
+            document.getElementById('fpConfirmPassword').value = '';
+            clearFieldErrors();
+            setTimeout(() => document.getElementById('fpEmail').focus(), 50);
+        }
+
+        function closeModal() {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function setLoading(btn, loading, defaultText) {
+            btn.disabled = loading;
+            btn.innerHTML = loading
+                ? '<span class="material-symbols-outlined animate-spin text-[18px]">progress_activity</span><span>Please wait...</span>'
+                : defaultText;
+        }
+
+        async function postJson(url, body) {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            let data = {};
+            try { data = await res.json(); } catch (_) { /* no body */ }
+            if (!res.ok) throw new Error(data.error || 'Something went wrong. Please try again.');
+            return data;
+        }
+
+        openLink?.addEventListener('click', e => { e.preventDefault(); openModal(); });
+        closeBtn?.addEventListener('click', closeModal);
+        document.getElementById('fpDoneBtn')?.addEventListener('click', closeModal);
+        modal?.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal();
+        });
+
+        // OTP field: only digits
+        const fpOtpInput = document.getElementById('fpOtp');
+        fpOtpInput.addEventListener('input', () => {
+            fpOtpInput.value = fpOtpInput.value.replace(/\D/g, '').slice(0, 6);
+        });
+
+        // Step 1 -> Send OTP
+        const sendOtpBtn = document.getElementById('fpSendOtpBtn');
+        sendOtpBtn.addEventListener('click', async () => {
+            const email = document.getElementById('fpEmail').value.trim();
+            const errorEl = document.getElementById('fpEmailError');
+            errorEl.classList.add('hidden');
+
+            if (!email) {
+                errorEl.textContent = 'Email is required';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            setLoading(sendOtpBtn, true);
+            try {
+                await postJson('/forgot-password/send-otp', { email });
+                currentEmail = email;
+                document.getElementById('fpOtpEmailLabel').textContent = email;
+                document.getElementById('fpOtp').value = '';
+                showStep('otp');
+                setTimeout(() => document.getElementById('fpOtp').focus(), 50);
+            } catch (err) {
+                errorEl.textContent = err.message;
+                errorEl.classList.remove('hidden');
+            } finally {
+                setLoading(sendOtpBtn, false, '<span>Send Verification Code</span>');
+            }
+        });
+
+        // Step 2 -> Verify OTP
+        const verifyOtpBtn = document.getElementById('fpVerifyOtpBtn');
+        verifyOtpBtn.addEventListener('click', async () => {
+            const otp = document.getElementById('fpOtp').value.trim();
+            const errorEl = document.getElementById('fpOtpError');
+            errorEl.classList.add('hidden');
+
+            if (!otp || otp.length !== 6) {
+                errorEl.textContent = 'Enter the 6-digit code';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            setLoading(verifyOtpBtn, true);
+            try {
+                await postJson('/forgot-password/verify-otp', { email: currentEmail, otp });
+                showStep('password');
+                setTimeout(() => document.getElementById('fpNewPassword').focus(), 50);
+            } catch (err) {
+                errorEl.textContent = err.message;
+                errorEl.classList.remove('hidden');
+            } finally {
+                setLoading(verifyOtpBtn, false, 'Verify Code');
+            }
+        });
+
+        // Resend OTP
+        const resendBtn = document.getElementById('fpResendOtpBtn');
+        resendBtn.addEventListener('click', async () => {
+            if (!currentEmail) return;
+            resendBtn.disabled = true;
+            try {
+                await postJson('/forgot-password/send-otp', { email: currentEmail });
+                showToast('A new code has been sent to your email.', 'success');
+            } catch (err) {
+                showToast(err.message, 'error');
+            } finally {
+                setTimeout(() => { resendBtn.disabled = false; }, 3000);
+            }
+        });
+
+        // Step 3 -> Reset Password
+        const resetBtn = document.getElementById('fpResetBtn');
+        resetBtn.addEventListener('click', async () => {
+            const newPassword = document.getElementById('fpNewPassword').value;
+            const confirmPassword = document.getElementById('fpConfirmPassword').value;
+            const errorEl = document.getElementById('fpPasswordError');
+            errorEl.classList.add('hidden');
+
+            if (!newPassword || !confirmPassword) {
+                errorEl.textContent = 'Both fields are required';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            if (newPassword.length < 6) {
+                errorEl.textContent = 'Password must be at least 6 characters';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            if (newPassword !== confirmPassword) {
+                errorEl.textContent = 'Passwords do not match';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            setLoading(resetBtn, true);
+            try {
+                await postJson('/forgot-password/reset-password', {
+                    email: currentEmail, newPassword, confirmPassword
+                });
+                showStep('success');
+            } catch (err) {
+                errorEl.textContent = err.message;
+                errorEl.classList.remove('hidden');
+            } finally {
+                setLoading(resetBtn, false, 'Reset Password');
+            }
+        });
+    })();
+</script>
+</body></html>

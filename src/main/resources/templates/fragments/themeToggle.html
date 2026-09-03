@@ -1,0 +1,10 @@
+<!-- Reusable day/night toggle button.
+     Include on any Tailwind-CDN page with:
+       <div th:replace="~{fragments/themeToggle :: toggle}"></div>
+     Needs /theme.js + /theme-tokens.css already loaded in <head>. -->
+<button th:fragment="toggle" type="button"
+        class="theme-toggle w-10 h-10 rounded-full flex items-center justify-center border border-outline-variant bg-surface-container-low text-on-surface hover:bg-surface-container-high transition-colors"
+        aria-label="Toggle dark mode" title="Toggle day/night mode">
+    <span class="material-symbols-outlined theme-icon-sun" aria-hidden="true" style="font-size:20px;">light_mode</span>
+    <span class="material-symbols-outlined theme-icon-moon" aria-hidden="true" style="font-size:20px;">dark_mode</span>
+</button>

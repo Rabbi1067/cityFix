@@ -1,0 +1,14 @@
+name: Keep Render Awake
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Render
+        run: |
+          curl --max-time 90 -s -o /dev/null -w "Status: %{http_code}\n" https://cityfix-0buh.onrender.com/ || echo "Ping failed but continuing"

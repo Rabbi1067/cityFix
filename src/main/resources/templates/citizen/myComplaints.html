@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>CityFix - My Complaints</title>
+    <style>
+        @layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}
+
+        .rating-choice { position: absolute; opacity: 0; pointer-events: none; }
+        .rating-half-star {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 38px;
+            overflow: hidden;
+            color: rgb(var(--on-surface-variant));
+            cursor: pointer;
+            transition: color .2s ease, background-color .2s ease;
+        }
+        .rating-half-star:hover { color: #fbbf24; background-color: rgba(251,191,36,.10); }
+        .rating-half-star.left { border-radius: 8px 0 0 8px; }
+        .rating-half-star.right { border-radius: 0 8px 8px 0; }
+        .rating-half-star .rating-glyph { font-size: 28px; line-height: 1; }
+        .rating-half-star.left .rating-glyph { transform: translateX(50%); }
+        .rating-half-star.right .rating-glyph { transform: translateX(-50%); }
+        .rating-choice:checked + .rating-half-star,
+        .rating-half-star.is-selected { color: #fbbf24; background-color: rgba(251,191,36,.14); }
+        .rating-display { display:inline-flex; align-items:center; gap:2px; color:#fbbf24; }
+        .rating-display-star { font-size:28px; line-height:1; }
+        .rating-display-star.empty { color:rgb(var(--outline)); }
+        .rating-display-star.half {
+            background: linear-gradient(90deg,#fbbf24 50%,rgb(var(--outline)) 50%);
+            -webkit-background-clip:text;
+            background-clip:text;
+            -webkit-text-fill-color:transparent;
+        }
+        .rating-toast {
+            position:absolute;
+            right:0;
+            top:calc(100% + 8px);
+            z-index:100;
+            display:flex;
+            align-items:center;
+            gap:10px;
+            width:max-content;
+            min-width:330px;
+            max-width:none;
+            padding:10px 14px;
+            border:1px solid rgba(34,197,94,.35);
+            border-radius:14px;
+            background:rgb(var(--surface-container-lowest));
+            color:rgb(var(--on-surface));
+            white-space:nowrap;
+            box-shadow:0 14px 36px rgba(0,0,0,.28);
+            animation:ratingToastIn .25s ease-out;
+        }
+        @keyframes ratingToastIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+        html, body { width:100%; min-width:0; min-height:100%; height:auto !important; overflow-x:hidden; overflow-y:auto !important; }
+        body { overscroll-behavior:auto; }
+        main { min-height:calc(100vh - 4rem); height:auto !important; overflow:visible !important; }
+        .cf-page-shell { min-width:0; }
+        .cf-mobile-menu-btn { display:none; }
+        .cf-mobile-nav-backdrop { display:none; }
+        .cf-topbar-actions { margin-left:auto; display:flex; align-items:center; justify-content:flex-end; gap:24px; min-width:max-content; }
+        .cf-topbar-actions > * { flex-shrink:0; }
+        .cf-topbar-actions > a { white-space:nowrap; }
+        .cf-loader { position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:18px; background:rgb(var(--surface) / .94); backdrop-filter:blur(16px); opacity:0; visibility:hidden; pointer-events:none; transition:opacity .35s ease, visibility .35s ease; }
+        .cf-loader.is-visible { opacity:1; visibility:visible; pointer-events:auto; }
+        .cf-loader-orbit { position:relative; width:92px; height:92px; display:grid; place-items:center; perspective:420px; }
+        .cf-loader-orbit::before,.cf-loader-orbit::after { content:""; position:absolute; inset:5px; border:1px solid rgb(var(--primary) / .24); border-radius:50%; transform:rotateX(68deg) rotateZ(18deg); animation:cf-orbit 2.4s linear infinite; }
+        .cf-loader-orbit::after { inset:13px; border-color:rgb(var(--secondary) / .38); transform:rotateY(68deg) rotateZ(-18deg); animation-direction:reverse; animation-duration:1.8s; }
+        .cf-loader-cube { width:36px; height:36px; position:relative; transform-style:preserve-3d; animation:cf-cube 2.2s ease-in-out infinite; }
+        .cf-loader-cube span { position:absolute; inset:0; border:1px solid rgb(var(--primary) / .58); background:linear-gradient(135deg,rgb(var(--primary) / .8),rgb(var(--secondary) / .68)); box-shadow:0 0 24px rgb(var(--primary) / .3); }
+        .cf-loader-cube span:nth-child(1){transform:translateZ(18px)} .cf-loader-cube span:nth-child(2){transform:rotateY(180deg) translateZ(18px)} .cf-loader-cube span:nth-child(3){transform:rotateY(90deg) translateZ(18px)} .cf-loader-cube span:nth-child(4){transform:rotateY(-90deg) translateZ(18px)} .cf-loader-cube span:nth-child(5){transform:rotateX(90deg) translateZ(18px)} .cf-loader-cube span:nth-child(6){transform:rotateX(-90deg) translateZ(18px)}
+        .cf-loader-copy { text-align:center; } .cf-loader-copy strong { display:block; color:rgb(var(--on-surface)); font-size:15px; } .cf-loader-copy span { display:block; margin-top:5px; color:rgb(var(--on-surface-variant)); font-size:12px; }
+        @keyframes cf-cube { 0%,100%{transform:rotateX(-18deg) rotateY(0deg)} 50%{transform:rotateX(28deg) rotateY(180deg) translateY(-5px)} } @keyframes cf-orbit { to{transform:rotateX(68deg) rotateZ(378deg)} }
+        @media (max-width:1023px) { .cf-sidebar { width:280px !important; transform:translateX(-100%); transition:transform .25s ease, box-shadow .25s ease; } .cf-sidebar.cf-sidebar-open { transform:translateX(0); box-shadow:20px 0 48px rgb(0 0 0 / .18); } .cf-page-shell { padding-left:0 !important; } .cf-topbar { left:0 !important; padding-left:24px !important; padding-right:24px !important; } .cf-mobile-menu-btn { display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; border:0; border-radius:999px; color:rgb(var(--on-surface-variant)); background:rgb(var(--surface-container-high)); } .cf-mobile-nav-backdrop.is-visible { display:block; position:fixed; inset:0; z-index:45; background:rgb(0 0 0 / .34); } }
+        @media (max-width:639px) { .cf-topbar { padding-left:16px !important; padding-right:16px !important; } .cf-topbar-actions { gap:12px !important; } .cf-section-pad { padding-left:16px !important; padding-right:16px !important; } .rating-toast { min-width:0; max-width:calc(100vw - 32px); white-space:normal; } }
+    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="tailwind-config">tailwind.config={theme:{extend:{"colors":{"tertiary-fixed-dim":"rgb(var(--tertiary-fixed-dim) / <alpha-value>)","on-secondary-fixed-variant":"rgb(var(--on-secondary-fixed-variant) / <alpha-value>)","on-tertiary":"rgb(var(--on-tertiary) / <alpha-value>)","on-tertiary-fixed":"rgb(var(--on-tertiary-fixed) / <alpha-value>)","on-primary-fixed-variant":"rgb(var(--on-primary-fixed-variant) / <alpha-value>)","on-primary":"rgb(var(--on-primary) / <alpha-value>)","primary-container":"rgb(var(--primary-container) / <alpha-value>)","tertiary":"rgb(var(--tertiary) / <alpha-value>)","error":"rgb(var(--error) / <alpha-value>)","secondary":"rgb(var(--secondary) / <alpha-value>)","on-error":"rgb(var(--on-error) / <alpha-value>)","surface-container-highest":"rgb(var(--surface-container-highest) / <alpha-value>)","on-surface":"rgb(var(--on-surface) / <alpha-value>)","secondary-fixed":"rgb(var(--secondary-fixed) / <alpha-value>)","error-container":"rgb(var(--error-container) / <alpha-value>)","surface-container-low":"rgb(var(--surface-container-low) / <alpha-value>)","on-tertiary-container":"rgb(var(--on-tertiary-container) / <alpha-value>)","surface":"rgb(var(--surface) / <alpha-value>)","inverse-primary":"rgb(var(--inverse-primary) / <alpha-value>)","surface-container-high":"rgb(var(--surface-container-high) / <alpha-value>)","on-secondary-container":"rgb(var(--on-secondary-container) / <alpha-value>)","outline":"rgb(var(--outline) / <alpha-value>)","secondary-container":"rgb(var(--secondary-container) / <alpha-value>)","on-secondary-fixed":"rgb(var(--on-secondary-fixed) / <alpha-value>)","surface-bright":"rgb(var(--surface-bright) / <alpha-value>)","outline-variant":"rgb(var(--outline-variant) / <alpha-value>)","primary-fixed-dim":"rgb(var(--primary-fixed-dim) / <alpha-value>)","on-primary-container":"rgb(var(--on-primary-container) / <alpha-value>)","primary":"rgb(var(--primary) / <alpha-value>)","on-surface-variant":"rgb(var(--on-surface-variant) / <alpha-value>)","surface-tint":"rgb(var(--surface-tint) / <alpha-value>)","on-primary-fixed":"rgb(var(--on-primary-fixed) / <alpha-value>)","surface-container":"rgb(var(--surface-container) / <alpha-value>)","primary-fixed":"rgb(var(--primary-fixed) / <alpha-value>)","tertiary-container":"rgb(var(--tertiary-container) / <alpha-value>)","on-error-container":"rgb(var(--on-error-container) / <alpha-value>)","inverse-surface":"rgb(var(--inverse-surface) / <alpha-value>)","on-tertiary-fixed-variant":"rgb(var(--on-tertiary-fixed-variant) / <alpha-value>)","on-secondary":"rgb(var(--on-secondary) / <alpha-value>)","inverse-on-surface":"rgb(var(--inverse-on-surface) / <alpha-value>)","secondary-fixed-dim":"rgb(var(--secondary-fixed-dim) / <alpha-value>)","surface-container-lowest":"rgb(var(--surface-container-lowest) / <alpha-value>)","tertiary-fixed":"rgb(var(--tertiary-fixed) / <alpha-value>)","on-background":"rgb(var(--on-background) / <alpha-value>)","background":"rgb(var(--background) / <alpha-value>)","surface-variant":"rgb(var(--surface-variant) / <alpha-value>)","surface-dim":"rgb(var(--surface-dim) / <alpha-value>)"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"margin-desktop":"32px","margin-mobile":"16px","base":"4px","sidebar-width":"280px","gutter":"24px","container-max":"1440px"},"fontFamily":{"display-lg":["Inter"],"label-sm":["Inter"],"title-md":["Inter"],"label-md":["Inter"],"headline-lg":["Inter"],"body-lg":["Inter"],"headline-lg-mobile":["Inter"],"body-md":["Inter"]},"fontSize":{"display-lg":["48px",{"lineHeight":"1.2","letterSpacing":"-0.02em","fontWeight":"700"}],"label-sm":["12px",{"lineHeight":"1","letterSpacing":"0.05em","fontWeight":"600"}],"title-md":["20px",{"lineHeight":"1.4","fontWeight":"600"}],"label-md":["14px",{"lineHeight":"1.2","letterSpacing":"0.01em","fontWeight":"500"}],"headline-lg":["32px",{"lineHeight":"1.25","letterSpacing":"-0.01em","fontWeight":"600"}],"body-lg":["18px",{"lineHeight":"1.6","fontWeight":"400"}],"headline-lg-mobile":["24px",{"lineHeight":"1.3","fontWeight":"600"}],"body-md":["16px",{"lineHeight":"1.5","fontWeight":"400"}]}}}}</script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet">
+    <script th:src="@{/theme.js}"></script>
+    <link rel="stylesheet" th:href="@{/theme-tokens.css}">
+</head>
+<body class="bg-surface font-body-md text-on-surface">
+<div id="cityfix-loader" class="cf-loader" role="status" aria-live="polite" aria-label="Loading complaints"><div class="cf-loader-orbit" aria-hidden="true"><div class="cf-loader-cube"><span></span><span></span><span></span><span></span><span></span><span></span></div></div><div class="cf-loader-copy"><strong>Loading your complaints</strong><span>Syncing your report history</span></div></div>
+
+<aside class="cf-sidebar fixed left-0 top-0 h-full w-sidebar-width bg-surface-container-lowest border-r border-outline-variant z-50 flex flex-col">
+    <div class="p-6 flex items-center gap-3 border-b border-outline-variant">
+        <img alt="CityFix Logo" class="h-8 w-auto" th:src="@{/screen.png}">
+        <span class="font-title-md text-title-md text-primary">CityFix</span>
+    </div>
+    <nav class="flex-1 py-6 px-4 space-y-2">
+        <a th:href="@{/citizen/dashboard}"
+           th:classappend="${activePage == 'citizen-dashboard'} ? 'bg-secondary-container text-on-secondary-container' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'"
+           class="flex items-center px-4 py-3 rounded-xl transition-all">
+            <span class="material-symbols-outlined mr-3">dashboard</span>
+            <span class="font-label-md text-label-md">Dashboard</span>
+        </a>
+        <a th:href="@{/citizen/my-complaints}"
+           th:classappend="${activePage == 'my-complaints'} ? 'bg-secondary-container text-on-secondary-container' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'"
+           class="flex items-center px-4 py-3 rounded-xl transition-all">
+            <span class="material-symbols-outlined mr-3">list_alt</span>
+            <span class="font-label-md text-label-md">My Complaints</span>
+        </a>
+        <a th:href="@{/citizen/create-complaint}"
+           th:classappend="${activePage == 'create-complaint'} ? 'bg-secondary-container text-on-secondary-container' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'"
+           class="flex items-center px-4 py-3 rounded-xl transition-all">
+            <span class="material-symbols-outlined mr-3">add_circle</span>
+            <span class="font-label-md text-label-md">Create Complaint</span>
+        </a>
+        <a th:href="@{/citizen/profile}"
+           th:classappend="${activePage == 'profile'} ? 'bg-secondary-container text-on-secondary-container' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'"
+           class="flex items-center px-4 py-3 rounded-xl transition-all">
+            <span class="material-symbols-outlined mr-3">person</span>
+            <span class="font-label-md text-label-md">Profile</span>
+        </a>
+    </nav>
+    <div class="p-4 mt-auto border-t border-outline-variant">
+        <a th:href="@{/logout}" class="flex items-center px-4 py-3 rounded-xl text-error hover:bg-error-container transition-all">
+            <span class="material-symbols-outlined mr-3">logout</span>
+            <span class="font-label-md text-label-md">Logout</span>
+        </a>
+    </div>
+</aside>
+<div id="mobile-nav-backdrop" class="cf-mobile-nav-backdrop" aria-hidden="true"></div>
+
+<div class="cf-page-shell pl-sidebar-width">
+    <header class="cf-topbar fixed top-0 left-sidebar-width right-0 h-16 bg-surface/80 backdrop-blur-xl border-b border-outline-variant z-40 flex items-center justify-between px-margin-desktop">
+        <button id="mobile-nav-toggle" type="button" class="cf-mobile-menu-btn" aria-label="Open navigation" aria-expanded="false"><span class="material-symbols-outlined">menu</span></button>
+        <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-primary">list_alt</span>
+            <div class="flex flex-col leading-tight">
+                <span class="font-label-md text-label-md text-on-surface">My Complaints</span>
+                <span class="text-label-sm text-on-surface-variant">Track your submitted reports</span>
+            </div>
+        </div>
+        <div class="cf-topbar-actions flex items-center gap-6">
+
+            <div th:replace="~{fragments/themeToggle :: toggle}"></div>
+
+            <span class="material-symbols-outlined text-on-surface-variant cursor-pointer">notifications</span>
+            <!--
+                Dynamic logged-in user: replace `loggedInUser` below with whatever
+                model attribute / principal object your backend actually exposes
+                (e.g. session user, Spring Security principal, etc.).
+                Elvis operator (?:) falls back gracefully if a field is null.
+            -->
+            <div class="relative flex flex-col items-end">
+                <a th:href="@{/citizen/profile}" class="flex items-center gap-3 border-l border-outline-variant pl-6 cursor-pointer hover:opacity-80 transition-opacity">
+                    <span class="hidden md:block text-right">
+                        <p class="text-label-md font-bold text-on-surface" th:text="${citizen.name}">Jane Citizen</p>
+                        <p class="text-label-sm text-on-surface-variant">Citizen User</p>
+                    </span>
+                    <img alt="Profile"
+                         class="w-9 h-9 rounded-full object-cover border border-outline-variant shadow-sm"
+                         id="header-avatar"
+                         th:src="@{${citizen.profileImagePath != null ? citizen.profileImagePath : '/profile1.jpg'}}">
+                </a>
+                <div th:if="${ratingSuccess != null}" id="ratingSuccessToast" class="rating-toast" role="status" aria-live="polite">
+                    <span class="material-symbols-outlined text-green-400" aria-hidden="true">check_circle</span>
+                    <span class="whitespace-nowrap text-label-sm">Thanks for rating. Your feedback has been submitted.</span>
+                    <button type="button" class="ml-auto text-on-surface-variant hover:text-on-surface" aria-label="Close notification" onclick="this.parentElement.remove()">
+                        <span class="material-symbols-outlined text-[18px]" aria-hidden="true">close</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="pt-16 min-h-screen bg-surface">
+        <div class="flex flex-col w-full px-margin-desktop py-8">
+
+            <!-- Header Section -->
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+                <div class="space-y-2">
+                    <div class="flex items-center gap-3 mb-1">
+                        <span class="w-8 h-[2px] bg-primary"></span>
+                        <span class="font-label-sm text-label-sm uppercase tracking-widest text-primary">Citizen Portal</span>
+                    </div>
+                    <h1 class="font-display-lg text-display-lg text-on-surface tracking-tight">My Complaints</h1>
+                    <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">Track and manage your submitted reports. Stay updated on the progress of civic improvements in your neighborhood.</p>
+                </div>
+
+                <!-- Redesigned stat cards: icon-badge style instead of flat color blocks -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full md:w-auto">
+                    <div class="flex items-center gap-5 bg-surface-container-lowest border border-outline-variant/40 rounded-2xl px-7 py-6 shadow-sm hover:shadow-lg transition-all min-w-[220px] min-h-[132px]">
+                        <div class="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-primary text-[30px]">pending_actions</span>
+                        </div>
+                        <div class="flex flex-col gap-1">
+                            <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wide">Active Complaints</span>
+                            <span class="font-display-lg text-4xl font-bold text-on-surface leading-none" th:text="${activeCount}">0</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-5 bg-surface-container-lowest border border-outline-variant/40 rounded-2xl px-7 py-6 shadow-sm hover:shadow-lg transition-all min-w-[220px] min-h-[132px]">
+                        <div class="w-14 h-14 rounded-2xl bg-secondary/10 flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-secondary text-[30px]">task_alt</span>
+                        </div>
+                        <div class="flex flex-col gap-1">
+                            <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wide">Resolved Complaints</span>
+                            <span class="font-display-lg text-4xl font-bold text-on-surface leading-none" th:text="${resolvedCount}">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <div th:if="${ratingError != null}" class="mb-6 flex items-start gap-3 rounded-xl border border-error/30 bg-error-container px-4 py-3 text-on-error-container" role="alert">
+                <span class="material-symbols-outlined text-error" aria-hidden="true">error</span>
+                <p class="font-label-md" th:text="${ratingError}">We could not save your rating.</p>
+            </div>
+
+            <!-- Filters & Search Bar (fully client-side now: live-filters as you type, no page reload, no crash) -->
+            <div class="bg-surface-container-lowest p-4 rounded-2xl shadow-sm mb-6 flex flex-wrap items-center gap-4 border border-outline-variant/30">
+                <div class="flex-1 min-w-[300px] relative">
+                    <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+                    <input class="w-full pl-12 pr-10 py-3 bg-surface border border-outline-variant rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-body-md text-on-surface"
+                           id="keywordInput" placeholder="Search by title, category, or location..." type="text" autocomplete="off">
+                    <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant cursor-pointer hidden" id="clearKeywordIcon">close</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <select class="bg-surface border border-outline-variant px-4 py-3 rounded-xl font-label-md text-on-surface focus:outline-none cursor-pointer hover:bg-surface-container-high transition-colors" id="categorySelect">
+                        <option value="">All Categories</option>
+                        <option value="Roads">Roads &amp; Pavements</option>
+                        <option value="Sanitation">Sanitation &amp; Waste</option>
+                        <option value="Lighting">Public Lighting</option>
+                        <option value="Parks">Parks &amp; Recreation</option>
+                        <option value="Water">Water &amp; Sewage</option>
+                        <option value="Other">Other Issues</option>
+                    </select>
+                    <select class="bg-surface border border-outline-variant px-4 py-3 rounded-xl font-label-md text-on-surface focus:outline-none cursor-pointer hover:bg-surface-container-high transition-colors" id="statusSelect">
+                        <option value="">Status</option>
+                        <option value="PENDING">Pending</option>
+                        <option value="IN_PROGRESS">In Progress</option>
+                        <option value="RESOLVED">Resolved</option>
+                        <option value="REJECTED">Rejected</option>
+                    </select>
+                    <!-- Filters already apply live/automatically now, so this button just clears them -->
+                    <button class="flex items-center gap-2 px-6 py-3 bg-surface border border-outline-variant text-on-surface-variant rounded-xl font-label-md hover:bg-error-container hover:text-error hover:border-error/30 transition-all active:scale-95" id="clearFiltersBtn" type="button">
+                        <span class="material-symbols-outlined text-[20px]">filter_alt_off</span>
+                        Remove Filters
+                    </button>
+                </div>
+            </div>
+
+            <!-- Data Table Section -->
+            <div class="bg-surface-container-lowest rounded-3xl shadow-xl overflow-hidden border border-outline-variant/20">
+                <div class="overflow-x-auto">
+                    <table class="w-full border-collapse text-left" id="complaintsTable">
+                        <thead>
+                        <tr class="bg-surface-container-high border-b border-outline-variant/50">
+                            <th class="px-6 py-5 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">ID</th>
+                            <th class="px-6 py-5 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Subject</th>
+                            <th class="px-6 py-5 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Category</th>
+                            <th class="px-6 py-5 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-5 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Priority</th>
+                            <th class="px-6 py-5 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Date</th>
+                            <th class="px-6 py-5 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-right">Action</th>
+                        </tr>
+                        </thead>
+                        <tbody class="divide-y divide-outline-variant/20" id="complaintsBody">
+                        <tr class="hover:bg-surface-container transition-colors group js-complaint-row"
+                            th:each="complaint : ${complaints}"
+                            th:attr="data-title=${complaint.title},
+                                      data-category=${complaint.category},
+                                      data-location=${complaint.location != null ? complaint.location : ''},
+                                      data-status=${complaint.status != null ? complaint.status.name() : 'PENDING'}">
+                            <td class="px-6 py-5 font-label-md text-on-surface-variant" th:text="'#' + ${complaint.id}">#10492</td>
+                            <td class="px-6 py-5">
+                                <span class="font-title-md text-on-surface group-hover:text-primary transition-colors" th:text="${complaint.title}">Subject</span>
+                            </td>
+                            <td class="px-6 py-5">
+                <span class="inline-flex items-center gap-1.5 font-body-md text-on-surface-variant">
+                  <span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+                  <span th:text="${complaint.category}">Category</span>
+                </span>
+                            </td>
+                            <td class="px-6 py-5">
+                                <span th:switch="${complaint.status != null ? complaint.status.name() : 'PENDING'}" class="text-label-sm font-bold uppercase tracking-tighter">
+                                    <span th:case="'RESOLVED'" class="bg-secondary-fixed text-on-secondary-fixed px-3 py-1 rounded-full inline-block">Resolved</span>
+                                    <span th:case="'IN_PROGRESS'" class="bg-primary-fixed text-on-primary-fixed px-3 py-1 rounded-full inline-block">In Progress</span>
+                                        <span th:case="'REJECTED'" class="bg-error-container text-on-error-container px-3 py-1 rounded-full inline-block">Rejected</span>  <!-- নতুন -->
+                                    <span th:case="*" class="bg-tertiary-fixed text-on-tertiary-fixed px-3 py-1 rounded-full inline-block">Pending</span>
+                                </span>
+                            </td>
+                            <td class="px-6 py-5">
+                                <div class="flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-[16px]"
+                                          th:classappend="${complaint.priority.name() == 'CRITICAL' or complaint.priority.name() == 'HIGH'} ? 'text-error' : ''"
+                                          style="color:#757684;">priority_high</span>
+                                    <span class="font-label-md" th:text="${complaint.priority}">Medium</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-5 font-body-md text-on-surface-variant"
+                                th:text="${#temporals.format(complaint.createdAt, 'MMM dd, yyyy')}">Oct 24, 2023</td>
+                            <td class="px-6 py-5 text-right">
+                                <!-- Was a link to /citizen/complaints/{id}/view (separate page).
+                                     Now opens the matching modal defined at the bottom of this same file. -->
+                                <button type="button"
+                                        class="js-view-complaint inline-flex items-center gap-2 px-4 py-2 rounded-lg text-primary font-label-md hover:bg-primary/5 transition-all"
+                                        th:attr="data-target='complaintModal-' + ${complaint.id}">
+                                    View Details
+                                    <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr th:if="${complaints.isEmpty()}" id="emptyStateRow">
+                            <td class="px-6 py-10 text-center text-on-surface-variant" colspan="7">No complaints found. Try adjusting your filters.</td>
+                        </tr>
+                        <!-- Shown by JS when filters match zero rows (server list wasn't empty, but filters excluded everything) -->
+                        <tr id="noMatchRow" style="display:none;">
+                            <td class="px-6 py-10 text-center text-on-surface-variant" colspan="7">No complaints match your search. Try different keywords or remove filters.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Pagination Footer (client-side, 5 per page, filter-aware) -->
+                <div class="p-6 bg-surface-container-low border-t border-outline-variant/30 flex items-center justify-between">
+                    <p class="font-label-md text-on-surface-variant" id="jsPageInfo">Page 1 of 1</p>
+                    <div class="flex items-center gap-2">
+                        <a class="p-2 rounded-lg border border-outline-variant hover:bg-surface transition-colors cursor-pointer" id="jsPrevBtn">
+                            <span class="material-symbols-outlined">chevron_left</span>
+                        </a>
+                        <div class="flex items-center gap-2" id="jsPageNumbers"></div>
+                        <a class="p-2 rounded-lg border border-outline-variant hover:bg-surface transition-colors cursor-pointer" id="jsNextBtn">
+                            <span class="material-symbols-outlined">chevron_right</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Help Section -->
+            <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="p-6 rounded-2xl bg-primary/5 flex flex-col gap-3">
+                    <span class="material-symbols-outlined text-primary">info</span>
+                    <h3 class="font-title-md text-on-surface">Need Help?</h3>
+                    <p class="font-body-md text-on-surface-variant">If you have questions about your report status, you can contact the city help desk directly.</p>
+                </div>
+                <div class="p-6 rounded-2xl bg-secondary-container/10 flex flex-col gap-3">
+                    <span class="material-symbols-outlined text-secondary">update</span>
+                    <h3 class="font-title-md text-on-surface">Update Frequency</h3>
+                    <p class="font-body-md text-on-surface-variant">Most reports are reviewed within 24-48 business hours.</p>
+                </div>
+                <div class="relative overflow-hidden p-6 rounded-2xl bg-surface-container-highest flex flex-col justify-end min-h-[160px]">
+                    <p class="font-label-sm text-on-surface-variant uppercase mb-1">New Report</p>
+                    <h3 class="font-title-md text-on-surface mb-3">Notice something else?</h3>
+                    <a class="bg-primary text-on-primary px-4 py-2 rounded-lg font-label-md text-center" th:href="@{/citizen/create-complaint}">Create Complaint</a>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<!-- ============ Complaint Details modals (merged in from the old /citizen/complaints/{id}/view page) ============
+     One modal per complaint (hidden by default), opened by the matching "View Details"
+     button above via data-target="complaintModal-{id}". Same read-only fields as before —
+     only the transport changed from "separate page" to "modal on this page". -->
+<div th:each="complaint : ${complaints}"
+     th:id="'complaintModal-' + ${complaint.id}"
+     class="js-complaint-modal hidden fixed inset-0 bg-inverse-surface/40 z-[60] items-center justify-center p-4">
+    <div class="bg-surface-container-lowest rounded-2xl shadow-2xl w-full max-w-3xl relative max-h-[90vh] overflow-y-auto border border-outline-variant/20">
+        <button type="button" class="js-close-complaint-modal absolute top-4 right-4 p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors" title="Close">
+            <span class="material-symbols-outlined">close</span>
+        </button>
+
+        <!-- Header -->
+        <div class="p-8 border-b border-outline-variant/30 flex items-start justify-between gap-4 pr-16">
+            <div>
+                <span class="font-label-md text-label-md text-primary" th:text="'#CF-' + ${complaint.id}">#CF-8942</span>
+                <h1 class="font-headline-lg text-headline-lg text-on-surface mt-1" th:text="${complaint.title}">Complaint Title</h1>
+                <p class="font-label-sm text-on-surface-variant mt-1" th:text="${#temporals.format(complaint.createdAt, 'MMM dd, yyyy - hh:mm a')}">Oct 24, 2023</p>
+            </div>
+            <span th:switch="${complaint.status != null ? complaint.status.name() : 'PENDING'}" class="text-label-sm font-bold shrink-0">
+                <span th:case="'RESOLVED'" class="px-3 py-1.5 rounded-full bg-surface-container-highest text-on-surface-variant inline-block">Resolved</span>
+                <span th:case="'IN_PROGRESS'" class="px-3 py-1.5 rounded-full bg-secondary-container text-on-secondary-container inline-block">In Progress</span>
+                <span th:case="*" class="px-3 py-1.5 rounded-full bg-tertiary-container text-on-tertiary-container inline-block">Pending</span>
+            </span>
+        </div>
+
+        <div class="p-8">
+            <!-- Image -->
+            <div class="mb-8" th:if="${complaint.hasImage()}">
+                <p class="font-label-md text-label-md text-on-surface-variant mb-2">Visual Evidence</p>
+                <div class="flex justify-center">
+                    <img th:src="${complaint.imageUrl}" alt="Complaint evidence"
+                          class="block max-w-full max-h-[62vh] w-auto h-auto object-contain rounded-xl border border-outline-variant shadow-sm">
+                </div>
+            </div>
+            <div class="mb-8 flex flex-col items-center justify-center gap-2 h-40 rounded-xl border-2 border-dashed border-outline-variant bg-surface-container-low"
+                 th:if="${!complaint.hasImage()}">
+                <span class="material-symbols-outlined text-on-surface-variant text-[32px]">image_not_supported</span>
+                <span class="font-label-md text-on-surface-variant">No image attached</span>
+            </div>
+
+            <!-- Resolution feedback is visible only after the admin has supplied proof of resolution. -->
+            <section th:if="${complaint.status != null and complaint.status.name() == 'RESOLVED' and complaint.resolution != null and complaint.resolution.hasResolutionImage()}"
+                     th:attr="aria-labelledby='resolution-feedback-title-' + ${complaint.id}"
+                     class="mb-8 rounded-2xl border border-secondary/20 bg-secondary/5 p-5">
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="material-symbols-outlined text-secondary" aria-hidden="true">task_alt</span>
+                    <h2 th:id="'resolution-feedback-title-' + ${complaint.id}" class="font-title-md text-on-surface">After Resolved</h2>
+                </div>
+                <div class="flex justify-center rounded-xl bg-surface-container-low p-3">
+                    <img th:src="${complaint.resolution.resolutionImageUrl}" alt="After resolved evidence"
+                         class="block max-w-full max-h-[52vh] w-auto h-auto object-contain rounded-xl border border-outline-variant shadow-sm">
+                </div>
+                <div class="mt-5 rounded-xl bg-surface-container-lowest border border-outline-variant/40 p-4">
+                    <p class="font-body-md text-on-surface leading-relaxed">Thank you for helping us improve your community. Your feedback helps us deliver better public services.</p>
+                </div>
+                <div th:if="${complaint.resolution.citizenRating == null}">
+                    <form th:id="'ratingForm-' + ${complaint.id}"
+                          th:action="@{'/citizen/complaints/' + ${complaint.id} + '/rating'}"
+                          method="post" class="mt-5">
+                        <fieldset>
+                            <legend class="font-label-md text-on-surface mb-1">How satisfied are you with the resolution?</legend>
+                            <p class="text-label-sm text-on-surface-variant mb-3">Choose from 0.5 to 5 stars. Click the left or right half of a star.</p>
+                            <div class="flex items-center gap-0.5" role="radiogroup" aria-label="Resolution rating">
+                                <th:block th:each="starNumber : ${#numbers.sequence(1, 5)}">
+                                    <input class="rating-choice" type="radio" name="rating" required
+                                           th:id="'rating-half-' + ${complaint.id} + '-' + ${starNumber}"
+                                           th:value="${starNumber * 2 - 1}">
+                                    <label class="rating-half-star left"
+                                           th:for="'rating-half-' + ${complaint.id} + '-' + ${starNumber}"
+                                           th:title="${starNumber - 0.5} + ' stars'"
+                                           th:attr="data-rating=${starNumber - 0.5}, aria-label=${starNumber - 0.5} + ' stars'">
+                                        <span class="rating-glyph" aria-hidden="true">★</span>
+                                    </label>
+
+                                    <input class="rating-choice" type="radio" name="rating" required
+                                           th:id="'rating-full-' + ${complaint.id} + '-' + ${starNumber}"
+                                           th:value="${starNumber * 2}">
+                                    <label class="rating-half-star right"
+                                           th:for="'rating-full-' + ${complaint.id} + '-' + ${starNumber}"
+                                           th:title="${starNumber} + ' stars'"
+                                           th:attr="data-rating=${starNumber}, aria-label=${starNumber} + ' stars'">
+                                        <span class="rating-glyph" aria-hidden="true">★</span>
+                                    </label>
+                                </th:block>
+                            </div>
+                            <p class="mt-2 text-label-sm text-on-surface-variant">Your rating can be submitted only once.</p>
+                            <button type="submit" class="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 font-label-md text-on-primary transition-all hover:opacity-90">
+                                <span class="material-symbols-outlined text-[18px]" aria-hidden="true">send</span>
+                                Submit Rating
+                            </button>
+                        </fieldset>
+                    </form>
+                </div>
+
+                <div th:if="${complaint.resolution.citizenRating != null}" class="mt-5">
+                    <p class="font-label-md text-on-surface mb-2">Your rating</p>
+                    <div class="rating-display" role="img"
+                         th:attr="aria-label='Your rating: ' + ${complaint.resolution.citizenRating / 2.0} + ' out of 5 stars'">
+                        <th:block th:each="displayStar : ${#numbers.sequence(1, 5)}">
+                            <span class="rating-display-star"
+                                  th:classappend="${complaint.resolution.citizenRating >= displayStar * 2} ? ' full' : (${complaint.resolution.citizenRating == displayStar * 2 - 1} ? ' half' : ' empty')"
+                                  aria-hidden="true">★</span>
+                        </th:block>
+                    </div>
+                    <span class="ml-2 font-label-md text-on-surface"
+                          th:text="${complaint.resolution.citizenRating / 2.0} + ' / 5'">4 / 5</span>
+                    <p class="mt-2 text-label-sm text-on-surface-variant">Thanks for rating. Your rating has been submitted and cannot be changed.</p>
+                </div>
+            </section>
+
+            <!-- Read-only details: citizen cannot edit status/priority, only admin can -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div>
+                    <p class="font-label-md text-label-md text-on-surface-variant mb-1">Category</p>
+                    <p class="font-body-md text-on-surface font-semibold" th:text="${complaint.category}">Roads</p>
+                </div>
+                <div>
+                    <p class="font-label-md text-label-md text-on-surface-variant mb-1">Location</p>
+                    <p class="font-body-md text-on-surface font-semibold" th:text="${complaint.location}">Main St.</p>
+                </div>
+                <div>
+                    <p class="font-label-md text-label-md text-on-surface-variant mb-1">Status</p>
+                    <p class="font-body-md text-on-surface font-semibold" th:text="${complaint.status != null ? complaint.status : 'PENDING'}">Pending</p>
+                </div>
+                <div>
+                    <p class="font-label-md text-label-md text-on-surface-variant mb-1">Priority</p>
+                    <p class="font-body-md text-on-surface font-semibold" th:text="${complaint.priority}">Medium</p>
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <p class="font-label-md text-label-md text-on-surface-variant mb-2">Description</p>
+                <p class="font-body-md text-on-surface bg-surface-container rounded-xl p-4 leading-relaxed" th:text="${complaint.description}">
+                    Full description of the issue goes here.
+                </p>
+            </div>
+
+            <!-- Informational notice: complaint is locked after submission -->
+            <div class="px-4 py-3 rounded-lg bg-primary/5 border border-primary/10 flex items-center gap-3">
+                <span class="material-symbols-outlined text-primary text-[20px]">lock</span>
+                <p class="font-label-md text-on-surface-variant">This complaint cannot be edited after submission. Status and priority are managed by the municipal admin team.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    (function () {
+        const email = /*[[${citizen.email}]]*/ '';
+        const nameKey = 'cityfix-profile-name-' + email;
+        const avatarKey = 'cityfix-avatar-' + email;
+        const applyProfile = () => {
+            const name = localStorage.getItem(nameKey);
+            const avatar = localStorage.getItem(avatarKey);
+            if (name) document.querySelectorAll('#header-name').forEach(el => el.textContent = name);
+            if (avatar) document.querySelectorAll('#header-avatar').forEach(el => el.src = avatar);
+        };
+        applyProfile();
+        window.addEventListener('storage', event => { if (event.key === nameKey || event.key === avatarKey) applyProfile(); });
+        window.addEventListener('cityfix-profile-updated', applyProfile);
+    })();
+</script>
+
+<script>
+    (function () {
+        // Keep every half-star up to the selected value highlighted.
+        // The submitted value remains an integer unit: 1 = 0.5 star ... 10 = 5 stars.
+        document.querySelectorAll('form[id^="ratingForm-"]').forEach(form => {
+            const inputs = form.querySelectorAll('input[name="rating"]');
+            const labels = form.querySelectorAll('.rating-half-star');
+
+            function updateRatingVisual() {
+                const selected = form.querySelector('input[name="rating"]:checked');
+                const selectedValue = selected ? Number(selected.value) / 2 : 0;
+
+                labels.forEach(label => {
+                    label.classList.toggle('is-selected', Number(label.dataset.rating) <= selectedValue);
+                });
+            }
+
+            inputs.forEach(input => input.addEventListener('change', updateRatingVisual));
+            updateRatingVisual();
+        });
+        const rowsPerPage = 5;
+        const tbody = document.getElementById('complaintsBody');
+        const allRows = Array.from(tbody.querySelectorAll('tr.js-complaint-row'));
+        const noMatchRow = document.getElementById('noMatchRow');
+
+        const keywordInput = document.getElementById('keywordInput');
+        const clearKeywordIcon = document.getElementById('clearKeywordIcon');
+        const categorySelect = document.getElementById('categorySelect');
+        const statusSelect = document.getElementById('statusSelect');
+        const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+
+        const pageInfo = document.getElementById('jsPageInfo');
+        const prevBtn = document.getElementById('jsPrevBtn');
+        const nextBtn = document.getElementById('jsNextBtn');
+        const pageNumbers = document.getElementById('jsPageNumbers');
+
+        let currentPage = 0;
+
+        // If the server sent zero complaints at all, there's nothing to filter/paginate.
+        if (allRows.length === 0) {
+            pageInfo.textContent = 'Page 1 of 1';
+            prevBtn.classList.add('opacity-50', 'pointer-events-none');
+            nextBtn.classList.add('opacity-50', 'pointer-events-none');
+            return;
+        }
+
+        function getVisibleRows() {
+            // "Visible" = matches the current keyword/category/status filters.
+            return allRows.filter(row => row.dataset.filteredOut !== 'true');
+        }
+
+        // Recomputes which rows match the current filters. Safe to call on every
+        // keystroke -- pure string comparisons, no reload, so it can never "crash"
+        // mid-type the way a debounced form.submit() could.
+        function applyFilters() {
+            const kw = keywordInput.value.trim().toLowerCase();
+            const cat = categorySelect.value;
+            const stat = statusSelect.value;
+
+            allRows.forEach(row => {
+                const title = (row.dataset.title || '').toLowerCase();
+                const category = row.dataset.category || '';
+                const location = (row.dataset.location || '').toLowerCase();
+                const status = row.dataset.status || '';
+
+                const matchesKeyword = !kw || title.includes(kw) || category.toLowerCase().includes(kw) || location.includes(kw);
+                const matchesCategory = !cat || category === cat;
+                const matchesStatus = !stat || status === stat;
+
+                row.dataset.filteredOut = (matchesKeyword && matchesCategory && matchesStatus) ? 'false' : 'true';
+            });
+
+            clearKeywordIcon.classList.toggle('hidden', kw.length === 0);
+            currentPage = 0;
+            renderPage();
+        }
+
+        function renderPageNumbers(totalPages) {
+            pageNumbers.innerHTML = '';
+            for (let i = 0; i < totalPages; i++) {
+                const btn = document.createElement('a');
+                btn.textContent = i + 1;
+                btn.className = 'w-10 h-10 flex items-center justify-center rounded-lg font-label-md transition-colors cursor-pointer ' +
+                    (i === currentPage ? 'bg-primary text-on-primary' : 'hover:bg-surface-container-high');
+                btn.addEventListener('click', () => {
+                    currentPage = i;
+                    renderPage();
+                });
+                pageNumbers.appendChild(btn);
+            }
+        }
+
+        function renderPage() {
+            const visibleRows = getVisibleRows();
+            const totalPages = Math.max(1, Math.ceil(visibleRows.length / rowsPerPage));
+            currentPage = Math.min(currentPage, totalPages - 1);
+
+            // Hide every row first, then reveal only the current page's matches.
+            allRows.forEach(row => { row.style.display = 'none'; });
+            visibleRows.forEach((row, i) => {
+                row.style.display = (i >= currentPage * rowsPerPage && i < (currentPage + 1) * rowsPerPage) ? '' : 'none';
+            });
+
+            noMatchRow.style.display = visibleRows.length === 0 ? '' : 'none';
+
+            pageInfo.textContent = visibleRows.length === 0
+                ? 'No results'
+                : `Page ${currentPage + 1} of ${totalPages}`;
+
+            prevBtn.classList.toggle('opacity-50', currentPage === 0 || visibleRows.length === 0);
+            prevBtn.classList.toggle('pointer-events-none', currentPage === 0 || visibleRows.length === 0);
+            nextBtn.classList.toggle('opacity-50', currentPage >= totalPages - 1 || visibleRows.length === 0);
+            nextBtn.classList.toggle('pointer-events-none', currentPage >= totalPages - 1 || visibleRows.length === 0);
+
+            renderPageNumbers(totalPages);
+        }
+
+        prevBtn.addEventListener('click', () => {
+            if (currentPage > 0) {
+                currentPage--;
+                renderPage();
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            const totalPages = Math.max(1, Math.ceil(getVisibleRows().length / rowsPerPage));
+            if (currentPage < totalPages - 1) {
+                currentPage++;
+                renderPage();
+            }
+        });
+
+        // Live filtering: every keystroke (typing or deleting) just re-filters
+        // the in-memory rows -- no form submit, no page reload.
+        keywordInput.addEventListener('input', applyFilters);
+        categorySelect.addEventListener('change', applyFilters);
+        statusSelect.addEventListener('change', applyFilters);
+
+        clearKeywordIcon.addEventListener('click', () => {
+            keywordInput.value = '';
+            applyFilters();
+            keywordInput.focus();
+        });
+
+        clearFiltersBtn.addEventListener('click', () => {
+            keywordInput.value = '';
+            categorySelect.value = '';
+            statusSelect.value = '';
+            applyFilters();
+        });
+
+        // Initial paint
+        allRows.forEach(row => { row.dataset.filteredOut = 'false'; });
+        renderPage();
+    })();
+</script>
+
+<!-- Complaint details modal open/close -->
+<script>
+    (function () {
+        function openModal(modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+        function closeModal(modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        document.querySelectorAll('.js-view-complaint').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const modal = document.getElementById(btn.getAttribute('data-target'));
+                if (modal) openModal(modal);
+            });
+        });
+
+        document.querySelectorAll('.js-complaint-modal').forEach(modal => {
+            modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(modal); });
+            const closeBtn = modal.querySelector('.js-close-complaint-modal');
+            if (closeBtn) closeBtn.addEventListener('click', () => closeModal(modal));
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.js-complaint-modal:not(.hidden)').forEach(closeModal);
+            }
+        });
+    })();
+</script>
+
+
+<script>
+    window.setTimeout(function () {
+        const toast = document.getElementById('ratingSuccessToast');
+        if (toast) toast.remove();
+    }, 5000);
+</script>
+
+<script>
+    (function () {
+        const toggle = document.getElementById('mobile-nav-toggle');
+        const sidebar = document.querySelector('.cf-sidebar');
+        const backdrop = document.getElementById('mobile-nav-backdrop');
+        const closeNav = () => { sidebar?.classList.remove('cf-sidebar-open'); backdrop?.classList.remove('is-visible'); toggle?.setAttribute('aria-expanded','false'); if (toggle) toggle.querySelector('.material-symbols-outlined').textContent='menu'; };
+        toggle?.addEventListener('click', () => { const open = !sidebar?.classList.contains('cf-sidebar-open'); sidebar?.classList.toggle('cf-sidebar-open', open); backdrop?.classList.toggle('is-visible', open); toggle?.setAttribute('aria-expanded', String(open)); if (toggle) toggle.querySelector('.material-symbols-outlined').textContent=open?'close':'menu'; });
+        backdrop?.addEventListener('click', closeNav); sidebar?.querySelectorAll('a').forEach(a => a.addEventListener('click', closeNav));
+        const loader = document.getElementById('cityfix-loader');
+        let slowTimer = setTimeout(() => loader?.classList.add('is-visible'), 2300);
+        window.addEventListener('load', () => { clearTimeout(slowTimer); setTimeout(() => loader?.classList.remove('is-visible'), 180); });
+    })();
+</script>
+</body>
+</html>

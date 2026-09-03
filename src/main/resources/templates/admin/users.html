@@ -1,0 +1,1024 @@
+
+
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>CityFix - Manage Users</title>
+  <style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script id="tailwind-config">tailwind.config={theme:{extend:{"colors":{"tertiary-fixed-dim":"rgb(var(--tertiary-fixed-dim) / <alpha-value>)","on-secondary-fixed-variant":"rgb(var(--on-secondary-fixed-variant) / <alpha-value>)","on-tertiary":"rgb(var(--on-tertiary) / <alpha-value>)","on-tertiary-fixed":"rgb(var(--on-tertiary-fixed) / <alpha-value>)","on-primary-fixed-variant":"rgb(var(--on-primary-fixed-variant) / <alpha-value>)","on-primary":"rgb(var(--on-primary) / <alpha-value>)","primary-container":"rgb(var(--primary-container) / <alpha-value>)","tertiary":"rgb(var(--tertiary) / <alpha-value>)","error":"rgb(var(--error) / <alpha-value>)","secondary":"rgb(var(--secondary) / <alpha-value>)","on-error":"rgb(var(--on-error) / <alpha-value>)","surface-container-highest":"rgb(var(--surface-container-highest) / <alpha-value>)","on-surface":"rgb(var(--on-surface) / <alpha-value>)","secondary-fixed":"rgb(var(--secondary-fixed) / <alpha-value>)","error-container":"rgb(var(--error-container) / <alpha-value>)","surface-container-low":"rgb(var(--surface-container-low) / <alpha-value>)","on-tertiary-container":"rgb(var(--on-tertiary-container) / <alpha-value>)","surface":"rgb(var(--surface) / <alpha-value>)","inverse-primary":"rgb(var(--inverse-primary) / <alpha-value>)","surface-container-high":"rgb(var(--surface-container-high) / <alpha-value>)","on-secondary-container":"rgb(var(--on-secondary-container) / <alpha-value>)","outline":"rgb(var(--outline) / <alpha-value>)","secondary-container":"rgb(var(--secondary-container) / <alpha-value>)","on-secondary-fixed":"rgb(var(--on-secondary-fixed) / <alpha-value>)","surface-bright":"rgb(var(--surface-bright) / <alpha-value>)","outline-variant":"rgb(var(--outline-variant) / <alpha-value>)","primary-fixed-dim":"rgb(var(--primary-fixed-dim) / <alpha-value>)","on-primary-container":"rgb(var(--on-primary-container) / <alpha-value>)","primary":"rgb(var(--primary) / <alpha-value>)","on-surface-variant":"rgb(var(--on-surface-variant) / <alpha-value>)","surface-tint":"rgb(var(--surface-tint) / <alpha-value>)","on-primary-fixed":"rgb(var(--on-primary-fixed) / <alpha-value>)","surface-container":"rgb(var(--surface-container) / <alpha-value>)","primary-fixed":"rgb(var(--primary-fixed) / <alpha-value>)","tertiary-container":"rgb(var(--tertiary-container) / <alpha-value>)","on-error-container":"rgb(var(--on-error-container) / <alpha-value>)","inverse-surface":"rgb(var(--inverse-surface) / <alpha-value>)","on-tertiary-fixed-variant":"rgb(var(--on-tertiary-fixed-variant) / <alpha-value>)","on-secondary":"rgb(var(--on-secondary) / <alpha-value>)","inverse-on-surface":"rgb(var(--inverse-on-surface) / <alpha-value>)","secondary-fixed-dim":"rgb(var(--secondary-fixed-dim) / <alpha-value>)","surface-container-lowest":"rgb(var(--surface-container-lowest) / <alpha-value>)","tertiary-fixed":"rgb(var(--tertiary-fixed) / <alpha-value>)","on-background":"rgb(var(--on-background) / <alpha-value>)","background":"rgb(var(--background) / <alpha-value>)","surface-variant":"rgb(var(--surface-variant) / <alpha-value>)","surface-dim":"rgb(var(--surface-dim) / <alpha-value>)"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"margin-desktop":"32px","margin-mobile":"16px","base":"4px","sidebar-width":"280px","gutter":"24px","container-max":"1440px"},"fontFamily":{"display-lg":["Inter"],"label-sm":["Inter"],"title-md":["Inter"],"label-md":["Inter"],"headline-lg":["Inter"],"body-lg":["Inter"],"headline-lg-mobile":["Inter"],"body-md":["Inter"]},"fontSize":{"display-lg":["48px",{"lineHeight":"1.2","letterSpacing":"-0.02em","fontWeight":"700"}],"label-sm":["12px",{"lineHeight":"1","letterSpacing":"0.05em","fontWeight":"600"}],"title-md":["20px",{"lineHeight":"1.4","fontWeight":"600"}],"label-md":["14px",{"lineHeight":"1.2","letterSpacing":"0.01em","fontWeight":"500"}],"headline-lg":["32px",{"lineHeight":"1.25","letterSpacing":"-0.01em","fontWeight":"600"}],"body-lg":["18px",{"lineHeight":"1.6","fontWeight":"400"}],"headline-lg-mobile":["24px",{"lineHeight":"1.3","fontWeight":"600"}],"body-md":["16px",{"lineHeight":"1.5","fontWeight":"400"}]}}}}</script>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet">
+  <script th:src="@{/theme.js}"></script>
+  <link rel="stylesheet" th:href="@{/theme-tokens.css}">
+  <style>
+    /* Responsive shell: desktop visuals remain unchanged. */
+    html, body { width:100%; min-width:0; overflow-x:hidden; }
+    .cf-users-sidebar { transition:transform .25s ease, box-shadow .25s ease; }
+    .cf-users-shell { min-width:0; }
+    .cf-users-menu-btn { display:none; }
+    .cf-users-backdrop { display:none; }
+    .cf-users-table-scroll { overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+    .cf-users-table-scroll::-webkit-scrollbar { display:none; }
+    .cf-users-table-scroll table { min-width:900px; }
+    @media (max-width:1023px) {
+      .cf-users-sidebar { width:280px !important; transform:translateX(-100%); }
+      .cf-users-sidebar.cf-users-sidebar-open { transform:translateX(0); box-shadow:20px 0 48px rgb(0 0 0 / .18); }
+      .cf-users-shell { padding-left:0 !important; }
+      .cf-users-topbar { left:0 !important; padding-left:24px !important; padding-right:24px !important; }
+      .cf-users-menu-btn { display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; border:0; border-radius:999px; color:rgb(var(--on-surface-variant)); background:rgb(var(--surface-container-high)); }
+      .cf-users-backdrop.is-visible { display:block; position:fixed; inset:0; z-index:45; background:rgb(0 0 0 / .34); backdrop-filter:blur(2px); }
+      .cf-users-table-scroll table { min-width:900px; }
+    }
+    @media (max-width:639px) {
+      .cf-users-topbar { padding-left:16px !important; padding-right:16px !important; }
+      .cf-users-topbar .text-label-sm { display:none; }
+      .cf-users-topbar-actions { gap:12px !important; }
+      .cf-users-shell main .px-margin-desktop { padding-left:16px !important; padding-right:16px !important; }
+      .cf-users-shell main .gap-gutter { gap:16px !important; }
+      .cf-users-shell main .p-8 { padding:20px !important; }
+      .cf-users-shell main .min-w-\[300px\] { min-width:0 !important; }
+    }
+  </style>
+</head>
+<body class="bg-surface font-body-md text-on-surface">
+<div id="cf-users-backdrop" class="cf-users-backdrop" aria-hidden="true"></div>
+
+<!-- Top notification used by form validation and other lightweight page messages. -->
+<div id="topNotification" role="alert" aria-live="polite"
+     class="hidden fixed top-20 right-4 sm:right-8 z-[100] w-[calc(100%-2rem)] sm:w-auto sm:min-w-[360px] max-w-md rounded-2xl border border-secondary/25 bg-surface-container-lowest shadow-2xl shadow-slate-950/15 px-4 py-4 transition-all duration-300">
+  <div class="flex items-start gap-3">
+    <div id="topNotificationIcon" class="mt-0.5 w-9 h-9 rounded-xl bg-secondary-container text-secondary flex items-center justify-center shrink-0">
+      <span class="material-symbols-outlined text-[20px]">check_circle</span>
+    </div>
+    <div class="min-w-0 flex-1">
+      <p id="topNotificationTitle" class="font-semibold text-sm text-on-surface">Success</p>
+      <p id="topNotificationMessage" class="text-xs text-on-surface-variant mt-1">The requested action was completed.</p>
+    </div>
+    <button id="closeTopNotification" type="button" class="p-1 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors" aria-label="Close notification">
+      <span class="material-symbols-outlined text-[18px]">close</span>
+    </button>
+  </div>
+</div>
+
+<!-- Success popup rendered by the controller after add, edit, or delete. -->
+<div id="userSuccessPopup" role="status" aria-live="polite"
+     class="hidden fixed top-20 right-4 sm:right-8 z-[100] w-[calc(100%-2rem)] sm:w-auto sm:min-w-[360px] max-w-md rounded-2xl border border-secondary/25 bg-secondary-container text-on-secondary-container shadow-2xl px-4 py-4"
+     style="transform: translateY(16px); opacity: 0; transition: transform 300ms ease, opacity 300ms ease;">
+  <div class="flex items-start gap-3">
+    <div class="mt-0.5 w-9 h-9 rounded-xl bg-secondary text-on-secondary flex items-center justify-center shrink-0">
+      <span class="material-symbols-outlined text-[20px]">check_circle</span>
+    </div>
+    <div class="min-w-0 flex-1">
+      <p class="font-semibold text-sm">Citizen action successful</p>
+      <p id="userSuccessMessage" class="text-xs mt-1 opacity-85">The citizen record was updated successfully.</p>
+    </div>
+    <button id="closeUserSuccessPopup" type="button" class="p-1 rounded-lg hover:bg-secondary/20 transition-colors" aria-label="Close notification">
+      <span class="material-symbols-outlined text-[18px]">close</span>
+    </button>
+  </div>
+</div>
+
+<aside class="cf-users-sidebar fixed left-0 top-0 h-full w-sidebar-width bg-surface-container-lowest border-r border-outline-variant z-50 flex flex-col">
+  <div class="p-6 flex items-center gap-3 border-b border-outline-variant">
+    <img alt="CityFix Logo" class="h-8 w-auto" th:src="@{/screen.png}">
+    <span class="font-title-md text-title-md text-primary">CityFix</span>
+  </div>
+  <nav class="flex-1 py-6 px-4 space-y-2">
+    <a th:href="@{/admin/dashboard}"
+       th:classappend="${activePage == 'dashboard'} ? 'bg-secondary-container text-on-secondary-container' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'"
+       class="flex items-center px-4 py-3 rounded-xl transition-all">
+      <span class="material-symbols-outlined mr-3">dashboard</span>
+      <span class="font-label-md text-label-md">Dashboard</span>
+    </a>
+    <a th:href="@{/admin/complaints}"
+       th:classappend="${activePage == 'manage-complaints'} ? 'bg-secondary-container text-on-secondary-container' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'"
+       class="flex items-center px-4 py-3 rounded-xl transition-all">
+      <span class="material-symbols-outlined mr-3">assignment</span>
+      <span class="font-label-md text-label-md">Manage Complaints</span>
+    </a>
+    <a th:href="@{/admin/complaints/reports}" class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all">
+      <span class="material-symbols-outlined mr-3">bar_chart</span>
+      <span class="font-label-md text-label-md">Reports</span>
+    </a>
+    <a th:href="@{/admin/users}"
+       th:classappend="${activePage == 'manage-users'} ? 'bg-secondary-container text-on-secondary-container' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'"
+       class="flex items-center px-4 py-3 rounded-xl transition-all">
+      <span class="material-symbols-outlined mr-3">group</span>
+      <span class="font-label-md text-label-md">Manage Users</span>
+    </a>
+    <a sec:authorize="hasRole('SUPER_ADMIN')" th:href="@{/admin/admins}"
+       th:classappend="${activePage == 'manage-admins'} ? 'bg-secondary-container text-on-secondary-container' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'"
+       class="flex items-center px-4 py-3 rounded-xl transition-all">
+      <span class="material-symbols-outlined mr-3">admin_panel_settings</span>
+      <span class="font-label-md text-label-md">Manage Admins</span>
+    </a>
+    <a th:href="@{/admin/profile}"
+       th:classappend="${activePage == 'profile'} ? 'bg-secondary-container text-on-secondary-container' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'"
+       class="flex items-center px-4 py-3 rounded-xl transition-all">
+      <span class="material-symbols-outlined mr-3">person</span>
+      <span class="font-label-md text-label-md">Profile</span>
+    </a>
+  </nav>
+  <div class="p-4 mt-auto border-t border-outline-variant">
+    <a th:href="@{/logout}" class="flex items-center px-4 py-3 rounded-xl text-error hover:bg-error-container transition-all">
+      <span class="material-symbols-outlined mr-3">logout</span>
+      <span class="font-label-md text-label-md">Logout</span>
+    </a>
+  </div>
+</aside>
+
+<div class="cf-users-shell pl-sidebar-width">
+  <header class="cf-users-topbar fixed top-0 left-sidebar-width right-0 h-16 bg-surface/80 backdrop-blur-xl border-b border-outline-variant z-40 flex items-center justify-between px-margin-desktop">
+    <div class="flex items-center gap-3">
+      <button id="cf-users-menu-btn" type="button" class="cf-users-menu-btn" aria-label="Open navigation" aria-expanded="false"><span class="material-symbols-outlined">menu</span></button>
+      <span class="material-symbols-outlined text-primary">group</span>
+      <div class="flex flex-col leading-tight">
+        <span class="font-label-md text-label-md text-on-surface">Manage Users</span>
+        <span class="text-label-sm text-on-surface-variant">View and manage registered citizens</span>
+      </div>
+    </div>
+    <div class="cf-users-topbar-actions flex items-center gap-6">
+      <!-- Day/night toggle -->
+      <div th:replace="~{fragments/themeToggle :: toggle}"></div>
+
+      <span class="material-symbols-outlined text-on-surface-variant cursor-pointer">notifications</span>
+      <a th:href="@{/admin/profile}" class="flex items-center gap-3 border-l border-outline-variant pl-6 cursor-pointer hover:opacity-80 transition-opacity">
+                <span class="hidden md:block text-right">
+                    <p class="text-label-md font-bold text-on-surface" id="header-name" th:text="${admin.name}">Admin</p>
+                    <p class="text-label-sm text-on-surface-variant">Administrator</p>
+                </span>
+        <img alt="Profile" class="w-9 h-9 rounded-full object-cover border border-outline-variant shadow-sm" id="header-avatar"
+             th:src="@{${admin.profileImagePath != null ? admin.profileImagePath : '/profile1.jpg'}}">
+      </a>
+    </div>
+  </header>
+
+  <main class="pt-16 min-h-screen bg-surface">
+    <div class="flex flex-col w-full">
+
+      <!-- Header / Stats Section — refined icon-badge cards (matches citizen-portal style) -->
+      <section class="px-margin-desktop py-8 grid grid-cols-1 md:grid-cols-4 gap-gutter">
+        <div class="md:col-span-2 flex flex-col justify-center">
+          <span class="font-label-md text-label-md text-primary uppercase tracking-wider mb-2">Administrative Control</span>
+          <h1 class="font-display-lg text-display-lg text-on-surface mb-4">Manage Users</h1>
+          <p class="font-body-lg text-body-lg text-on-surface-variant max-w-xl">
+            Monitor and manage platform access for citizens and municipal administrators. Maintain the integrity of the civic network through role-based permissions and verification.
+          </p>
+        </div>
+        <div class="flex items-center gap-4 bg-surface-container-lowest border border-outline-variant/40 rounded-2xl px-6 py-4 shadow-sm hover:shadow-md transition-shadow">
+          <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined text-primary">groups</span>
+          </div>
+          <div class="flex flex-col">
+            <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wide">Total Registered</span>
+            <span class="font-display-lg text-headline-lg text-on-surface leading-none" th:text="${totalRegistered}">0</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-4 bg-surface-container-lowest border border-outline-variant/40 rounded-2xl px-6 py-4 shadow-sm hover:shadow-md transition-shadow">
+          <div class="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined text-secondary">verified_user</span>
+          </div>
+          <div class="flex flex-col">
+            <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wide">New This Month</span>
+            <span class="font-display-lg text-headline-lg text-on-surface leading-none" th:text="${newThisMonth}">0</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Controls & Filters Bar -->
+      <section class="px-margin-desktop mb-6">
+        <div class="bg-surface-container-high p-4 rounded-xl flex flex-wrap items-center gap-4 shadow-md">
+          <div class="flex-1 min-w-[300px] relative">
+            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+            <input id="userSearchInput" class="w-full pl-12 pr-4 py-3 bg-surface-container-lowest rounded-lg border-none focus:ring-2 focus:ring-primary/20 outline-none font-body-md text-on-surface" placeholder="Search by name or email..." type="text">
+          </div>
+          <div class="flex items-center gap-2">
+            <select id="districtFilter" class="bg-surface-container-lowest px-4 py-3 rounded-lg border-none font-label-md text-on-surface outline-none cursor-pointer">
+              <option value="">All Districts</option>
+            </select>
+            <!-- Was a link to /admin/users/add (separate page). Now opens the Add User modal below. -->
+            <button type="button" id="openAddUserModal" class="bg-primary text-on-primary px-6 py-3 rounded-lg font-label-md flex items-center gap-2 hover:opacity-90 transition-all">
+              <span class="material-symbols-outlined text-[20px]">person_add</span>
+              Add Citizen
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Data Table Section -->
+      <section class="px-margin-desktop pb-12">
+        <div class="flex items-center justify-between mb-3 px-1">
+          <p class="font-label-md text-label-md text-on-surface-variant" id="jsTableSummary">
+            <span th:text="${citizens.size()}">0</span> registered citizens
+          </p>
+        </div>
+        <div class="bg-surface-container-lowest rounded-xl shadow-xl overflow-hidden">
+          <div class="cf-users-table-scroll">
+            <table class="w-full text-left border-collapse">
+              <thead>
+              <tr class="bg-surface-container text-on-surface-variant font-label-md border-b border-outline-variant">
+                <th class="px-6 py-4 font-label-md uppercase tracking-wider">User Details</th>
+                <th class="px-6 py-4 font-label-md uppercase tracking-wider">Citizen ID</th>
+                <th class="px-6 py-4 font-label-md uppercase tracking-wider">Ward/District</th>
+                <th class="px-6 py-4 font-label-md uppercase tracking-wider cursor-pointer select-none hover:text-on-surface transition-colors" id="joinedHeader">
+                                    <span class="inline-flex items-center gap-1">
+                                        Joined
+                                        <span class="material-symbols-outlined text-[16px]" id="joinedSortIcon">arrow_downward</span>
+                                    </span>
+                </th>
+                <th class="px-6 py-4 font-label-md uppercase tracking-wider text-right">Actions</th>
+              </tr>
+              </thead>
+              <tbody class="divide-y divide-surface-container" id="usersBody">
+              <tr class="hover:bg-surface-container-low transition-colors group js-user-row"
+                  th:each="citizen : ${citizens}"
+                  th:attr="data-id=${citizen.id}, data-phone=${citizen.phone}, data-name=${#strings.toLowerCase(citizen.name)}, data-email=${#strings.toLowerCase(citizen.email)}, data-district=${(citizen.address != null and !#strings.isEmpty(citizen.address.city)) ? citizen.address.city : 'Unknown'}, data-created=${#temporals.formatISO(citizen.createdAt)}">
+                <td class="px-6 py-4">
+                  <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-full bg-tertiary-container flex items-center justify-center text-on-tertiary-container font-bold uppercase ring-2 ring-surface-container-lowest"
+                         th:text="${#strings.isEmpty(citizen.name)} ? '?' : ${#strings.substring(citizen.name, 0, 1)}">JD</div>
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <p class="font-title-md text-on-surface leading-none" th:text="${citizen.name}">Full Name</p>
+                        <span th:if="${citizen.createdAt != null and citizen.createdAt.isAfter(#temporals.createNow().minusDays(30))}"
+                              class="px-2 py-0.5 rounded-full bg-secondary-container/40 text-on-secondary-container font-label-sm text-[10px] uppercase tracking-wide">New</span>
+                      </div>
+                      <p class="font-label-sm text-on-surface-variant mt-1" th:text="${citizen.email}">email@example.com</p>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-6 py-4 font-body-md text-on-surface-variant" th:text="${citizen.citizenId}">CTZ-0001</td>
+                <td class="px-6 py-4 font-body-md text-on-surface-variant" th:text="${(citizen.address != null and !#strings.isEmpty(citizen.address.city)) ? citizen.address.city : 'Unknown'}">City</td>
+                <td class="px-6 py-4 font-body-md text-on-surface-variant"
+                    th:text="${#temporals.format(citizen.createdAt, 'MMM dd, yyyy')}">Jan 01, 2026</td>
+                <td class="px-6 py-4 text-right">
+                  <div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <!-- Was a link to /admin/users/{id}/edit (separate page). Now opens this row's edit modal. -->
+                    <button type="button" class="js-open-user-modal p-2 hover:bg-surface-container-highest rounded-full text-on-surface-variant transition-colors" title="Edit User"
+                            th:attr="data-target='editUserModal-' + ${citizen.id}">
+                      <span class="material-symbols-outlined">edit</span>
+                    </button>
+                    <!-- Was a link to /admin/users/{id}/delete (separate confirm page). Now opens this row's delete modal. -->
+                    <button type="button" class="js-open-user-modal p-2 hover:bg-error-container/20 rounded-full text-error transition-colors" title="Delete User"
+                            th:attr="data-target='deleteUserModal-' + ${citizen.id}">
+                      <span class="material-symbols-outlined">delete</span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr th:if="${citizens.isEmpty()}">
+                <td class="px-6 py-14 text-center" colspan="5">
+                  <div class="flex flex-col items-center gap-2">
+                    <span class="material-symbols-outlined text-on-surface-variant text-[32px]">group_off</span>
+                    <p class="font-title-md text-on-surface">No citizens registered yet</p>
+                    <p class="font-body-md text-on-surface-variant">New registrations will show up here automatically.</p>
+                  </div>
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination (client-side, 5 per page, search-aware) -->
+          <div class="px-6 py-4 bg-surface-container-low flex items-center justify-between">
+            <p class="font-label-sm text-on-surface-variant" id="jsPageInfo">Showing 0 of 0 users</p>
+            <div class="flex items-center gap-2" id="jsPaginationControls">
+              <button class="p-2 rounded-lg hover:bg-surface-container-highest disabled:opacity-30" id="jsPrevBtn" type="button">
+                <span class="material-symbols-outlined">chevron_left</span>
+              </button>
+              <div class="flex items-center gap-2" id="jsPageNumbers"></div>
+              <button class="p-2 rounded-lg hover:bg-surface-container-highest disabled:opacity-30" id="jsNextBtn" type="button">
+                <span class="material-symbols-outlined">chevron_right</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<!-- ============ Add User modal (merged in from the old /admin/users/add page) ============
+     Same fields as before, th:object="${newCitizen}", same POST target. -->
+<div id="addUserModal" class="js-user-modal hidden fixed inset-0 bg-inverse-surface/40 z-[60] items-center justify-center p-4">
+  <div class="bg-surface-container-lowest rounded-2xl shadow-2xl w-full max-w-4xl relative max-h-[90vh] overflow-y-auto border border-outline-variant/20">
+    <button type="button" class="js-close-user-modal absolute top-4 right-4 p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors" title="Close">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+
+    <div class="p-8 pb-0">
+      <span class="font-label-md text-label-md text-primary uppercase tracking-wider">Administrative Control</span>
+      <h1 class="font-display-lg text-headline-lg text-on-surface mt-2">Add New Citizen</h1>
+      <p class="font-body-md text-on-surface-variant mt-2">Citizen ID will be auto-generated after saving.</p>
+    </div>
+
+    <form class="js-add-user-form p-8 space-y-6" method="post" th:action="@{/admin/users/add}" th:object="${newCitizen}">
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <div class="flex flex-col gap-2">
+          <label class="font-label-md text-on-surface-variant" for="addName">Full Legal Name</label>
+          <input class="w-full h-11 px-4 bg-surface-container-low rounded border border-outline/20 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all font-body-md"
+                 id="addName" placeholder="John Doe" required th:field="*{name}" type="text">
+          <p class="text-error font-label-sm" th:errors="*{name}" th:if="${#fields.hasErrors('name')}">Name error</p>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="font-label-md text-on-surface-variant" for="addPhone">Phone Number</label>
+          <input class="w-full h-11 px-4 bg-surface-container-low rounded border border-outline/20 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all font-body-md"
+                 th:classappend="${phoneError} ? 'border-error focus:border-error focus:ring-error/10' : ''"
+                 id="addPhone" placeholder="+880 1XXXXXXXXX" required th:field="*{phone}" type="tel">
+          <p class="text-error font-label-sm" th:if="${phoneError}" th:text="${phoneError}">Phone error</p>
+        </div>
+
+        <div class="flex flex-col gap-2 md:col-span-2">
+          <label class="font-label-md text-on-surface-variant" for="addEmail">Email Address</label>
+          <input class="w-full h-11 px-4 bg-surface-container-low rounded border border-outline/20 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all font-body-md"
+                 th:classappend="${emailError} ? 'border-error focus:border-error focus:ring-error/10' : ''"
+                 id="addEmail" placeholder="email@address.com" required th:field="*{email}" type="email">
+          <p class="text-error font-label-sm" th:if="${emailError}" th:text="${emailError}">Email error</p>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="font-label-md text-on-surface-variant" for="addNationalId">National ID <span class="text-outline">(Optional)</span></label>
+          <input class="w-full h-11 px-4 bg-surface-container-low rounded border border-outline/20 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all font-body-md"
+                 id="addNationalId" placeholder="10/13/17 digit NID" th:field="*{nationalId}" type="text">
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="font-label-md text-on-surface-variant">Gender</label>
+          <div class="flex items-center gap-6 h-11 px-1">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input class="accent-primary w-4 h-4" required th:field="*{gender}" th:value="MALE" type="radio">
+              <span class="font-body-md text-on-surface">Male</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input class="accent-primary w-4 h-4" required th:field="*{gender}" th:value="FEMALE" type="radio">
+              <span class="font-body-md text-on-surface">Female</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-2 md:col-span-2">
+          <label class="font-label-md text-on-surface-variant" for="addOccupation">Occupation <span class="text-outline">(Optional)</span></label>
+          <input class="w-full h-11 px-4 bg-surface-container-low rounded border border-outline/20 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all font-body-md"
+                 id="addOccupation" placeholder="e.g., Engineer" th:field="*{occupation}" type="text">
+        </div>
+
+        <div class="flex flex-col gap-2 md:col-span-2">
+          <label class="font-label-md text-on-surface-variant" for="addStreet">Address</label>
+          <input class="w-full h-11 px-4 bg-surface-container-low rounded border border-outline/20 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all font-body-md"
+                 id="addStreet" placeholder="House, Road, Area" required th:field="*{street}" type="text">
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="font-label-md text-on-surface-variant" for="addCity">City</label>
+          <input class="w-full h-11 px-4 bg-surface-container-low rounded border border-outline/20 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all font-body-md"
+                 id="addCity" placeholder="Dhaka" required th:field="*{city}" type="text">
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="font-label-md text-on-surface-variant" for="addZipCode">Zip Code</label>
+          <input class="w-full h-11 px-4 bg-surface-container-low rounded border border-outline/20 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all font-body-md"
+                 id="addZipCode" placeholder="1207" required th:field="*{zipCode}" type="text">
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="font-label-md text-on-surface-variant" for="addPassword">Temporary Password</label>
+          <div class="relative">
+            <input class="w-full h-11 px-4 pr-11 bg-surface-container-low rounded border border-outline/20 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all font-body-md"
+                   id="addPassword" placeholder="••••••••" required th:field="*{password}" type="password">
+            <button class="absolute right-3 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface-variant transition-colors" id="toggleAddPassword" tabindex="-1" type="button">
+              <span class="material-symbols-outlined text-[20px]" id="toggleAddPasswordIcon">visibility</span>
+            </button>
+          </div>
+          <p class="text-error font-label-sm" th:errors="*{password}" th:if="${#fields.hasErrors('password')}">Password error</p>
+        </div>
+      </div>
+
+      <div class="pt-4 flex items-center justify-end gap-4">
+        <button type="button" class="js-close-user-modal px-6 py-3 rounded-lg font-label-md text-on-surface-variant hover:bg-surface-container-high transition-all">Cancel</button>
+        <button class="h-12 px-8 bg-primary text-on-primary font-title-md rounded-lg shadow-lg hover:shadow-primary/20 transition-all flex items-center justify-center gap-2" type="submit">
+          <span class="material-symbols-outlined text-[20px]">person_add</span>
+          <span>Save User</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ Edit User modals ============
+     The edit experience is intentionally different from Add Citizen: identity
+     metadata is read-only, while editable information is grouped into focused
+     sections for faster and safer administration. -->
+<div th:each="citizen : ${citizens}"
+     th:id="'editUserModal-' + ${citizen.id}"
+     class="js-user-modal hidden fixed inset-0 bg-slate-950/50 backdrop-blur-sm z-[60] items-center justify-center p-4 sm:p-6">
+  <div class="bg-surface-container-lowest rounded-3xl shadow-2xl w-full max-w-4xl relative max-h-[92vh] overflow-hidden border border-outline-variant/30">
+    <div class="bg-gradient-to-br from-primary to-primary-container px-6 py-6 sm:px-8 sm:py-7 text-on-primary relative overflow-hidden">
+      <div class="absolute -right-12 -top-16 h-48 w-48 rounded-full bg-white/10"></div>
+      <div class="absolute right-16 -bottom-24 h-40 w-40 rounded-full bg-white/10"></div>
+      <button type="button" class="js-close-user-modal absolute top-4 right-4 z-10 p-2 rounded-full text-on-primary hover:bg-white/15 transition-colors" title="Close">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+      <div class="relative flex items-center gap-4 pr-10">
+        <div class="w-14 h-14 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center shrink-0 shadow-inner">
+          <span class="material-symbols-outlined text-[30px]">manage_accounts</span>
+        </div>
+        <div class="min-w-0">
+          <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/75">Citizen profile</p>
+          <h1 class="text-2xl sm:text-3xl font-semibold tracking-tight mt-1">Edit User</h1>
+          <p class="text-sm text-white/80 mt-1">Review and update the citizen's registered information.</p>
+        </div>
+      </div>
+    </div>
+
+    <form th:action="@{'/admin/users/' + ${citizen.id} + '/edit'}" method="post" th:attr="data-user-id=${citizen.id}" class="js-edit-user-form max-h-[calc(92vh-152px)] overflow-y-auto">
+      <div class="px-6 py-6 sm:px-8 sm:py-7 space-y-8">
+        <section class="grid grid-cols-1 sm:grid-cols-[auto_1fr] gap-5 items-center rounded-2xl bg-surface-container-low border border-outline-variant/30 p-5">
+          <div class="w-16 h-16 rounded-2xl bg-tertiary-container flex items-center justify-center text-on-tertiary-container font-bold uppercase text-2xl ring-4 ring-surface-container-lowest shadow-sm"
+               th:text="${#strings.isEmpty(citizen.name)} ? '?' : ${#strings.substring(citizen.name, 0, 1)}">JD</div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 min-w-0">
+            <div>
+              <p class="text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant">Citizen ID</p>
+              <p class="font-mono text-base font-semibold text-primary mt-1 truncate" th:text="${citizen.citizenId}">CTZ-0001</p>
+            </div>
+            <div>
+              <p class="text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant">Joined Date</p>
+              <p class="text-base font-semibold text-on-surface mt-1" th:text="${citizen.createdAt != null ? #temporals.format(citizen.createdAt, 'MMM dd, yyyy') : 'Not available'}">Jan 01, 2026</p>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center"><span class="material-symbols-outlined text-[20px]">person</span></div>
+            <div><h2 class="font-title-md text-on-surface">Personal information</h2><p class="text-sm text-on-surface-variant">Update personal details while keeping registered identity information consistent.</p></div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div class="flex flex-col gap-2">
+              <label class="text-sm font-semibold text-on-surface" th:for="'editName-' + ${citizen.id}">Full name</label>
+              <input th:id="'editName-' + ${citizen.id}" name="name" th:value="${citizen.name}" type="text" required
+                     class="w-full h-12 px-4 bg-surface rounded-xl border border-outline-variant/50 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-sm">
+            </div>
+            <div class="flex flex-col gap-2">
+              <label class="text-sm font-semibold text-on-surface" th:for="'editNationalId-' + ${citizen.id}">National ID <span class="font-normal text-outline">(Optional)</span></label>
+              <input th:id="'editNationalId-' + ${citizen.id}" name="nationalId" th:value="${citizen.nationalId}" type="text" placeholder="10/13/17 digit NID"
+                     class="w-full h-12 px-4 bg-surface rounded-xl border border-outline-variant/50 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-sm">
+            </div>
+            <div class="flex flex-col gap-2">
+              <label class="text-sm font-semibold text-on-surface" th:for="'editGender-' + ${citizen.id}">Gender</label>
+              <div class="relative">
+                <div th:id="'editGender-' + ${citizen.id}" class="h-12 flex items-center justify-between px-4 rounded-xl bg-surface-container-low border border-outline-variant/50 text-sm text-on-surface-variant cursor-not-allowed">
+                  <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-[19px] text-primary">badge</span>
+                    <span th:if="${citizen.gender != null and citizen.gender.name() == 'MALE'}">Male</span>
+                    <span th:if="${citizen.gender != null and citizen.gender.name() == 'FEMALE'}">Female</span>
+                    <span th:if="${citizen.gender == null}">Not specified</span>
+                  </div>
+                  <span class="material-symbols-outlined text-[18px] text-outline">lock</span>
+                </div>
+                <!-- Preserve the registration-time value when the form is submitted. -->
+                <input type="hidden" name="gender" th:value="${citizen.gender}">
+              </div>
+              <p class="text-xs text-on-surface-variant">Gender is fixed from the original registration.</p>
+            </div>
+            <div class="flex flex-col gap-2">
+              <label class="text-sm font-semibold text-on-surface" th:for="'editOccupation-' + ${citizen.id}">Occupation <span class="font-normal text-outline">(Optional)</span></label>
+              <input th:id="'editOccupation-' + ${citizen.id}" name="occupation" th:value="${citizen.occupation}" type="text" placeholder="e.g., Engineer"
+                     class="w-full h-12 px-4 bg-surface rounded-xl border border-outline-variant/50 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-sm">
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-9 h-9 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center"><span class="material-symbols-outlined text-[20px]">contact_phone</span></div>
+            <div><h2 class="font-title-md text-on-surface">Contact & account</h2><p class="text-sm text-on-surface-variant">Manage contact details with account identity protection.</p></div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div class="flex flex-col gap-2">
+              <label class="text-sm font-semibold text-on-surface" th:for="'editPhone-' + ${citizen.id}">Phone number</label>
+              <input th:id="'editPhone-' + ${citizen.id}" name="phone" th:value="${citizen.phone}" type="tel" required
+                     class="w-full h-12 px-4 bg-surface rounded-xl border border-outline-variant/50 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-sm">
+            </div>
+            <div class="flex flex-col gap-2">
+              <label class="text-sm font-semibold text-on-surface" th:for="'editEmail-' + ${citizen.id}">Email address</label>
+              <div class="relative"><input th:id="'editEmail-' + ${citizen.id}" th:value="${citizen.email}" type="email" disabled class="w-full h-12 pl-4 pr-11 bg-surface-container-low rounded-xl border border-outline-variant/50 outline-none text-sm text-on-surface-variant cursor-not-allowed"><span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline text-[18px]">lock</span></div>
+              <p class="text-xs text-on-surface-variant">Protected because it is used for citizen login.</p>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-9 h-9 rounded-xl bg-tertiary/10 text-tertiary flex items-center justify-center"><span class="material-symbols-outlined text-[20px]">location_on</span></div>
+            <div><h2 class="font-title-md text-on-surface">Residential address</h2><p class="text-sm text-on-surface-variant">Keep the citizen's service area and delivery address accurate.</p></div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div class="flex flex-col gap-2 md:col-span-2"><label class="text-sm font-semibold text-on-surface" th:for="'editStreet-' + ${citizen.id}">Street address</label><input th:id="'editStreet-' + ${citizen.id}" name="address.street" th:value="${citizen.address != null ? citizen.address.street : ''}" type="text" placeholder="House, Road, Area" class="w-full h-12 px-4 bg-surface rounded-xl border border-outline-variant/50 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-sm"></div>
+            <div class="flex flex-col gap-2"><label class="text-sm font-semibold text-on-surface" th:for="'editCity-' + ${citizen.id}">City</label><input th:id="'editCity-' + ${citizen.id}" name="address.city" th:value="${citizen.address != null ? citizen.address.city : ''}" type="text" placeholder="Dhaka" class="w-full h-12 px-4 bg-surface rounded-xl border border-outline-variant/50 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-sm"></div>
+            <div class="flex flex-col gap-2"><label class="text-sm font-semibold text-on-surface" th:for="'editZipCode-' + ${citizen.id}">Zip code</label><input th:id="'editZipCode-' + ${citizen.id}" name="address.zipCode" th:value="${citizen.address != null ? citizen.address.zipCode : ''}" type="text" placeholder="1207" class="w-full h-12 px-4 bg-surface rounded-xl border border-outline-variant/50 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-sm"></div>
+          </div>
+        </section>
+      </div>
+
+      <div class="sticky bottom-0 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-3 px-6 py-4 sm:px-8 bg-surface-container-lowest/95 backdrop-blur border-t border-outline-variant/30">
+        <button type="button" class="js-close-user-modal h-12 px-6 rounded-xl border border-outline-variant text-on-surface font-semibold text-sm hover:bg-surface-container transition-all">Cancel</button>
+        <button type="submit" class="h-12 px-7 flex items-center justify-center gap-2 rounded-xl bg-primary text-on-primary font-semibold text-sm shadow-lg shadow-primary/20 hover:opacity-90 active:scale-[0.98] transition-all"><span class="material-symbols-outlined text-[20px]">save</span>Save changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ Delete User modals (one per citizen, merged in from the old /admin/users/{id}/delete confirm page) ============ -->
+<div th:each="citizen : ${citizens}"
+     th:id="'deleteUserModal-' + ${citizen.id}"
+     class="js-user-modal hidden fixed inset-0 bg-inverse-surface/40 z-[60] items-center justify-center p-4">
+  <div class="bg-surface-container-lowest rounded-2xl shadow-2xl w-full max-w-md relative border border-outline-variant/20">
+    <button type="button" class="js-close-user-modal absolute top-4 right-4 p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors" title="Close">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+
+    <div class="p-8 flex flex-col items-center text-center border-b border-outline-variant/30">
+      <div class="w-16 h-16 rounded-full bg-error-container flex items-center justify-center mb-4">
+        <span class="material-symbols-outlined text-error text-[32px]">warning</span>
+      </div>
+      <h1 class="font-headline-lg text-headline-lg text-on-surface mb-2">Delete this user?</h1>
+      <p class="font-body-md text-on-surface-variant">This action cannot be undone. The citizen's account and all associated data will be permanently removed.</p>
+    </div>
+
+    <div class="p-8">
+      <div class="bg-surface-container rounded-xl p-5 flex items-center gap-4 mb-6">
+        <div class="w-12 h-12 rounded-full bg-tertiary-container flex items-center justify-center text-on-tertiary-container font-bold uppercase text-lg"
+             th:text="${#strings.isEmpty(citizen.name)} ? '?' : ${#strings.substring(citizen.name, 0, 1)}">JD</div>
+        <div class="flex-1 min-w-0">
+          <p class="font-title-md text-on-surface leading-none truncate" th:text="${citizen.name}">Full Name</p>
+          <p class="font-label-sm text-on-surface-variant mt-1 truncate" th:text="${citizen.email}">email@example.com</p>
+        </div>
+      </div>
+
+      <dl class="space-y-3 mb-8">
+        <div class="flex items-center justify-between">
+          <dt class="font-label-md text-on-surface-variant">Citizen ID</dt>
+          <dd class="font-label-md text-on-surface font-semibold" th:text="${citizen.citizenId}">CTZ-0001</dd>
+        </div>
+        <div class="flex items-center justify-between">
+          <dt class="font-label-md text-on-surface-variant">Phone</dt>
+          <dd class="font-label-md text-on-surface font-semibold" th:text="${citizen.phone}">+880 1XXXXXXXXX</dd>
+        </div>
+        <div class="flex items-center justify-between">
+          <dt class="font-label-md text-on-surface-variant">Ward/District</dt>
+          <dd class="font-label-md text-on-surface font-semibold"
+              th:text="${(citizen.address != null and !#strings.isEmpty(citizen.address.city)) ? citizen.address.city : 'Unknown'}">City</dd>
+        </div>
+        <div class="flex items-center justify-between">
+          <dt class="font-label-md text-on-surface-variant">Joined</dt>
+          <dd class="font-label-md text-on-surface font-semibold"
+              th:text="${#temporals.format(citizen.createdAt, 'MMM dd, yyyy')}">Jan 01, 2026</dd>
+        </div>
+      </dl>
+
+      <div class="flex items-center gap-3">
+        <button type="button" class="js-close-user-modal flex-1 h-12 flex items-center justify-center rounded-lg border border-outline-variant text-on-surface font-label-md hover:bg-surface-container transition-all">
+          Cancel
+        </button>
+        <form th:action="@{'/admin/users/' + ${citizen.id} + '/delete'}" method="post" class="flex-1 js-delete-user-form">
+          <button type="submit"
+                  class="w-full h-12 flex items-center justify-center gap-2 rounded-lg bg-error text-on-error font-label-md hover:opacity-90 active:scale-[0.98] transition-all">
+            <span class="material-symbols-outlined text-[20px]">delete</span>
+            Delete
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Keeps header avatar in sync with the photo picked on the Admin Profile page
+     (that upload is only saved to this browser's localStorage, not the server) -->
+<script th:inline="javascript">
+  (function () {
+    const avatarKey = 'cityfix-avatar-' + /*[[${admin.email}]]*/ '';
+    const savedAvatar = localStorage.getItem(avatarKey);
+    if (savedAvatar) {
+      document.getElementById('header-avatar').src = savedAvatar;
+    }
+  })();
+</script>
+
+<!-- Table search / district filter / sort / pagination (unchanged logic) -->
+<script>
+  (function () {
+    const rowsPerPage = 5;
+    const tbody = document.getElementById('usersBody');
+    const allRows = Array.from(tbody.querySelectorAll('tr.js-user-row'));
+    const searchInput = document.getElementById('userSearchInput');
+    const districtFilter = document.getElementById('districtFilter');
+    const pageInfo = document.getElementById('jsPageInfo');
+    const tableSummary = document.getElementById('jsTableSummary');
+    const prevBtn = document.getElementById('jsPrevBtn');
+    const nextBtn = document.getElementById('jsNextBtn');
+    const pageNumbers = document.getElementById('jsPageNumbers');
+    const joinedHeader = document.getElementById('joinedHeader');
+    const joinedSortIcon = document.getElementById('joinedSortIcon');
+
+    let currentPage = 0;
+    let sortDirection = 'desc';
+
+    function populateDistrictFilter() {
+      const districts = allRows
+              .map(row => row.getAttribute('data-district'))
+              .filter(d => d && d.trim() !== '');
+
+      const uniqueSorted = Array.from(new Set(districts)).sort();
+
+      uniqueSorted.forEach(d => {
+        const option = document.createElement('option');
+        option.value = d;
+        option.textContent = d;
+        districtFilter.appendChild(option);
+      });
+    }
+
+    function getFilteredRows() {
+      const term = searchInput.value.trim().toLowerCase();
+      const district = districtFilter.value;
+
+      const filtered = allRows.filter(row => {
+        const name = row.getAttribute('data-name') || '';
+        const email = row.getAttribute('data-email') || '';
+        const rowDistrict = row.getAttribute('data-district') || '';
+
+        const matchesSearch = !term || name.includes(term) || email.includes(term);
+        const matchesDistrict = !district || rowDistrict === district;
+
+        return matchesSearch && matchesDistrict;
+      });
+
+      filtered.sort((a, b) => {
+        const dateA = new Date(a.getAttribute('data-created'));
+        const dateB = new Date(b.getAttribute('data-created'));
+        return sortDirection === 'desc' ? dateB - dateA : dateA - dateB;
+      });
+
+      return filtered;
+    }
+
+    function renderPageNumbers(totalPages) {
+      pageNumbers.innerHTML = '';
+      for (let i = 0; i < totalPages; i++) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = i + 1;
+        btn.className = 'w-8 h-8 rounded-lg font-label-md transition-colors ' +
+                (i === currentPage ? 'bg-primary text-on-primary' : 'hover:bg-surface-container-highest');
+        btn.addEventListener('click', () => {
+          currentPage = i;
+          render();
+        });
+        pageNumbers.appendChild(btn);
+      }
+    }
+
+    function render() {
+      allRows.forEach(row => row.style.display = 'none');
+
+      const filtered = getFilteredRows();
+      const totalPages = Math.max(1, Math.ceil(filtered.length / rowsPerPage));
+
+      if (currentPage >= totalPages) currentPage = totalPages - 1;
+      if (currentPage < 0) currentPage = 0;
+
+      const start = currentPage * rowsPerPage;
+      const end = start + rowsPerPage;
+      const pageRows = filtered.slice(start, end);
+
+      pageRows.forEach(row => row.style.display = '');
+
+      const showingFrom = filtered.length === 0 ? 0 : start + 1;
+      const showingTo = Math.min(end, filtered.length);
+      pageInfo.textContent = `Showing ${showingFrom}-${showingTo} of ${filtered.length} users`;
+
+      const isFiltered = searchInput.value.trim() !== '' || districtFilter.value !== '';
+      tableSummary.textContent = isFiltered
+              ? `${filtered.length} of ${allRows.length} registered citizens`
+              : `${allRows.length} registered citizens`;
+
+      prevBtn.disabled = currentPage === 0;
+      nextBtn.disabled = currentPage >= totalPages - 1;
+
+      renderPageNumbers(totalPages);
+    }
+
+    searchInput.addEventListener('input', () => {
+      currentPage = 0;
+      render();
+    });
+
+    districtFilter.addEventListener('change', () => {
+      currentPage = 0;
+      render();
+    });
+
+    prevBtn.addEventListener('click', () => {
+      if (currentPage > 0) {
+        currentPage--;
+        render();
+      }
+    });
+
+    nextBtn.addEventListener('click', () => {
+      currentPage++;
+      render();
+    });
+
+    joinedHeader.addEventListener('click', () => {
+      sortDirection = sortDirection === 'desc' ? 'asc' : 'desc';
+      joinedSortIcon.textContent = sortDirection === 'desc' ? 'arrow_downward' : 'arrow_upward';
+      currentPage = 0;
+      render();
+    });
+
+    populateDistrictFilter();
+    render();
+  })();
+</script>
+
+<!-- Add/Edit/Delete User modal open/close (shared across all .js-user-modal instances) -->
+<script>
+  (function () {
+    function openModal(modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
+    function closeModal(modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+
+    document.getElementById('openAddUserModal').addEventListener('click', () => {
+      openModal(document.getElementById('addUserModal'));
+    });
+
+    document.querySelectorAll('.js-open-user-modal').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const modal = document.getElementById(btn.getAttribute('data-target'));
+        if (modal) openModal(modal);
+      });
+    });
+
+    document.querySelectorAll('.js-user-modal').forEach(modal => {
+      modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(modal); });
+      modal.querySelectorAll('.js-close-user-modal').forEach(btn => {
+        btn.addEventListener('click', () => closeModal(modal));
+      });
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.js-user-modal:not(.hidden)').forEach(closeModal);
+      }
+    });
+  })();
+</script>
+
+<!-- Add User modal: password show/hide toggle -->
+<script>
+  (function () {
+    const toggleBtn = document.getElementById('toggleAddPassword');
+    const passwordInput = document.getElementById('addPassword');
+    const toggleIcon = document.getElementById('toggleAddPasswordIcon');
+
+    toggleBtn.addEventListener('click', () => {
+      const isHidden = passwordInput.type === 'password';
+      passwordInput.type = isHidden ? 'text' : 'password';
+      toggleIcon.textContent = isHidden ? 'visibility_off' : 'visibility';
+    });
+  })();
+</script>
+
+<!-- Frontend-only success popup. The pending action survives the normal form page reload via sessionStorage. -->
+<script>
+  (function () {
+    const STORAGE_KEY = 'cityfix-citizen-action-success';
+    const popup = document.getElementById('userSuccessPopup');
+    const message = document.getElementById('userSuccessMessage');
+    const closeButton = document.getElementById('closeUserSuccessPopup');
+
+    const labels = {
+      added: 'Citizen added successfully.',
+      updated: 'Citizen updated successfully.',
+      deleted: 'Citizen deleted successfully.'
+    };
+
+    function hidePopup() {
+      if (!popup) return;
+      popup.style.transform = 'translateY(16px)';
+      popup.style.opacity = '0';
+      setTimeout(function () {
+        popup.classList.add('hidden');
+        popup.classList.remove('flex');
+      }, 300);
+    }
+
+    function showPopup(action) {
+      if (!popup || !labels[action]) return;
+      message.textContent = labels[action];
+      popup.classList.remove('hidden');
+      popup.classList.add('flex');
+      requestAnimationFrame(function () {
+        popup.style.transform = 'translateY(0)';
+        popup.style.opacity = '1';
+      });
+      if (window.__cityfixPopupTimer) clearTimeout(window.__cityfixPopupTimer);
+      window.__cityfixPopupTimer = setTimeout(hidePopup, 6500);
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      const pendingAction = sessionStorage.getItem(STORAGE_KEY);
+      if (pendingAction) {
+        sessionStorage.removeItem(STORAGE_KEY);
+        showPopup(pendingAction);
+      }
+
+      if (closeButton) closeButton.addEventListener('click', hidePopup);
+
+      document.querySelectorAll('.js-add-user-form').forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+          setTimeout(function () {
+            if (!event.defaultPrevented) sessionStorage.setItem(STORAGE_KEY, 'added');
+          }, 0);
+        });
+      });
+
+      document.querySelectorAll('.js-edit-user-form').forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+          setTimeout(function () {
+            if (!event.defaultPrevented) sessionStorage.setItem(STORAGE_KEY, 'updated');
+          }, 0);
+        });
+      });
+
+      document.querySelectorAll('.js-delete-user-form').forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+          setTimeout(function () {
+            if (!event.defaultPrevented) sessionStorage.setItem(STORAGE_KEY, 'deleted');
+          }, 0);
+        });
+      });
+    });
+  })();
+</script>
+
+<!-- Prevent duplicate phone-number submissions before they reach the database. -->
+<script>
+  (function () {
+    const notification = document.getElementById('topNotification');
+    const notificationIcon = document.getElementById('topNotificationIcon');
+    const notificationTitle = document.getElementById('topNotificationTitle');
+    const notificationMessage = document.getElementById('topNotificationMessage');
+    const closeNotification = document.getElementById('closeTopNotification');
+    let hideTimer;
+
+    function normalizePhone(value) {
+      return (value || '').replace(/[^0-9]/g, '');
+    }
+
+    function showNotification(type, title, message) {
+      const isSuccess = type === 'success';
+      notificationTitle.textContent = title;
+      notificationMessage.textContent = message;
+      notification.classList.toggle('border-secondary/25', isSuccess);
+      notification.classList.toggle('border-error/25', !isSuccess);
+      notificationIcon.className = 'mt-0.5 w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ' +
+              (isSuccess ? 'bg-secondary-container text-secondary' : 'bg-error-container text-error');
+      notificationIcon.querySelector('span').textContent = isSuccess ? 'check_circle' : 'error';
+      notification.classList.remove('hidden');
+      notification.classList.add('flex');
+      clearTimeout(hideTimer);
+      hideTimer = setTimeout(hideNotification, 6500);
+    }
+
+    function showDuplicateNotification(title, message) {
+      showNotification('error', title, message);
+    }
+
+    function showSuccessNotification(title, message) {
+      showNotification('success', title, message);
+    }
+
+    function showPhoneExistsNotification() {
+      showDuplicateNotification(
+              'Phone number already exists',
+              'This phone number is already registered to another citizen. Please use a different number.'
+      );
+    }
+
+    function showEmailExistsNotification() {
+      showDuplicateNotification(
+              'Email address already exists',
+              'This email address is already registered to another citizen. Please use a different email.'
+      );
+    }
+
+    function hideNotification() {
+      notification.classList.add('hidden');
+      notification.classList.remove('flex');
+    }
+
+    closeNotification.addEventListener('click', hideNotification);
+
+    function markFieldAsInvalid(field) {
+      if (!field) return;
+      field.focus();
+      field.classList.add('border-error', 'ring-4', 'ring-error/10');
+      setTimeout(function () {
+        field.classList.remove('border-error', 'ring-4', 'ring-error/10');
+      }, 6500);
+    }
+
+    function markPhoneAsInvalid(phoneInput) {
+      showPhoneExistsNotification();
+      markFieldAsInvalid(phoneInput);
+    }
+
+    function markEmailAsInvalid(emailInput) {
+      showEmailExistsNotification();
+      markFieldAsInvalid(emailInput);
+    }
+
+    document.querySelectorAll('.js-edit-user-form').forEach(function (form) {
+      form.addEventListener('submit', function (event) {
+        const phoneInput = form.querySelector('input[name="phone"]');
+        const currentPhone = normalizePhone(phoneInput ? phoneInput.value : '');
+        const currentUserId = form.getAttribute('data-user-id');
+        const duplicate = Array.from(document.querySelectorAll('.js-user-row')).some(function (row) {
+          const rowUserId = row.getAttribute('data-id');
+          const existingPhone = normalizePhone(row.getAttribute('data-phone'));
+          return rowUserId !== currentUserId && currentPhone !== '' && existingPhone === currentPhone;
+        });
+
+        if (duplicate) {
+          event.preventDefault();
+          markPhoneAsInvalid(phoneInput);
+        }
+      });
+    });
+
+    document.querySelectorAll('.js-add-user-form').forEach(function (form) {
+      form.addEventListener('submit', function (event) {
+        const phoneInput = form.querySelector('#addPhone');
+        const emailInput = form.querySelector('#addEmail');
+        const currentPhone = normalizePhone(phoneInput ? phoneInput.value : '');
+        const currentEmail = (emailInput ? emailInput.value : '').trim().toLowerCase();
+        const rows = Array.from(document.querySelectorAll('.js-user-row'));
+
+        const duplicatePhone = currentPhone !== '' && rows.some(function (row) {
+          return normalizePhone(row.getAttribute('data-phone')) === currentPhone;
+        });
+        const duplicateEmail = currentEmail !== '' && rows.some(function (row) {
+          return (row.getAttribute('data-email') || '').trim().toLowerCase() === currentEmail;
+        });
+
+        if (duplicatePhone || duplicateEmail) {
+          event.preventDefault();
+
+          // Keep the notification strictly aligned with the matching field(s).
+          if (duplicatePhone && duplicateEmail) {
+            showDuplicateNotification(
+                    'Email and phone already exist',
+                    'Both values are already registered to another citizen. Please use different contact details.'
+            );
+            markFieldAsInvalid(emailInput);
+            markFieldAsInvalid(phoneInput);
+          } else if (duplicatePhone === true) {
+            showDuplicateNotification(
+                    'Phone number already exists',
+                    'This phone number is already registered to another citizen. Please use a different number.'
+            );
+            markFieldAsInvalid(phoneInput);
+          } else if (duplicateEmail === true) {
+            showDuplicateNotification(
+                    'Email address already exists',
+                    'This email address is already registered to another citizen. Please use a different email.'
+            );
+            markFieldAsInvalid(emailInput);
+          }
+        }
+      });
+    });
+  })();
+</script>
+
+<script>
+  (function () {
+    const menu = document.getElementById('cf-users-menu-btn');
+    const sidebar = document.querySelector('.cf-users-sidebar');
+    const backdrop = document.getElementById('cf-users-backdrop');
+    const closeNav = () => { sidebar?.classList.remove('cf-users-sidebar-open'); backdrop?.classList.remove('is-visible'); menu?.setAttribute('aria-expanded','false'); if (menu) menu.querySelector('.material-symbols-outlined').textContent = 'menu'; };
+    menu?.addEventListener('click', () => { const open = !sidebar?.classList.contains('cf-users-sidebar-open'); sidebar?.classList.toggle('cf-users-sidebar-open', open); backdrop?.classList.toggle('is-visible', open); menu?.setAttribute('aria-expanded', String(open)); if (menu) menu.querySelector('.material-symbols-outlined').textContent = open ? 'close' : 'menu'; });
+    backdrop?.addEventListener('click', closeNav);
+    sidebar?.querySelectorAll('a').forEach(link => link.addEventListener('click', closeNav));
+
+  })();
+</script>
+</body>
+</html>
