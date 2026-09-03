@@ -744,15 +744,36 @@
       const locations = [...new Set(complaints.map(c => String(c.location || '').trim()).filter(Boolean))];
       const grouped = new Map();
       active.forEach(c => grouped.set(c.location || 'Unknown location', (grouped.get(c.location || 'Unknown location') || 0) + 1));
-      const originalPositions = {
-        'Downtown District': { xPercent: 33, yPercent: 25 },
-        'Central Square': { xPercent: 75, yPercent: 67 },
-        'Westside Park': { xPercent: 55, yPercent: 45 }
-      };
-      const heatmap = [...grouped.entries()].map(([label, weight], index) => {
-        const position = originalPositions[label] || { xPercent: 18 + ((index * 29) % 70), yPercent: 20 + ((index * 41) % 65) };
-        return { label, weight, ...position };
-      });
+
+      const heatmapPositions = [
+        { xPercent: 15, yPercent: 20 },
+        { xPercent: 35, yPercent: 30 },
+        { xPercent: 55, yPercent: 22 },
+        { xPercent: 75, yPercent: 35 },
+        { xPercent: 25, yPercent: 55 },
+        { xPercent: 48, yPercent: 50 },
+        { xPercent: 70, yPercent: 60 },
+        { xPercent: 85, yPercent: 75 },
+        { xPercent: 35, yPercent: 78 },
+        { xPercent: 60, yPercent: 82 }
+      ];
+
+      const heatmap = [...grouped.entries()].map(
+              ([label, weight], index) => {
+
+                const position =
+                        heatmapPositions[index % heatmapPositions.length];
+
+                return {
+                  label,
+                  weight,
+                  xPercent: position.xPercent,
+                  yPercent: position.yPercent
+                };
+              }
+      );
+
+
       return {
         metrics: {
           issuesResolved: complaints.filter(c => String(c.status).toUpperCase() === 'RESOLVED').length,
@@ -822,7 +843,7 @@
       const status = STATUS_CONFIG[String(c.status || 'PENDING').toUpperCase()] || STATUS_CONFIG.PENDING;
       const thumb = el('div', { className: 'complaint-thumb' });
       if (c.imageUrl) {
-        thumb.style.backgroundImage = `url(${JSON.stringify(c.imageUrl)})`;
+        thumb.style.backgroundImage = `url("${c.imageUrl}")`;
         thumb.setAttribute('role', 'img');
         thumb.setAttribute('aria-label', `${c.title || 'Complaint'} image`);
       } else {
@@ -856,9 +877,20 @@
     }
 
     function heatColor(weight) {
-      if (weight >= 8) return { outer: 'rgba(186,26,26,.30)', inner: 'var(--error)' };
-      if (weight >= 4) return { outer: 'rgba(0,40,142,.25)', inner: 'var(--primary)' };
-      return { outer: 'rgba(0,108,73,.25)', inner: 'var(--secondary)' };
+      if (weight >= 8) return {
+        outer: 'rgba(186,26,26,.30)',
+        inner: 'var(--error)'
+      };
+
+      if (weight >= 4) return {
+        outer: 'rgba(0,40,142,.25)',
+        inner: 'var(--primary)'
+      };
+
+      return {
+        outer: 'rgba(0,108,73,.25)',
+        inner: 'var(--secondary)'
+      };
     }
 
     function renderHeatmap() {

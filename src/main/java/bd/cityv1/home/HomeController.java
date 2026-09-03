@@ -23,12 +23,16 @@ public class HomeController {
 
     @GetMapping("/")
     public String home(Model model) {
+
+        // Citizens
         List<Map<String, Object>> citizens = citizenRepository.findAll()
                 .stream()
                 .map(citizen -> Map.<String, Object>of(
-                        "id", citizen.getId()))
+                        "id", citizen.getId()
+                ))
                 .toList();
 
+        // Complaints
         List<ComplaintHomeDto> complaints = complaintRepository
                 .findAllByOrderByCreatedAtDesc()
                 .stream()
@@ -41,11 +45,12 @@ public class HomeController {
                         complaint.getStatus() == null
                                 ? "PENDING"
                                 : complaint.getStatus().name(),
+
+                        // IMPORTANT: Send Supabase image URL directly
                         complaint.hasImage()
-                                ? "/complaints/"
-                                  + complaint.getId()
-                                  + "/image"
+                                ? complaint.getImageUrl()
                                 : null,
+
                         complaint.getCreatedAt() == null
                                 ? null
                                 : complaint.getCreatedAt().toString()
@@ -61,6 +66,7 @@ public class HomeController {
 
     @GetMapping("/about")
     public String about(Model model) {
+
         model.addAttribute("activePage", "about");
 
         List<Long> citizens = citizenRepository
@@ -73,7 +79,8 @@ public class HomeController {
                 .findAll()
                 .stream()
                 .map(complaint -> Map.of(
-                        "status", complaint.getStatus() == null
+                        "status",
+                        complaint.getStatus() == null
                                 ? ""
                                 : complaint.getStatus().name()
                 ))
@@ -87,20 +94,26 @@ public class HomeController {
 
     @GetMapping("/contact")
     public String contact(Model model) {
+
         model.addAttribute("activePage", "contact");
+
         return "contact";
     }
 
     @GetMapping("/login")
     public String login(Model model) {
+
         model.addAttribute("activePage", "login");
+
         return "login";
     }
 
     @GetMapping("/register")
     public String register(Model model) {
+
         model.addAttribute("activePage", "register");
         model.addAttribute("citizen", new Citizen());
+
         return "register";
     }
 }
